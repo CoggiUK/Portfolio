@@ -16,14 +16,15 @@ services:
   - type: web
     name: portfolio-backend
     runtime: node
-    rootDir: backend
     plan: free
-    buildCommand: npm install
-    startCommand: node server.js
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && node server.js
     healthCheckPath: /api/settings
     envVars:
       - key: JWT_SECRET
         generateValue: true        # Render tự sinh secret an toàn
+      - key: NODE_VERSION
+        value: "22"                # Vite/Express cần Node mới (>=20.19/22.12)
     # Bật khối này (gói trả phí) để db.json không bị reset:
     # disk:
     #   name: portfolio-data
@@ -34,10 +35,11 @@ services:
   - type: web
     name: portfolio-frontend
     runtime: static
-    rootDir: frontend
-    buildCommand: npm install && npm run build
-    staticPublishPath: dist
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: frontend/dist
     envVars:
+      - key: NODE_VERSION
+        value: "22"                # Vite 8 yêu cầu Node >= 20.19 hoặc 22.12
       - key: VITE_API_BASE          # baked vào lúc build để gọi đúng backend
         fromService:
           type: web
