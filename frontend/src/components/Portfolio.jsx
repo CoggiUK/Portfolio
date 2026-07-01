@@ -27,7 +27,8 @@ import {
   Code,
   Palette,
   Store,
-  Milestone
+  Milestone,
+  Mouse
 } from 'lucide-react';
 import MockUI from './MockUI';
 import { getShowcase } from '../data/showcases';
@@ -135,6 +136,7 @@ function IntroSplash({ profile, initials, onEnter }) {
         <p className="intro-splash-tag">Cùng khám phá đôi lời giới thiệu &amp; các dự án của mình nhé.</p>
       </div>
       <button className="intro-scroll" onClick={(e) => { e.stopPropagation(); enter.current(); }} aria-label="Cuộn xuống để vào">
+        <Mouse size={18} style={{ marginRight: '6px', opacity: 0.85 }} />
         <span>Cuộn xuống để vào</span>
         <ChevronDown size={22} />
       </button>
