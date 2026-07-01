@@ -181,9 +181,9 @@ export default function Portfolio({ profile, projects, onAdminClick, onOpenProje
           <a href="#about" className="nav-link">Giới thiệu</a>
           <a href="#climb" className="nav-link">Leo núi</a>
           <a href="#skills" className="nav-link">Kỹ năng</a>
+          <a href="#projects" className="nav-link">Dự án</a>
           <a href="#journey" className="nav-link">Hành trình</a>
           <a href="#events" className="nav-link">Dấu ấn</a>
-          <a href="#projects" className="nav-link">Dự án</a>
           <a href="#contact" className="nav-link">Liên hệ</a>
           <button onClick={onAdminClick} className="btn-secondary btn-sm">
             <Lock size={14} />
@@ -415,6 +415,62 @@ export default function Portfolio({ profile, projects, onAdminClick, onOpenProje
         </div>
       </section>
 
+      {/* PROJECTS SHOWCASE */}
+      {(() => {
+        const enriched = projects.map((p) => ({ project: p, showcase: getShowcase(p.id) }));
+        const systems = enriched.filter((e) => !e.showcase || e.showcase.type === 'system');
+        const landings = enriched.filter((e) => e.showcase && e.showcase.type === 'landing');
+
+        return (
+          <>
+            <section id="projects" className="container section">
+              <div className="section-head" data-reveal>
+                <span className="eyebrow">Dự án nổi bật</span>
+                <h2 className="glow-text">Sản phẩm &amp; Hệ thống đã triển khai</h2>
+              </div>
+
+              <div className="project-rows">
+                {systems.map(({ project, showcase }, i) => (
+                  <ProjectCard
+                    key={project.id}
+                    project={project}
+                    showcase={showcase}
+                    hoveredSkill={hoveredSkill}
+                    onOpen={onOpenProject}
+                    index={i}
+                    layout="row"
+                    reverse={i % 2 === 1}
+                  />
+                ))}
+              </div>
+            </section>
+
+            {landings.length > 0 && (
+              <section id="landings" className="container section">
+                <div className="section-head" data-reveal>
+                  <span className="eyebrow">Landing Pages</span>
+                  <h2 className="glow-text-purple">Bộ sưu tập Landing Page</h2>
+                </div>
+
+                <div className="grid-3 project-gallery">
+                  {landings.map(({ project, showcase }, i) => (
+                    <ProjectCard
+                      key={project.id}
+                      project={project}
+                      showcase={showcase}
+                      hoveredSkill={hoveredSkill}
+                      onOpen={onOpenProject}
+                      index={i}
+                      layout="tile"
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
+          </>
+        );
+      })()}
+
       {/* JOURNEY: EXPERIENCE / ACTIVITIES / EDUCATION */}
       <section id="journey" className="container section">
         <div className="section-head" data-reveal>
@@ -552,62 +608,6 @@ export default function Portfolio({ profile, projects, onAdminClick, onOpenProje
           </div>
         </section>
       )}
-
-      {/* PROJECTS SHOWCASE */}
-      {(() => {
-        const enriched = projects.map((p) => ({ project: p, showcase: getShowcase(p.id) }));
-        const systems = enriched.filter((e) => !e.showcase || e.showcase.type === 'system');
-        const landings = enriched.filter((e) => e.showcase && e.showcase.type === 'landing');
-
-        return (
-          <>
-            <section id="projects" className="container section">
-              <div className="section-head" data-reveal>
-                <span className="eyebrow">Dự án nổi bật</span>
-                <h2 className="glow-text">Sản phẩm &amp; Hệ thống đã triển khai</h2>
-              </div>
-
-              <div className="project-rows">
-                {systems.map(({ project, showcase }, i) => (
-                  <ProjectCard
-                    key={project.id}
-                    project={project}
-                    showcase={showcase}
-                    hoveredSkill={hoveredSkill}
-                    onOpen={onOpenProject}
-                    index={i}
-                    layout="row"
-                    reverse={i % 2 === 1}
-                  />
-                ))}
-              </div>
-            </section>
-
-            {landings.length > 0 && (
-              <section id="landings" className="container section">
-                <div className="section-head" data-reveal>
-                  <span className="eyebrow">Landing Pages</span>
-                  <h2 className="glow-text-purple">Bộ sưu tập Landing Page</h2>
-                </div>
-
-                <div className="grid-3 project-gallery">
-                  {landings.map(({ project, showcase }, i) => (
-                    <ProjectCard
-                      key={project.id}
-                      project={project}
-                      showcase={showcase}
-                      hoveredSkill={hoveredSkill}
-                      onOpen={onOpenProject}
-                      index={i}
-                      layout="tile"
-                    />
-                  ))}
-                </div>
-              </section>
-            )}
-          </>
-        );
-      })()}
 
       {/* CONTACT */}
       <section id="contact" className="container section">
