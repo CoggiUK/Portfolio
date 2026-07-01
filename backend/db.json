@@ -22,12 +22,21 @@
       {
         "role": "UI/UX Designer",
         "company": "Công ty Cổ phần Học viện Minh Trí Thành",
-        "period": "07/2025 - Hiện tại",
+        "period": "04/2026 - Hiện tại",
         "points": [
-          "Nghiên cứu và phát triển các chức năng hệ thống, phân tích hành vi người dùng trên Landing Page để đưa ra phương án tối ưu.",
-          "Thiết kế & xây dựng hệ thống phân tích dữ liệu từ Landing kết hợp AI để đánh giá độ hiệu quả.",
-          "Thiết kế giao diện CRM nội bộ và thiết lập bộ quy chuẩn design thống nhất giữa Design và Front-end.",
-          "Chuyển đổi, tích hợp AI vào thiết kế hệ thống nhằm tự động hoá công việc và nâng cao trải nghiệm người dùng."
+          "Trực tiếp thiết kế giao diện hệ thống nội bộ cốt lõi: CRM, ERP SPACE, Dashboard GA4 bản Web & Mobile.",
+          "Xây dựng quy chuẩn Design System và tối ưu hoá quy trình bàn giao (hand-off) giữa Design và Front-end.",
+          "Ứng dụng AI (Gemini, Claude) vào vận hành hệ thống, tối ưu hóa giao diện dựa trên dữ liệu người dùng."
+        ]
+      },
+      {
+        "role": "Chuyên viên R&D",
+        "company": "Công ty Cổ phần Học viện Minh Trí Thành",
+        "period": "07/2025 - 04/2026",
+        "points": [
+          "Nghiên cứu giải pháp kỹ thuật, phân tích sản phẩm và thiết lập luồng vận hành hệ thống ban đầu.",
+          "Phân tích hành vi người dùng trên các Landing Page để đưa ra các phương án đề xuất tối ưu hóa chuyển đổi.",
+          "Nghiên cứu tích hợp các công nghệ mới và chuẩn hóa cấu trúc dữ liệu vận hành nội bộ."
         ]
       }
     ],
@@ -142,19 +151,27 @@
       },
       {
         "camp": "Trạm dừng chân 2",
-        "title": "Chuyển mình sang UI/UX",
+        "title": "Tốt nghiệp Đại học FPT",
         "year": "2025",
         "altitude": "1000m",
-        "desc": "Tốt nghiệp Đại học FPT và gia nhập Học viện Minh Trí Thành. Định vị bản thân là Designer có nền tảng Kỹ thuật phần mềm — cầu nối tối ưu hoá quy trình hand-off.",
-        "icon": "Palette"
+        "desc": "Tốt nghiệp chuyên ngành Kỹ thuật Phần mềm Đại học FPT, tích lũy tư duy hệ thống vững chắc.",
+        "icon": "Award"
+      },
+      {
+        "camp": "Gia nhập Minh Trí Thành",
+        "title": "Nghiên cứu & Phát triển (R&D)",
+        "year": "07/07/2025 - 04/2026",
+        "altitude": "1500m",
+        "desc": "Bắt đầu làm việc tại Học viện Minh Trí Thành từ 07/07/2025. Nghiên cứu giải pháp kỹ thuật, phân tích sản phẩm và chuẩn hoá luồng vận hành.",
+        "icon": "Briefcase"
       },
       {
         "camp": "Trạm dừng chân 3",
-        "title": "AI & Tự động hoá hệ thống",
-        "year": "2026 - Hiện tại",
+        "title": "UI/UX Designer & AI Integration",
+        "year": "04/2026 - Hiện tại",
         "altitude": "2000m",
-        "desc": "Trực tiếp thiết kế và phát triển các hệ thống cốt lõi: CRM, ERP SPACE, Dashboard GA4. Ứng dụng AI (Gemini, Claude) tối ưu hoá 350% hiệu suất vận hành.",
-        "icon": "Sparkles"
+        "desc": "Chuyển sang vai trò Thiết kế (Design). Trực tiếp thiết kế hệ thống nội bộ cốt lõi: CRM, ERP SPACE, Dashboard GA4. Ứng dụng AI tối ưu hiệu suất.",
+        "icon": "Palette"
       },
       {
         "camp": "Thử thách mới",

@@ -32,12 +32,21 @@ const fallbackData = {
       {
         role: "UI/UX Designer",
         company: "Công ty Cổ phần Học viện Minh Trí Thành",
-        period: "07/2025 - Hiện tại",
+        period: "04/2026 - Hiện tại",
         points: [
-          "Nghiên cứu và phát triển các chức năng hệ thống, phân tích hành vi người dùng trên Landing Page để đưa ra phương án tối ưu.",
-          "Thiết kế & xây dựng hệ thống phân tích dữ liệu từ Landing kết hợp AI để đánh giá độ hiệu quả.",
-          "Thiết kế giao diện CRM nội bộ và thiết lập bộ quy chuẩn design thống nhất giữa Design và Front-end.",
-          "Chuyển đổi, tích hợp AI vào thiết kế hệ thống nhằm tự động hoá công việc và nâng cao trải nghiệm người dùng."
+          "Trực tiếp thiết kế giao diện hệ thống nội bộ cốt lõi: CRM, ERP SPACE, Dashboard GA4 bản Web & Mobile.",
+          "Xây dựng quy chuẩn Design System và tối ưu hoá quy trình bàn giao (hand-off) giữa Design và Front-end.",
+          "Ứng dụng AI (Gemini, Claude) vào vận hành hệ thống, tối ưu hóa giao diện dựa trên dữ liệu người dùng."
+        ]
+      },
+      {
+        role: "Chuyên viên R&D",
+        company: "Công ty Cổ phần Học viện Minh Trí Thành",
+        period: "07/2025 - 04/2026",
+        points: [
+          "Nghiên cứu giải pháp kỹ thuật, phân tích sản phẩm và thiết lập luồng vận hành hệ thống ban đầu.",
+          "Phân tích hành vi người dùng trên các Landing Page để đưa ra các phương án đề xuất tối ưu hóa chuyển đổi.",
+          "Nghiên cứu tích hợp các công nghệ mới và chuẩn hóa cấu trúc dữ liệu vận hành nội bộ."
         ]
       }
     ],
