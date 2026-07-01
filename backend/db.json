@@ -103,7 +103,9 @@
     "events": [
       { "name": "Vị tết 2021", "type": "Ban tổ chức", "org": "Đại học FPT" },
       { "name": "International Day 2021", "type": "Ban tổ chức", "org": "Đại học FPT" },
-      { "name": "Retro Night 3, 4, 5", "type": "Nội bộ - sinh nhật CLB", "org": "FPTU AI Club" },
+      { "name": "Retro Night 3", "type": "Nội bộ - sinh nhật CLB", "org": "FPTU AI Club" },
+      { "name": "Retro Night 4", "type": "Nội bộ - sinh nhật CLB", "org": "FPTU AI Club" },
+      { "name": "Retro Night 5", "type": "Nội bộ - sinh nhật CLB", "org": "FPTU AI Club" },
       { "name": "AI FAIR", "type": "Nội bộ - Tết", "org": "FPTU AI Club" },
       { "name": "POPAWA", "type": "Nội bộ - teambuilding", "org": "FPTU AI Club" },
       { "name": "Wave FaIter", "type": "Nội bộ - vai trò cố vấn", "org": "FPTU AI Club" },
