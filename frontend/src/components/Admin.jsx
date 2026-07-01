@@ -20,7 +20,8 @@ import {
   ArrowUp,
   ArrowDown,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  GripVertical
 } from 'lucide-react';
 import { api } from '../api';
 
@@ -59,6 +60,7 @@ export default function Admin({ token, expiresAt, onLogout, onUpdateData }) {
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [loading, setLoading] = useState(false);
+  const [draggedGroupIdx, setDraggedGroupIdx] = useState(null);
 
   // Time remaining on token calculation
   const [timeRemaining, setTimeRemaining] = useState('');
@@ -678,30 +680,56 @@ export default function Admin({ token, expiresAt, onLogout, onUpdateData }) {
                       <div 
                         key={groupIdx} 
                         className="glass-card" 
+                        draggable={true}
+                        onDragStart={(e) => {
+                          setDraggedGroupIdx(groupIdx);
+                          e.dataTransfer.effectAllowed = 'move';
+                        }}
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                        }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          if (draggedGroupIdx !== null && draggedGroupIdx !== groupIdx) {
+                            const newGroups = [...(profile.skillGroups || [])];
+                            const draggedGroup = newGroups[draggedGroupIdx];
+                            newGroups.splice(draggedGroupIdx, 1);
+                            newGroups.splice(groupIdx, 0, draggedGroup);
+                            setProfile({ ...profile, skillGroups: newGroups });
+                          }
+                          setDraggedGroupIdx(null);
+                        }}
+                        onDragEnd={() => setDraggedGroupIdx(null)}
                         style={{ 
                           padding: '24px', 
-                          border: '1px solid rgba(255,255,255,0.05)', 
-                          background: 'rgba(255,255,255,0.01)',
+                          border: draggedGroupIdx === groupIdx ? '1px dashed var(--primary-color)' : '1px solid rgba(255,255,255,0.05)', 
+                          background: draggedGroupIdx === groupIdx ? 'rgba(0, 255, 136, 0.05)' : 'rgba(255,255,255,0.01)',
+                          opacity: draggedGroupIdx === groupIdx ? 0.6 : 1,
+                          transition: 'all 0.2s ease',
                           display: 'flex',
                           flexDirection: 'column',
-                          gap: '16px'
+                          gap: '16px',
+                          cursor: 'grab'
                         }}
                       >
                         {/* Group Header */}
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flexGrow: 1 }}>
-                            <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>Tên nhóm kỹ năng</label>
-                            <input
-                              type="text"
-                              className="glass-input"
-                              value={group.label || ''}
-                              onChange={(e) => {
-                                const newGroups = [...(profile.skillGroups || [])];
-                                newGroups[groupIdx] = { ...newGroups[groupIdx], label: e.target.value };
-                                setProfile({ ...profile, skillGroups: newGroups });
-                              }}
-                              placeholder="Ví dụ: UI/UX Design, Lập trình..."
-                            />
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexGrow: 1 }}>
+                            <GripVertical size={20} style={{ color: 'var(--text-muted)', cursor: 'grab', flexShrink: 0, marginTop: '22px' }} />
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flexGrow: 1 }}>
+                              <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>Tên nhóm kỹ năng</label>
+                              <input
+                                type="text"
+                                className="glass-input"
+                                value={group.label || ''}
+                                onChange={(e) => {
+                                  const newGroups = [...(profile.skillGroups || [])];
+                                  newGroups[groupIdx] = { ...newGroups[groupIdx], label: e.target.value };
+                                  setProfile({ ...profile, skillGroups: newGroups });
+                                }}
+                                placeholder="Ví dụ: UI/UX Design, Lập trình..."
+                              />
+                            </div>
                           </div>
                           <button
                             type="button"

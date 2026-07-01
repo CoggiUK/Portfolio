@@ -371,6 +371,75 @@ export default function Portfolio({ profile, projects, onAdminClick, onOpenProje
         </div>
       </section>
 
+      {/* EVENTS SECTION */}
+      {Array.isArray(profile.events) && profile.events.length > 0 && (
+        <section id="events" className="container section">
+          <div className="section-head" data-reveal>
+            <span className="eyebrow">Dấu ấn</span>
+            <h2 className="glow-text">Sự kiện &amp; Hoạt động Nổi bật</h2>
+            <p>Các chương trình tiêu biểu đã trực tiếp tổ chức, điều phối hoặc cố vấn chuyên môn.</p>
+          </div>
+          <div className="grid-3 event-grid" style={{ gap: '20px' }}>
+            {profile.events.map((evt, i) => {
+              let badgeColor = 'rgba(0, 255, 136, 0.1)';
+              let badgeText = 'var(--primary-color)';
+              let iconColor = 'var(--primary-color)';
+              
+              if (evt.type.includes('cố vấn')) {
+                badgeColor = 'rgba(139, 92, 246, 0.15)';
+                badgeText = 'var(--secondary-color)';
+                iconColor = 'var(--secondary-color)';
+              } else if (evt.type.includes('Nội bộ')) {
+                badgeColor = 'rgba(0, 240, 255, 0.15)';
+                badgeText = 'var(--cyan-accent)';
+                iconColor = 'var(--cyan-accent)';
+              }
+              
+              return (
+                <div 
+                  key={i} 
+                  className="glass-card event-card" 
+                  data-reveal 
+                  style={{ 
+                    transitionDelay: `${(i % 3) * 100}ms`,
+                    padding: '24px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    minHeight: '140px',
+                    border: '1px solid rgba(255, 255, 255, 0.05)',
+                    background: 'rgba(255, 255, 255, 0.02)',
+                    backdropFilter: 'blur(10px)'
+                  }}
+                >
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                      <span 
+                        className="badge" 
+                        style={{ 
+                          backgroundColor: badgeColor, 
+                          color: badgeText,
+                          borderColor: 'transparent',
+                          fontSize: '0.75rem',
+                          padding: '4px 10px'
+                        }}
+                      >
+                        {evt.type}
+                      </span>
+                    </div>
+                    <h3 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#ffffff', lineHeight: 1.4 }}>{evt.name}</h3>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', marginTop: '16px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                    <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: iconColor, marginRight: '8px' }} />
+                    FPTU AI Club
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
       {/* PROJECTS SHOWCASE */}
       {(() => {
         const enriched = projects.map((p) => ({ project: p, showcase: getShowcase(p.id) }));
