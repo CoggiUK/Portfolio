@@ -93,33 +93,35 @@ function IntroSplash({ profile, initials, onEnter }) {
 
   return (
     <div className={`intro-splash ${leaving ? 'is-leaving' : ''}`} onClick={() => enter.current()} role="button" tabIndex={0} aria-label="Vào trang">
-      <div className="intro-splash-bg" aria-hidden="true"><span className="aurora aurora-1" /><span className="aurora aurora-2" /></div>
+      <div className="intro-splash-bg" aria-hidden="true">
+        <span className="aurora aurora-1" />
+        <span className="aurora aurora-2" />
+        <div className="tech-bg-grid" />
+        <div className="flying-planes-container">
+          <div className="flying-plane plane-1">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path d="m22 2-7 20-4-9-9-4Z" />
+              <path d="M22 2 11 13" />
+            </svg>
+          </div>
+          <div className="flying-plane plane-2">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path d="m22 2-7 20-4-9-9-4Z" />
+              <path d="M22 2 11 13" />
+            </svg>
+          </div>
+          <span className="tech-float float-1">&lt;/&gt;</span>
+          <span className="tech-float float-2">&#123; &#125;</span>
+          <span className="tech-float float-3">[]</span>
+          <span className="tech-float float-4">div</span>
+          <span className="tech-float float-5">const</span>
+        </div>
+      </div>
       <div className="intro-splash-inner">
         <div className="intro-avatar-wrap">
-          <div className="intro-avatar-ring-outer" aria-hidden="true" />
-          <div className="intro-avatar-ring-inner" aria-hidden="true" />
-
-          {/* Dotted trail - behind part */}
-          <svg className="orbit-trail-svg-behind" viewBox="0 0 300 300" aria-hidden="true" style={{ position: 'absolute', inset: '-65px', width: '300px', height: '300px', pointerEvents: 'none', zIndex: 0 }}>
-            <path d="M 40,150 A 110,35 0 0,1 260,150" fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth="1.5" strokeDasharray="5 5" transform="rotate(-15 150 150)" />
-          </svg>
-
+          <span className="intro-avatar-ring" aria-hidden="true" />
           <div className={`intro-avatar ${profile.avatar ? 'has-image' : ''}`}>
             {profile.avatar ? <img src={profile.avatar} alt={profile.name} /> : initials}
-          </div>
-
-          {/* Dotted trail - front part */}
-          <svg className="orbit-trail-svg-front" viewBox="0 0 300 300" aria-hidden="true" style={{ position: 'absolute', inset: '-65px', width: '300px', height: '300px', pointerEvents: 'none', zIndex: 6 }}>
-            <path d="M 260,150 A 110,35 0 0,1 40,150" fill="none" stroke="var(--cyan-accent)" strokeWidth="1.5" strokeDasharray="5 5" transform="rotate(-15 150 150)" style={{ filter: 'drop-shadow(0 0 4px var(--cyan-accent))' }} />
-          </svg>
-
-          <div className="intro-avatar-orbit-wrap" aria-hidden="true">
-            <div className="intro-avatar-plane">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="m22 2-7 20-4-9-9-4Z" />
-                <path d="M22 2 11 13" />
-              </svg>
-            </div>
           </div>
           <span className="intro-wave" aria-hidden="true">👋</span>
         </div>
