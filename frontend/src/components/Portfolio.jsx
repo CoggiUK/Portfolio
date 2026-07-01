@@ -12,6 +12,7 @@ import {
   CheckCircle2,
   Sparkles,
   Briefcase,
+  Award,
   GraduationCap,
   Users,
   Heart,
