@@ -711,7 +711,44 @@ export default function Admin({ token, expiresAt, onLogout, onUpdateData }) {
                                     fontWeight: 500
                                   }}
                                 >
+                                  <button
+                                    type="button"
+                                    disabled={itemIdx === 0}
+                                    style={{
+                                      background: 'none',
+                                      border: 'none',
+                                      color: itemIdx === 0 ? 'rgba(255,255,255,0.1)' : 'var(--text-muted)',
+                                      cursor: itemIdx === 0 ? 'default' : 'pointer',
+                                      padding: 0,
+                                      display: 'flex',
+                                      alignItems: 'center'
+                                    }}
+                                    onClick={() => moveSkill(groupIdx, itemIdx, 'left')}
+                                    title="Di chuyển sang trái"
+                                  >
+                                    <ChevronLeft size={14} />
+                                  </button>
+
                                   <span>{item}</span>
+
+                                  <button
+                                    type="button"
+                                    disabled={itemIdx === group.items.length - 1}
+                                    style={{
+                                      background: 'none',
+                                      border: 'none',
+                                      color: itemIdx === group.items.length - 1 ? 'rgba(255,255,255,0.1)' : 'var(--text-muted)',
+                                      cursor: itemIdx === group.items.length - 1 ? 'default' : 'pointer',
+                                      padding: 0,
+                                      display: 'flex',
+                                      alignItems: 'center'
+                                    }}
+                                    onClick={() => moveSkill(groupIdx, itemIdx, 'right')}
+                                    title="Di chuyển sang phải"
+                                  >
+                                    <ChevronRight size={14} />
+                                  </button>
+
                                   <button
                                     type="button"
                                     style={{
@@ -721,7 +758,8 @@ export default function Admin({ token, expiresAt, onLogout, onUpdateData }) {
                                       cursor: 'pointer',
                                       padding: 0,
                                       display: 'flex',
-                                      alignItems: 'center'
+                                      alignItems: 'center',
+                                      marginLeft: '4px'
                                     }}
                                     onClick={() => {
                                       const newGroups = [...(profile.skillGroups || [])];
@@ -729,6 +767,7 @@ export default function Admin({ token, expiresAt, onLogout, onUpdateData }) {
                                       newGroups[groupIdx] = { ...newGroups[groupIdx], items: newItems };
                                       setProfile({ ...profile, skillGroups: newGroups });
                                     }}
+                                    title="Xóa kỹ năng này"
                                   >
                                     <Trash2 size={12} style={{ color: '#f87171' }} />
                                   </button>
