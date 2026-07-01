@@ -171,6 +171,28 @@ export default function Portfolio({ profile, projects, onAdminClick, onOpenProje
       <div className="aurora aurora-1" aria-hidden="true" />
       <div className="aurora aurora-2" aria-hidden="true" />
 
+      {/* Tech background elements & Flying Airplanes */}
+      <div className="tech-bg-grid" aria-hidden="true" />
+      <div className="flying-planes-container" aria-hidden="true">
+        <div className="flying-plane plane-1">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <path d="m22 2-7 20-4-9-9-4Z" />
+            <path d="M22 2 11 13" />
+          </svg>
+        </div>
+        <div className="flying-plane plane-2">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <path d="m22 2-7 20-4-9-9-4Z" />
+            <path d="M22 2 11 13" />
+          </svg>
+        </div>
+        <span className="tech-float float-1">&lt;/&gt;</span>
+        <span className="tech-float float-2">&#123; &#125;</span>
+        <span className="tech-float float-3">[]</span>
+        <span className="tech-float float-4">div</span>
+        <span className="tech-float float-5">const</span>
+      </div>
+
       {/* HEADER NAVBAR */}
       <header className="navbar glass-card">
         <div className="logo">
