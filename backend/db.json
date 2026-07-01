@@ -90,7 +90,7 @@
         ]
       },
       {
-        "label": "Kỹ năng mềm / Quy trình (Linh hoạt từ 5 năm làm sự kiện)",
+        "label": "Kỹ năng mềm / Quy trình",
         "items": [
           "Giải quyết vấn đề",
           "Nghiên cứu người dùng",
@@ -101,14 +101,13 @@
       }
     ],
     "events": [
-      { "name": "Vị tết 2021", "type": "Ban tổ chức" },
-      { "name": "International Day 2021", "type": "Ban tổ chức" },
-      { "name": "Retro Night 3, 4, 5", "type": "Nội bộ - sinh nhật CLB" },
-      { "name": "AI FAIR", "type": "Nội bộ - Tết" },
-      { "name": "POPAWA", "type": "Nội bộ - teambuilding" },
-      { "name": "Wave FaIter", "type": "Nội bộ - vai trò cố vấn" },
-      { "name": "FRUITY K-NIGHT", "type": "Nội bộ - vai trò cố vấn" },
-      { "name": "và các sự kiện nội bộ khác nữa", "type": "Khác" }
+      { "name": "Vị tết 2021", "type": "Ban tổ chức", "org": "Đại học FPT" },
+      { "name": "International Day 2021", "type": "Ban tổ chức", "org": "Đại học FPT" },
+      { "name": "Retro Night 3, 4, 5", "type": "Nội bộ - sinh nhật CLB", "org": "FPTU AI Club" },
+      { "name": "AI FAIR", "type": "Nội bộ - Tết", "org": "FPTU AI Club" },
+      { "name": "POPAWA", "type": "Nội bộ - teambuilding", "org": "FPTU AI Club" },
+      { "name": "Wave FaIter", "type": "Nội bộ - vai trò cố vấn", "org": "FPTU AI Club" },
+      { "name": "FRUITY K-NIGHT", "type": "Nội bộ - vai trò cố vấn", "org": "FPTU AI Club" }
     ],
     "interests": [
       "Đi du lịch",

@@ -624,7 +624,7 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Sections */
 .section { padding: var(--section-pad-y) 24px; }
-.section-head { text-align: center; max-width: 620px; margin: 0 auto 40px; }
+.section-head { text-align: center; max-width: 800px; margin: 0 auto 40px; }
 .section-head h2 { font-size: clamp(2rem, 3.4vw, 2.7rem); margin-bottom: 14px; }
 .section-head p { color: var(--text-sub); line-height: 1.7; }
 .eyebrow {
@@ -641,8 +641,20 @@ h1, h2, h3, h4, h5, h6 {
 /* Skills */
 .skill-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: 1fr;
   gap: 20px;
+}
+
+@media (min-width: 640px) {
+  .skill-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .skill-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 .skill-card { padding: 26px; }
 .skill-card-title {
@@ -1140,7 +1152,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 .lp-stat-num { display: block; font-family: var(--font-display); font-weight: 800; font-size: clamp(1.8rem, 3vw, 2.6rem); }
 .lp-stat-lbl { color: var(--text-sub); font-size: .84rem; }
 .lp-section { max-width: 1120px; margin: 0 auto; padding: 52px 5vw; }
-.lp-section-head { text-align: center; max-width: 600px; margin: 0 auto 34px; }
+.lp-section-head { text-align: center; max-width: 800px; margin: 0 auto 34px; }
 .lp-section-head h2 { font-size: clamp(1.8rem, 3vw, 2.5rem); }
 .lp-feature-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 18px; }
 .lp-feature { padding: 22px; }

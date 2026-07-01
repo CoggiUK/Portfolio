@@ -431,7 +431,7 @@ export default function Portfolio({ profile, projects, onAdminClick, onOpenProje
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', marginTop: '16px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
                     <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: iconColor, marginRight: '8px' }} />
-                    FPTU AI Club
+                    {evt.org || 'FPTU AI Club'}
                   </div>
                 </div>
               );

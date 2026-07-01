@@ -58,17 +58,16 @@ const fallbackData = {
       { label: "Lập trình & Kỹ thuật", items: ["Node.js", ".NET", "Git", "HTML/CSS", "Tư duy hệ thống & Hand-off"] },
       { label: "Vận hành & Quản lý Dự án", items: ["Tổ chức Sự kiện", "Quản trị rủi ro", "Điều phối nhóm", "Phân bổ nguồn lực"] },
       { label: "Phân tích dữ liệu", items: ["GA4", "GTM", "BigQuery", "Heatmap"] },
-      { label: "Kỹ năng mềm / Quy trình (Linh hoạt từ 5 năm làm sự kiện)", items: ["Giải quyết vấn đề", "Nghiên cứu người dùng", "Thích ứng nhanh", "Giao tiếp liên ban ngành", "Làm việc nhóm"] }
+      { label: "Kỹ năng mềm / Quy trình", items: ["Giải quyết vấn đề", "Nghiên cứu người dùng", "Thích ứng nhanh", "Giao tiếp liên ban ngành", "Làm việc nhóm"] }
     ],
     events: [
-      { name: "Vị tết 2021", type: "Ban tổ chức" },
-      { name: "International Day 2021", type: "Ban tổ chức" },
-      { name: "Retro Night 3, 4, 5", type: "Nội bộ - sinh nhật CLB" },
-      { name: "AI FAIR", type: "Nội bộ - Tết" },
-      { name: "POPAWA", type: "Nội bộ - teambuilding" },
-      { name: "Wave FaIter", type: "Nội bộ - vai trò cố vấn" },
-      { name: "FRUITY K-NIGHT", type: "Nội bộ - vai trò cố vấn" },
-      { name: "và các sự kiện nội bộ khác nữa", type: "Khác" }
+      { name: "Vị tết 2021", type: "Ban tổ chức", org: "Đại học FPT" },
+      { name: "International Day 2021", type: "Ban tổ chức", org: "Đại học FPT" },
+      { name: "Retro Night 3, 4, 5", type: "Nội bộ - sinh nhật CLB", org: "FPTU AI Club" },
+      { name: "AI FAIR", type: "Nội bộ - Tết", org: "FPTU AI Club" },
+      { name: "POPAWA", type: "Nội bộ - teambuilding", org: "FPTU AI Club" },
+      { name: "Wave FaIter", type: "Nội bộ - vai trò cố vấn", org: "FPTU AI Club" },
+      { name: "FRUITY K-NIGHT", type: "Nội bộ - vai trò cố vấn", org: "FPTU AI Club" }
     ],
     interests: ["Đi du lịch", "Nghiên cứu & tìm hiểu những điều mới"]
   },
