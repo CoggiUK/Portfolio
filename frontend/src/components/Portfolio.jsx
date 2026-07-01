@@ -414,17 +414,11 @@ export default function Portfolio({ profile, projects, onAdminClick, onOpenProje
 
         return (
           <section id="climb" className="container section">
-            <div className="section-head" data-reveal style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: '20px', flexWrap: 'wrap' }}>
-              <div>
-                <span className="eyebrow" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                  <MountainIcon size={14} /> Chinh phục
-                </span>
-                <h2 className="glow-text" style={{ margin: 0 }}>Hành trình Leo núi Cuộc đời</h2>
-              </div>
-              <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.03)', padding: '6px 12px', borderRadius: '20px', border: '1px solid var(--border-color)', marginBottom: '8px' }}>
-                <span>Cuộn ngang để xem hành trình</span>
-                <span style={{ animation: 'bounceX 1.6s infinite', display: 'inline-block' }}>➔</span>
-              </div>
+            <div className="section-head" data-reveal>
+              <span className="eyebrow" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <MountainIcon size={14} /> Chinh phục
+              </span>
+              <h2 className="glow-text">Hành trình Leo núi Cuộc đời</h2>
             </div>
 
             <div className="climb-scroll-outer" style={{ 
