@@ -100,27 +100,35 @@ const fallbackData = {
       },
       {
         camp: "Thử thách khởi nghiệp",
-        title: "Co-Founder & Shipper tại Ngỗng Ăn Chay",
+        title: "Co-Founder tại Ngỗng Ăn Chay",
         year: "05/2024 - 09/2024 (4 tháng)",
         altitude: "750m",
-        desc: "Dự án khởi nghiệp ẩm thực chay thực tế. Trực tiếp tham gia từ khâu lên kế hoạch, quản lý vận hành, tối ưu quy trình đến phân phối và giao hàng (shipper) thực chiến.",
+        desc: "Dự án khởi nghiệp ẩm thực chay thực tế. Trực tiếp tham gia từ khâu lên kế hoạch, quản lý vận hành, tối ưu quy trình đến phân phối sản phẩm thực chiến.",
         icon: "Store"
       },
       {
         camp: "Trạm dừng chân 2",
-        title: "Chuyển mình sang UI/UX",
+        title: "Tốt nghiệp Đại học FPT",
         year: "2025",
         altitude: "1000m",
-        desc: "Tốt nghiệp Đại học FPT và gia nhập Học viện Minh Trí Thành. Định vị bản thân là Designer có nền tảng Kỹ thuật phần mềm — cầu nối tối ưu hoá quy trình hand-off.",
-        icon: "Palette"
+        desc: "Tốt nghiệp chuyên ngành Kỹ thuật Phần mềm Đại học FPT, tích lũy tư duy hệ thống vững chắc.",
+        icon: "Award"
+      },
+      {
+        camp: "Gia nhập Minh Trí Thành",
+        title: "Nghiên cứu & Phát triển (R&D)",
+        year: "07/07/2025 - 04/2026",
+        altitude: "1500m",
+        desc: "Bắt đầu làm việc tại Học viện Minh Trí Thành từ 07/07/2025. Nghiên cứu giải pháp kỹ thuật, phân tích sản phẩm và chuẩn hoá luồng vận hành.",
+        icon: "Briefcase"
       },
       {
         camp: "Trạm dừng chân 3",
-        title: "AI & Tự động hoá hệ thống",
-        year: "2026 - Hiện tại",
+        title: "UI/UX Designer & AI Integration",
+        year: "04/2026 - Hiện tại",
         altitude: "2000m",
-        desc: "Trực tiếp thiết kế và phát triển các hệ thống cốt lõi: CRM, ERP SPACE, Dashboard GA4. Ứng dụng AI (Gemini, Claude) tối ưu hoá 350% hiệu suất vận hành.",
-        icon: "Sparkles"
+        desc: "Chuyển sang vai trò Thiết kế (Design). Trực tiếp thiết kế hệ thống nội bộ cốt lõi: CRM, ERP SPACE, Dashboard GA4. Ứng dụng AI tối ưu hiệu suất.",
+        icon: "Palette"
       },
       {
         camp: "Thử thách mới",
