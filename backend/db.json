@@ -115,6 +115,43 @@
       "Đi du lịch",
       "Nghiên cứu & tìm hiểu những điều mới"
     ],
+    "climbingSteps": [
+      {
+        "camp": "Trạm xuất phát",
+        "title": "FPT University & AI Club",
+        "year": "2021",
+        "altitude": "100m",
+        "desc": "Khởi động hành trình tại Đại học FPT chuyên ngành Kỹ thuật Phần mềm. Gia nhập FPTU AI Club, bắt đầu rèn luyện tư duy hệ thống và kỹ năng tổ chức sự kiện đầu đời."
+      },
+      {
+        "camp": "Trạm dừng chân 1",
+        "title": "Kỹ thuật & Hệ thống",
+        "year": "2022 - 2024",
+        "altitude": "500m",
+        "desc": "Mài giũa tư duy lập trình và thuật toán. Tham gia phát triển các dự án thực tế trong câu lạc bộ, tích luỹ nền tảng kỹ thuật vững chắc để leo lên những độ cao mới."
+      },
+      {
+        "camp": "Trạm dừng chân 2",
+        "title": "Chuyển mình sang UI/UX",
+        "year": "2025",
+        "altitude": "1000m",
+        "desc": "Tốt nghiệp Đại học FPT và gia nhập Học viện Minh Trí Thành. Định vị bản thân là Designer có nền tảng Kỹ thuật phần mềm — cầu nối tối ưu hoá quy trình hand-off."
+      },
+      {
+        "camp": "Trạm dừng chân 3",
+        "title": "AI & Tự động hoá hệ thống",
+        "year": "2026 - Hiện tại",
+        "altitude": "2000m",
+        "desc": "Trực tiếp thiết kế và phát triển các hệ thống cốt lõi: CRM, ERP SPACE, Dashboard GA4. Ứng dụng AI (Gemini, Claude) tối ưu hoá 350% hiệu suất vận hành."
+      },
+      {
+        "camp": "Đỉnh núi tiếp theo",
+        "title": "Product Designer toàn diện",
+        "year": "Tương lai",
+        "altitude": "3000m",
+        "desc": "Không chỉ thiết kế giao diện, hướng tới quản trị sản phẩm toàn diện từ công nghệ, thiết kế đến chiến lược vận hành, liên tục chinh phục những đỉnh cao mới."
+      }
+    ],
     "settings": {
       "themeColor": "#00ff88",
       "enableBlobs": true,

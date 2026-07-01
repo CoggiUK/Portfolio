@@ -35,6 +35,12 @@ const Facebook = ({ size = 24, ...props }) => (
   </svg>
 );
 
+const MountainIcon = ({ size = 24, ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <path d="m8 3 4 8 5-5 5 15H2L8 3z" />
+  </svg>
+);
+
 // Module-scoped so it survives in-app navigation (back from a project) but
 // resets on a full page reload (F5) — the intro only reappears when refreshed.
 let introSeen = false;
@@ -173,6 +179,7 @@ export default function Portfolio({ profile, projects, onAdminClick, onOpenProje
         </div>
         <nav className="nav-links">
           <a href="#about" className="nav-link">Giới thiệu</a>
+          <a href="#climb" className="nav-link">Leo núi</a>
           <a href="#skills" className="nav-link">Kỹ năng</a>
           <a href="#journey" className="nav-link">Hành trình</a>
           <a href="#events" className="nav-link">Dấu ấn</a>
@@ -270,6 +277,113 @@ export default function Portfolio({ profile, projects, onAdminClick, onOpenProje
             ))}
           </div>
         </div>
+      )}
+
+      {/* CLIMBING JOURNEY SECTION */}
+      {Array.isArray(profile.climbingSteps) && profile.climbingSteps.length > 0 && (
+        <section id="climb" className="container section">
+          <div className="section-head" data-reveal>
+            <span className="eyebrow" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+              <MountainIcon size={14} /> Chinh phục
+            </span>
+            <h2 className="glow-text">Hành trình Leo núi Cuộc đời</h2>
+            <p>Từng cột mốc học hỏi, trưởng thành và chinh phục những đỉnh cao mới qua các giai đoạn cuộc đời.</p>
+          </div>
+
+          <div className="climb-timeline">
+            {/* The vertical climbing path line */}
+            <div className="climb-line" style={{ 
+              position: 'absolute', 
+              left: '50%', 
+              top: '0', 
+              bottom: '0', 
+              width: '4px', 
+              background: 'linear-gradient(to bottom, var(--primary-color), var(--secondary-color), var(--cyan-accent))',
+              transform: 'translateX(-50%)',
+              borderRadius: '2px',
+              opacity: 0.2
+            }} />
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '40px', position: 'relative' }}>
+              {profile.climbingSteps.map((step, i) => {
+                const isEven = i % 2 === 0;
+                return (
+                  <div 
+                    key={i} 
+                    style={{ 
+                      display: 'flex', 
+                      justifyContent: isEven ? 'flex-start' : 'flex-end', 
+                      alignItems: 'center',
+                      position: 'relative',
+                      width: '100%' 
+                    }}
+                    data-reveal
+                  >
+                    {/* Central Node representing the camp */}
+                    <div style={{ 
+                      position: 'absolute', 
+                      left: '50%', 
+                      transform: 'translateX(-50%)',
+                      width: '20px', 
+                      height: '20px', 
+                      borderRadius: '50%', 
+                      background: 'var(--bg-card)', 
+                      border: '3px solid ' + (i === profile.climbingSteps.length - 1 ? 'var(--primary-color)' : 'var(--secondary-color)'),
+                      boxShadow: '0 0 10px ' + (i === profile.climbingSteps.length - 1 ? 'var(--primary-color)' : 'var(--secondary-color)'),
+                      zIndex: 2,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#ffffff' }} />
+                    </div>
+
+                    {/* Card container */}
+                    <div 
+                      className="glass-card climb-card"
+                      style={{ 
+                        width: '45%', 
+                        padding: '24px', 
+                        border: '1px solid rgba(255, 255, 255, 0.05)',
+                        background: 'rgba(255, 255, 255, 0.02)',
+                        textAlign: isEven ? 'right' : 'left',
+                        position: 'relative',
+                        transition: 'all 0.3s ease',
+                        cursor: 'default'
+                      }}
+                    >
+                      {/* Altitude / Camp badge */}
+                      <div style={{ 
+                        display: 'flex', 
+                        justifyContent: isEven ? 'flex-end' : 'flex-start', 
+                        alignItems: 'center', 
+                        gap: '8px',
+                        marginBottom: '8px'
+                      }}>
+                        <span className="badge" style={{ fontSize: '0.75rem', borderColor: 'transparent', background: 'rgba(139, 92, 246, 0.15)', color: 'var(--secondary-color)' }}>
+                          {step.camp}
+                        </span>
+                        <span className="badge primary" style={{ fontSize: '0.75rem' }}>
+                          ALT {step.altitude}
+                        </span>
+                      </div>
+
+                      <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#ffffff', marginBottom: '4px' }}>
+                        {step.title}
+                      </h3>
+                      <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'block', marginBottom: '12px' }}>
+                        {step.year}
+                      </span>
+                      <p style={{ fontSize: '0.9rem', color: 'var(--text-sub)', lineHeight: 1.6 }}>
+                        {step.desc}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
       )}
 
       {/* SKILLS SECTION */}

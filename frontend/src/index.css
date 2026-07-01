@@ -2008,3 +2008,41 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
   .lpd-hero { min-height: 190px; } .lpd-hero-emoji { font-size: 4.6rem; }
 }
 @media (prefers-reduced-motion: reduce) { .lpd-hero-emoji { animation: none !important; } }
+
+/* Climbing Timeline styles */
+.climb-timeline {
+  position: relative;
+  max-width: 800px;
+  margin: 40px auto 0;
+  padding: 20px 0;
+}
+
+@media (max-width: 768px) {
+  .climb-line {
+    left: 20px !important;
+    transform: none !important;
+  }
+  .climb-timeline > div > div {
+    justify-content: flex-start !important;
+    padding-left: 40px !important;
+    box-sizing: border-box !important;
+  }
+  .climb-timeline > div > div > div:first-child {
+    left: 20px !important;
+    transform: translateX(-50%) !important;
+  }
+  .climb-timeline .climb-card {
+    width: 100% !important;
+    text-align: left !important;
+  }
+  .climb-timeline .climb-card > div {
+    justify-content: flex-start !important;
+  }
+}
+
+.climb-card:hover {
+  border-color: rgba(139, 92, 246, 0.2) !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  transform: translateY(-2px);
+}
