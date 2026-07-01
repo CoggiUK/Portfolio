@@ -16,7 +16,11 @@ import {
   CheckCircle2,
   AlertTriangle,
   Camera,
-  Trash
+  Trash,
+  ArrowUp,
+  ArrowDown,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { api } from '../api';
 
@@ -157,6 +161,38 @@ export default function Admin({ token, expiresAt, onLogout, onUpdateData }) {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Reorder skill groups
+  const moveGroup = (idx, direction) => {
+    const newGroups = [...(profile.skillGroups || [])];
+    if (direction === 'up' && idx > 0) {
+      const temp = newGroups[idx];
+      newGroups[idx] = newGroups[idx - 1];
+      newGroups[idx - 1] = temp;
+    } else if (direction === 'down' && idx < newGroups.length - 1) {
+      const temp = newGroups[idx];
+      newGroups[idx] = newGroups[idx + 1];
+      newGroups[idx + 1] = temp;
+    }
+    setProfile({ ...profile, skillGroups: newGroups });
+  };
+
+  // Reorder skill items within a group
+  const moveSkill = (groupIdx, itemIdx, direction) => {
+    const newGroups = [...(profile.skillGroups || [])];
+    const items = [...(newGroups[groupIdx].items || [])];
+    if (direction === 'left' && itemIdx > 0) {
+      const temp = items[itemIdx];
+      items[itemIdx] = items[itemIdx - 1];
+      items[itemIdx - 1] = temp;
+    } else if (direction === 'right' && itemIdx < items.length - 1) {
+      const temp = items[itemIdx];
+      items[itemIdx] = items[itemIdx + 1];
+      items[itemIdx + 1] = temp;
+    }
+    newGroups[groupIdx] = { ...newGroups[groupIdx], items };
+    setProfile({ ...profile, skillGroups: newGroups });
   };
 
   // Read an image file, center-crop to a square and downscale to 320px before
