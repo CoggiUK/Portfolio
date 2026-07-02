@@ -3,6 +3,9 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "overrides": {
+    "uuid": "8.3.2"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -23,6 +26,7 @@
     "eslint": "^10.3.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
+    "firebase-tools": "^13.29.0",
     "globals": "^17.6.0",
     "vite": "^5.4.11"
   }
