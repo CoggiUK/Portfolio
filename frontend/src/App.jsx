@@ -7,11 +7,15 @@ import ProjectDetail from './components/ProjectDetail';
 import LandingPage from './components/LandingPage';
 import { getShowcase } from './data/showcases';
 import { api } from './api';
+import { db, auth } from './firebase';
+import { doc, getDoc } from 'firebase/firestore';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
+
 
 // Default static fallback data — mirrors server/db.json (Nguyễn Tùng Lâm's real CV)
 const fallbackData = {
   profile: {
-    name: "Nguyễn Tùng Lâm",
+    name: "Tùng Lâm Nguyễn",
     title: "UI/UX Designer · hướng tới Product Designer",
     bio: "Mình là người thích biến những bài toán phức tạp thành trải nghiệm số gọn gàng, dễ dùng và có gu thẩm mỹ. Mình lấy người dùng làm trung tâm, tư duy theo hệ thống và tận dụng AI để đưa ý tưởng thành sản phẩm thật. Rất vui được gặp bạn ở đây — cùng dạo qua hành trình và các dự án của mình nhé!",
     email: "ntlam2211@gmail.com",
@@ -310,28 +314,39 @@ export default function App() {
   const [projects, setProjects] = useState(fallbackData.projects);
   const [activeProject, setActiveProject] = useState(null); // opened project (detail/landing)
 
-  // Read data from settings on mount or refresh
+  // Read data from settings on mount or refresh from Firestore
   const loadPortfolioData = async () => {
     try {
-      const res = await fetch(api('/api/settings'));
-      if (res.ok) {
-        const data = await res.json();
+      const docRef = doc(db, 'settings', 'main');
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        const data = docSnap.data();
         if (data.profile) setProfile(data.profile);
         if (data.projects) setProjects(data.projects);
       }
     } catch (err) {
-      console.warn('API Server is offline. Falling back to default static local data.', err);
+      console.warn('Firebase error fetching data. Falling back to default static local data.', err);
     }
   };
 
   useEffect(() => {
     loadPortfolioData();
 
+    // Listen to Firebase Auth changes
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setToken('firebase-auth-active');
+        setExpiresAt(Date.now() + 30 * 24 * 3600 * 1000);
+      } else {
+        setToken('');
+        setExpiresAt(0);
+      }
+    });
+
     // Routing path detection for secret setting page `/portal-admin`
     const path = window.location.pathname;
     if (path === '/portal-admin') {
-      const isTokenValid = token && expiresAt > Date.now();
-      if (isTokenValid) {
+      if (auth.currentUser) {
         setView('admin');
       } else {
         setView('login');
@@ -349,8 +364,7 @@ export default function App() {
     const handlePopState = () => {
       const p = window.location.pathname;
       if (p === '/portal-admin') {
-        const isTokenValid = token && expiresAt > Date.now();
-        setView(isTokenValid ? 'admin' : 'login');
+        setView(auth.currentUser ? 'admin' : 'login');
         return;
       }
       const pid = new URLSearchParams(window.location.search).get('p');
@@ -362,25 +376,29 @@ export default function App() {
       setView('portfolio');
     };
     window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      unsubscribe();
+    };
   }, [token, expiresAt]);
 
   const handleLoginSuccess = (jwtToken, expiry) => {
     setToken(jwtToken);
     setExpiresAt(expiry);
-    localStorage.setItem('jwt_token', jwtToken);
-    localStorage.setItem('jwt_expires', expiry.toString());
     setView('admin');
     window.history.pushState({}, '', '/portal-admin');
   };
 
-  const handleLogout = () => {
-    setToken('');
-    setExpiresAt(0);
-    localStorage.removeItem('jwt_token');
-    localStorage.removeItem('jwt_expires');
-    setView('portfolio');
-    window.history.pushState({}, '', '/');
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      setToken('');
+      setExpiresAt(0);
+      setView('portfolio');
+      window.history.pushState({}, '', '/');
+    } catch (err) {
+      console.error('Logout error', err);
+    }
   };
 
   const navigateToAdminConsole = () => {

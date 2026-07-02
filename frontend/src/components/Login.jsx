@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { Lock, User, ShieldAlert, ArrowLeft, KeyRound, ShieldCheck } from 'lucide-react';
 import { api } from '../api';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../firebase';
+
 
 export default function Login({ onLoginSuccess, onBackToPortfolio }) {
   const [username, setUsername] = useState('');
@@ -11,7 +14,7 @@ export default function Login({ onLoginSuccess, onBackToPortfolio }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!username || !password) {
-      setError('Vui lòng nhập tài khoản và mật khẩu.');
+      setError('Vui lòng nhập email và mật khẩu.');
       return;
     }
 
@@ -19,24 +22,20 @@ export default function Login({ onLoginSuccess, onBackToPortfolio }) {
     setError('');
 
     try {
-      const response = await fetch(api('/api/auth/login'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, password }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Có lỗi xảy ra khi đăng nhập.');
-      }
+      const userCredential = await signInWithEmailAndPassword(auth, username, password);
+      const user = userCredential.user;
+      const idToken = await user.getIdToken();
 
       // Successful login
-      onLoginSuccess(data.token, data.expiresAt);
+      onLoginSuccess(idToken, Date.now() + 30 * 24 * 3600 * 1000);
     } catch (err) {
-      setError(err.message);
+      let friendlyError = err.message;
+      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+        friendlyError = 'Email hoặc mật khẩu không chính xác.';
+      } else if (err.code === 'auth/invalid-email') {
+        friendlyError = 'Định dạng email không hợp lệ.';
+      }
+      setError(friendlyError);
     } finally {
       setLoading(false);
     }
@@ -136,16 +135,16 @@ export default function Login({ onLoginSuccess, onBackToPortfolio }) {
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', textAlign: 'left' }}>
             <label htmlFor="username" style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-sub)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <User size={14} /> Tài khoản
+              <User size={14} /> Email đăng nhập
             </label>
             <input
               id="username"
-              type="text"
+              type="email"
               required
               className="glass-input"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="Nhập tên đăng nhập"
+              placeholder="Nhập email quản trị viên"
               disabled={loading}
             />
           </div>

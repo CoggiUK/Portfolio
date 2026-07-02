@@ -24,6 +24,10 @@ import {
   GripVertical
 } from 'lucide-react';
 import { api } from '../api';
+import { db, auth } from '../firebase';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
+
 
 const Github = ({ size = 24, ...props }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
@@ -66,37 +70,36 @@ export default function Admin({ token, expiresAt, onLogout, onUpdateData }) {
   const [timeRemaining, setTimeRemaining] = useState('');
 
   useEffect(() => {
-    // Fetch initial admin config data
+    // Fetch initial admin config data from Firestore
     const fetchData = async () => {
       try {
-        const res = await fetch(api('/api/settings'));
-        const data = await res.json();
-        if (data.profile) setProfile(data.profile);
-        if (data.projects) setProjects(data.projects);
+        const docRef = doc(db, 'settings', 'main');
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          if (data.profile) setProfile(data.profile);
+          if (data.projects) setProjects(data.projects);
+        }
       } catch (err) {
-        showError('Không thể tải dữ liệu từ máy chủ.');
+        showError('Không thể tải dữ liệu từ Firestore.');
       }
     };
 
     fetchData();
 
-    // Timer for JWT expiration
+    // Timer for Firebase session
     const updateTimer = () => {
-      const diff = expiresAt - Date.now();
-      if (diff <= 0) {
-        setTimeRemaining('Hết hạn');
-        onLogout();
+      if (auth.currentUser) {
+        setTimeRemaining(`Đăng nhập: ${auth.currentUser.email}`);
       } else {
-        const min = Math.floor(diff / 60000);
-        const sec = Math.floor((diff % 60000) / 1000);
-        setTimeRemaining(`${min} phút ${sec} giây`);
+        setTimeRemaining('Không hoạt động');
       }
     };
 
     updateTimer();
-    const timerInterval = setInterval(updateTimer, 1000);
+    const timerInterval = setInterval(updateTimer, 3000);
     return () => clearInterval(timerInterval);
-  }, [expiresAt, onLogout]);
+  }, [onLogout]);
 
   const showSuccess = (msg) => {
     setSuccessMsg(msg);
@@ -115,16 +118,8 @@ export default function Admin({ token, expiresAt, onLogout, onUpdateData }) {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await fetch(api('/api/settings/profile'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(profile)
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Lỗi cập nhật hồ sơ.');
+      const docRef = doc(db, 'settings', 'main');
+      await setDoc(docRef, { profile }, { merge: true });
       
       showSuccess('Hồ sơ cá nhân đã được lưu thành công.');
       onUpdateData(); // Trigger app refetch
@@ -144,18 +139,10 @@ export default function Admin({ token, expiresAt, onLogout, onUpdateData }) {
         skillGroups: updatedSkillGroups
       };
       
-      const res = await fetch(api('/api/settings/profile'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(updatedProfile)
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Lỗi cập nhật kỹ năng.');
+      const docRef = doc(db, 'settings', 'main');
+      await setDoc(docRef, { profile: updatedProfile }, { merge: true });
       
-      setProfile(data.profile);
+      setProfile(updatedProfile);
       showSuccess('Danh sách kỹ năng đã cập nhật thành công.');
       onUpdateData(); // Trigger app refetch
     } catch (err) {
@@ -271,18 +258,10 @@ export default function Admin({ token, expiresAt, onLogout, onUpdateData }) {
   const handleSaveProjects = async (updatedProjects) => {
     setLoading(true);
     try {
-      const res = await fetch(api('/api/settings/projects'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(updatedProjects)
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Lỗi cập nhật dự án.');
+      const docRef = doc(db, 'settings', 'main');
+      await setDoc(docRef, { projects: updatedProjects }, { merge: true });
       
-      setProjects(data.projects);
+      setProjects(updatedProjects);
       setSelectedProjectId(null);
       showSuccess('Danh sách dự án đã cập nhật thành công.');
       onUpdateData();
@@ -344,20 +323,12 @@ export default function Admin({ token, expiresAt, onLogout, onUpdateData }) {
 
     setLoading(true);
     try {
-      const res = await fetch(api('/api/settings/change-password'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          currentPassword: passwordForm.currentPassword,
-          newPassword: passwordForm.newPassword
-        })
-      });
-      
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Lỗi thay đổi mật khẩu.');
+      if (!auth.currentUser) {
+        throw new Error('Chưa đăng nhập hệ thống.');
+      }
+      const credential = EmailAuthProvider.credential(auth.currentUser.email, passwordForm.currentPassword);
+      await reauthenticateWithCredential(auth.currentUser, credential);
+      await updatePassword(auth.currentUser, passwordForm.newPassword);
       
       showSuccess('Mật khẩu đã được thay đổi thành công.');
       setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
