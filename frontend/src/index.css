@@ -1,3 +1,14 @@
+/* Suspense fallback while a lazily-loaded route (admin/login/project) fetches */
+.route-loading {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-sub, #9aa);
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+}
+
 :root {
   /* Colors */
   --bg-dark: #07070a;
