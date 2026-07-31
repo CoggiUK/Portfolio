@@ -340,7 +340,7 @@ export default function Admin({ token, expiresAt, onLogout, onUpdateData }) {
   };
 
   return (
-    <div className="container" style={{ padding: '40px 24px', position: 'relative', zIndex: 10, minHeight: '90vh' }}>
+    <div className="container admin-root">
       {/* Top Banner and Navigation */}
       <div style={{
         display: 'flex',
@@ -397,11 +397,14 @@ export default function Admin({ token, expiresAt, onLogout, onUpdateData }) {
         </div>
       )}
 
-      {/* Main Admin Console Layout Grid */}
-      <div className="grid-2" style={{ gridTemplateColumns: '260px 1fr', alignItems: 'start' }}>
-        
+      {/* Main Admin Console Layout Grid.
+          A class, not an inline gridTemplateColumns — inline styles outrank the
+          media query, which is what pinned this to two columns on phones and
+          crushed every field to ~60px wide. */}
+      <div className="admin-shell">
+
         {/* SIDE BAR NAVIGATION */}
-        <div className="glass-card" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div className="glass-card admin-side" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <button 
             onClick={() => { setActiveTab('profile'); setSelectedProjectId(null); }}
             className="btn-secondary"
@@ -520,7 +523,7 @@ export default function Admin({ token, expiresAt, onLogout, onUpdateData }) {
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div className="admin-fields">
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-sub)' }}>Họ và tên</label>
                   <input
@@ -554,7 +557,7 @@ export default function Admin({ token, expiresAt, onLogout, onUpdateData }) {
                 />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div className="admin-fields">
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-sub)' }}>Email liên hệ</label>
                   <input
@@ -576,7 +579,7 @@ export default function Admin({ token, expiresAt, onLogout, onUpdateData }) {
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div className="admin-fields">
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-sub)' }}>Facebook Link</label>
                   <input
@@ -945,7 +948,7 @@ export default function Admin({ token, expiresAt, onLogout, onUpdateData }) {
                     </h2>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '16px' }}>
+                  <div className="admin-fields admin-fields--wide">
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                       <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-sub)' }}>Tên dự án</label>
                       <input
