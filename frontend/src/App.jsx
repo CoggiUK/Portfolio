@@ -29,8 +29,7 @@ const fallbackData = {
     education: {
       school: "Đại học FPT",
       major: "Kỹ thuật phần mềm",
-      period: "2021 - 2024",
-      gpa: "2.75"
+      period: "2021 - 2024"
     },
     experience: [
       {

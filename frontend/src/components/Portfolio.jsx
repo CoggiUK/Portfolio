@@ -400,6 +400,82 @@ export default function Portfolio({ profile, projects, onAdminClick, onOpenProje
     }
   };
 
+  // Hero building blocks — shared by the desktop two-column layout and the
+  // stacked mobile layout, so the two never drift out of sync.
+  const heroAvatar = (
+    <div className="avatar-wrap">
+      <div className="avatar-glow" />
+      <div
+        onDoubleClick={onAdminClick}
+        title="Nháy đúp để mở Admin Console bí mật"
+        className={`avatar-container ${profile.avatar ? 'has-image' : ''}`}
+      >
+        {profile.avatar ? <img src={profile.avatar} alt={profile.name} /> : initials}
+      </div>
+    </div>
+  );
+
+  const heroEyebrow = (
+    <div className="hero-eyebrow">
+      <span className="status-dot" /> Sẵn sàng cộng tác · {profile.location || 'Hà Nội'}
+    </div>
+  );
+
+  const heroStats = (
+    <div className="hero-stats">
+      <div className="hero-stat">
+        <span className="hero-stat-num"><CountUp value={projects.length} suffix="+" /></span>
+        <span className="hero-stat-label">Dự án sản phẩm</span>
+      </div>
+      <div className="hero-stat">
+        <span className="hero-stat-num"><CountUp value={skillGroups.length} /></span>
+        <span className="hero-stat-label">Nhóm kỹ năng</span>
+      </div>
+      <div className="hero-stat">
+        <span className="hero-stat-num">AI</span>
+        <span className="hero-stat-label">Design-first</span>
+      </div>
+    </div>
+  );
+
+  const heroFacts = (
+    <ul className="hero-card-facts">
+      {profile.company && (
+        <li><Briefcase size={15} /> <span>{profile.company}</span></li>
+      )}
+      {profile.location && (
+        <li><MapPin size={15} /> <span>{profile.location}</span></li>
+      )}
+      {profile.education?.school && (
+        <li>
+          <GraduationCap size={15} />
+          <span>{profile.education.major} · {profile.education.school}</span>
+        </li>
+      )}
+    </ul>
+  );
+
+  const heroCta = (
+    <div className="hero-cta">
+      <a href="#projects" className="btn-neon">Xem các dự án <Sparkles size={16} /></a>
+      <a href="#contact" className="btn-secondary">Liên hệ với mình</a>
+    </div>
+  );
+
+  const heroSocial = (
+    <div className="social-row">
+      {profile.facebook && (
+        <a href={profile.facebook} target="_blank" rel="noreferrer" className="social-icon" title="Facebook"><Facebook size={20} /></a>
+      )}
+      {profile.email && (
+        <a href={`mailto:${profile.email}`} className="social-icon" title="Email"><Mail size={20} /></a>
+      )}
+      {profile.behance && (
+        <a href={profile.behance} target="_blank" rel="noreferrer" className="social-icon" title="Behance / Portfolio"><Compass size={20} /></a>
+      )}
+    </div>
+  );
+
   return (
     <div className="portfolio-root" style={{ position: 'relative', zIndex: 10 }}>
       <MouseGlow />
@@ -482,80 +558,40 @@ export default function Portfolio({ profile, projects, onAdminClick, onOpenProje
         </button>
       </nav>
 
-      {/* ABOUT — original two-column hero (job title removed) */}
-      <section id="about" className="container hero">
-        <div className="hero-left">
-          <div className="hero-eyebrow">
-            <span className="status-dot" /> Sẵn sàng cộng tác · {profile.location || 'Hà Nội'}
+      {/* ABOUT — desktop: two columns · mobile: a single, stacked column ordered
+          avatar → name → bio → profile card → CTA (see the isCompact branch) */}
+      <section id="about" className={`container hero ${isCompact ? 'is-compact' : ''}`}>
+        {isCompact ? (
+          <div className="hero-compact">
+            <div className="hero-c-item">{heroAvatar}</div>
+            <div className="hero-c-item">{heroEyebrow}</div>
+            <h1 className="glow-text hero-title hero-c-item">{profile.name}</h1>
+            <p className="hero-bio hero-c-item">{profile.bio}</p>
+            <aside className="hero-card glass-card hero-card--compact hero-c-item">
+              {heroStats}
+              {heroFacts}
+            </aside>
+            <div className="hero-c-item">{heroCta}</div>
+            <div className="hero-c-item">{heroSocial}</div>
           </div>
-
-          <h1 className="glow-text hero-title">{profile.name}</h1>
-
-          <p className="hero-bio">{profile.bio}</p>
-
-          <div className="hero-cta">
-            <a href="#projects" className="btn-neon">Xem các dự án <Sparkles size={16} /></a>
-            <a href="#contact" className="btn-secondary">Liên hệ với mình</a>
-          </div>
-
-          <div className="social-row">
-            {profile.facebook && (
-              <a href={profile.facebook} target="_blank" rel="noreferrer" className="social-icon" title="Facebook"><Facebook size={20} /></a>
-            )}
-            {profile.email && (
-              <a href={`mailto:${profile.email}`} className="social-icon" title="Email"><Mail size={20} /></a>
-            )}
-            {profile.behance && (
-              <a href={profile.behance} target="_blank" rel="noreferrer" className="social-icon" title="Behance / Portfolio"><Compass size={20} /></a>
-            )}
-          </div>
-        </div>
-
-        {/* Profile quick-card */}
-        <aside className="hero-card glass-card">
-          <div className="avatar-wrap">
-            <div className="avatar-glow" />
-            <div
-              onDoubleClick={onAdminClick}
-              title="Nháy đúp để mở Admin Console bí mật"
-              className={`avatar-container ${profile.avatar ? 'has-image' : ''}`}
-            >
-              {profile.avatar
-                ? <img src={profile.avatar} alt={profile.name} />
-                : initials}
+        ) : (
+          <>
+            <div className="hero-left">
+              {heroEyebrow}
+              <h1 className="glow-text hero-title">{profile.name}</h1>
+              <p className="hero-bio">{profile.bio}</p>
+              {heroCta}
+              {heroSocial}
             </div>
-          </div>
 
-          <div className="hero-stats">
-            <div className="hero-stat">
-              <span className="hero-stat-num"><CountUp value={projects.length} suffix="+" /></span>
-              <span className="hero-stat-label">Dự án sản phẩm</span>
-            </div>
-            <div className="hero-stat">
-              <span className="hero-stat-num"><CountUp value={skillGroups.length} /></span>
-              <span className="hero-stat-label">Nhóm kỹ năng</span>
-            </div>
-            <div className="hero-stat">
-              <span className="hero-stat-num">AI</span>
-              <span className="hero-stat-label">Design-first</span>
-            </div>
-          </div>
-
-          <ul className="hero-card-facts">
-            {profile.company && (
-              <li><Briefcase size={15} /> <span>{profile.company}</span></li>
-            )}
-            {profile.location && (
-              <li><MapPin size={15} /> <span>{profile.location}</span></li>
-            )}
-            {profile.education?.school && (
-              <li>
-                <GraduationCap size={15} />
-                <span>{profile.education.major} · {profile.education.school}{profile.education.gpa ? ` (GPA ${profile.education.gpa})` : ''}</span>
-              </li>
-            )}
-          </ul>
-        </aside>
+            {/* Profile quick-card */}
+            <aside className="hero-card glass-card">
+              {heroAvatar}
+              {heroStats}
+              {heroFacts}
+            </aside>
+          </>
+        )}
       </section>
 
       {/* TECH MARQUEE — infinite ticker of tools & stacks */}
@@ -722,7 +758,6 @@ export default function Portfolio({ profile, projects, onAdminClick, onOpenProje
                 <p className="timeline-org">{profile.education.school}</p>
                 <div className="edu-meta">
                   <span className="badge">{profile.education.period}</span>
-                  {profile.education.gpa && <span className="badge primary">GPA {profile.education.gpa}</span>}
                 </div>
               </div>
             )}

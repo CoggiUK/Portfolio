@@ -1077,13 +1077,52 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
     padding: 32px var(--gutter) 48px;
     text-align: center;
   }
-  /* Profile card first on a stacked layout: face + facts before a long bio
-     is the stronger mobile hierarchy, and it puts the CTA within thumb reach. */
-  .hero-card { order: -1; max-width: 460px; margin: 0 auto; width: 100%; }
-  .hero-left { text-align: center; }
+  /* 901–960px still renders the desktop markup: stack it, intro above the card. */
+  .hero-left { order: 0; text-align: center; }
+  .hero-card { order: 1; max-width: 460px; margin: 0 auto; width: 100%; }
   .hero-bio { margin-left: auto; margin-right: auto; }
   .hero-cta { justify-content: center; }
   .social-row { justify-content: center; }
+}
+
+/* ---------- Compact hero (≤900px, isCompact branch) ----------
+   A single centred column: avatar → name → bio → profile card → CTA → social.
+   Gentle staggered rise keeps the entrance soft rather than snapping in. */
+.hero.is-compact { display: block; padding: 28px var(--gutter) 44px; }
+.hero-compact {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 20px;
+  max-width: 520px;
+  margin: 0 auto;
+}
+.hero-compact .avatar-wrap { margin: 0 auto; }
+.hero-compact .avatar-container { width: 120px; height: 120px; font-size: 2.6rem; }
+.hero-compact .hero-eyebrow { margin: 0; }
+.hero-compact .hero-title { margin: 0; font-size: clamp(2.1rem, 8vw, 3rem); }
+.hero-compact .hero-bio { margin: 0 auto; max-width: 460px; font-size: 0.98rem; }
+/* order:0 undoes the `.hero-card { order:1 }` from the ≤960 rule above, which
+   would otherwise flex-reorder the card to the end of the compact column. */
+.hero-card--compact { order: 0; width: 100%; gap: 18px; padding: 22px 20px; }
+.hero-compact .hero-cta { justify-content: center; width: 100%; }
+.hero-compact .social-row { margin: 0; justify-content: center; }
+
+.hero-c-item { animation: heroRise 0.7s cubic-bezier(0.22, 0.61, 0.36, 1) both; }
+.hero-compact > :nth-child(1) { animation-delay: 0.04s; }
+.hero-compact > :nth-child(2) { animation-delay: 0.11s; }
+.hero-compact > :nth-child(3) { animation-delay: 0.18s; }
+.hero-compact > :nth-child(4) { animation-delay: 0.25s; }
+.hero-compact > :nth-child(5) { animation-delay: 0.32s; }
+.hero-compact > :nth-child(6) { animation-delay: 0.39s; }
+.hero-compact > :nth-child(7) { animation-delay: 0.46s; }
+@keyframes heroRise {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-c-item { animation: none; }
 }
 
 /* Journey timeline → single column */
