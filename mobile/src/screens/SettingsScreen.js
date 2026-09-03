@@ -117,6 +117,7 @@ export default function SettingsScreen({ navigation }) {
                 icon="link-outline"
                 onPress={google.connect}
                 loading={google.busy}
+                disabled={!google.configured}
                 style={{ flex: 1 }}
               />
             )}

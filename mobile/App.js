@@ -5,6 +5,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider } from './src/contexts/AuthContext';
 import { AppProvider } from './src/contexts/AppContext';
 import RootNavigator from './src/navigation';
+import ErrorBoundary from './src/components/ErrorBoundary';
 import { colors } from './src/theme';
 
 export default function App() {
@@ -14,7 +15,9 @@ export default function App() {
         <AuthProvider>
           <AppProvider>
             <StatusBar style="light" />
-            <RootNavigator />
+            <ErrorBoundary>
+              <RootNavigator />
+            </ErrorBoundary>
           </AppProvider>
         </AuthProvider>
       </SafeAreaProvider>

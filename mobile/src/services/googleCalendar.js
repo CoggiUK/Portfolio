@@ -21,6 +21,13 @@ export const CLIENT_IDS = {
   web: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || undefined,
 };
 
+/**
+ * expo-auth-session ném lỗi ngay trong lúc render khi clientId là undefined,
+ * đủ để sập app. Khi chưa cấu hình OAuth ta đưa vào id giữ chỗ này để hook
+ * dựng được — `connect()` vẫn từ chối dựa trên `isConfigured()`.
+ */
+const PLACEHOLDER_CLIENT_ID = 'unconfigured.apps.googleusercontent.com';
+
 export const isConfigured = () =>
   Boolean(Platform.OS === 'android' ? CLIENT_IDS.android : Platform.OS === 'ios' ? CLIENT_IDS.ios : CLIENT_IDS.web);
 
@@ -84,11 +91,12 @@ export const isConnected = async () => Boolean(await getAccessToken());
  */
 export function useGoogleAuth(onDone) {
   const [busy, setBusy] = useState(false);
+  const configured = isConfigured();
   const [request, response, promptAsync] = Google.useAuthRequest({
-    androidClientId: CLIENT_IDS.android,
-    iosClientId: CLIENT_IDS.ios,
-    webClientId: CLIENT_IDS.web,
-    clientId: CLIENT_IDS.web,
+    androidClientId: CLIENT_IDS.android || PLACEHOLDER_CLIENT_ID,
+    iosClientId: CLIENT_IDS.ios || PLACEHOLDER_CLIENT_ID,
+    webClientId: CLIENT_IDS.web || PLACEHOLDER_CLIENT_ID,
+    clientId: CLIENT_IDS.web || PLACEHOLDER_CLIENT_ID,
     responseType: ResponseType.Code,
     scopes: SCOPES,
     shouldAutoExchangeCode: false,
@@ -131,12 +139,12 @@ export function useGoogleAuth(onDone) {
   }, [response]);
 
   const connect = useCallback(async () => {
-    if (!isConfigured()) {
+    if (!configured) {
       onDone?.(false, 'Chưa cấu hình Google OAuth Client ID (xem mobile/.env.example).');
       return;
     }
     await promptAsync();
-  }, [promptAsync, onDone]);
+  }, [configured, promptAsync, onDone]);
 
   const disconnect = useCallback(async () => {
     const t = await readTokens();
@@ -152,8 +160,8 @@ export function useGoogleAuth(onDone) {
   }, [onDone]);
 
   return useMemo(
-    () => ({ connect, disconnect, busy, ready: !!request, configured: isConfigured() }),
-    [connect, disconnect, busy, request]
+    () => ({ connect, disconnect, busy, ready: configured && !!request, configured }),
+    [connect, disconnect, busy, request, configured]
   );
 }
 
