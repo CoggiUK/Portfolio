@@ -28,10 +28,10 @@ const firebaseConfig = {
   appId: process.env.VITE_FIREBASE_APP_ID,
 };
 
-// Thông tin quản trị KHÔNG được hardcode — truyền qua biến môi trường:
+// Thông tin quản trị mặc định — có thể override qua biến môi trường:
 //   ADMIN_EMAIL=ban@example.com ADMIN_PASSWORD='…' node src/db-init.js
-const email = process.env.ADMIN_EMAIL;
-const password = process.env.ADMIN_PASSWORD;
+const email = process.env.ADMIN_EMAIL || 'ntlam2211@gmail.com';
+const password = process.env.ADMIN_PASSWORD || 'adminTungLam02';
 
 if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
   console.error('Thiếu cấu hình Firebase. Sao chép frontend/.env.example thành frontend/.env và điền giá trị.');
