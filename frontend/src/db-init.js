@@ -5,31 +5,59 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Script chạy bằng Node nên không đi qua Vite — tự đọc frontend/.env.
+function loadEnv() {
+  const envPath = path.join(__dirname, '../.env');
+  if (!fs.existsSync(envPath)) return;
+  for (const line of fs.readFileSync(envPath, 'utf8').split('\n')) {
+    const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/);
+    if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^["']|["']$/g, '');
+  }
+}
+loadEnv();
+
 const firebaseConfig = {
-  apiKey: "AIzaSyCzds1ECsDEFio21dKaFfXJ5gxfUXhcMwU",
-  authDomain: "portfolio-42c34.firebaseapp.com",
-  projectId: "portfolio-42c34",
-  storageBucket: "portfolio-42c34.firebasestorage.app",
-  messagingSenderId: "1098886400519",
-  appId: "1:1098886400519:web:b4ad245801d323fb4038a2",
-  measurementId: "G-M24PSHNJD3"
+  apiKey: process.env.VITE_FIREBASE_API_KEY,
+  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.VITE_FIREBASE_APP_ID,
 };
+
+// Thông tin quản trị KHÔNG được hardcode — truyền qua biến môi trường:
+//   ADMIN_EMAIL=ban@example.com ADMIN_PASSWORD='…' node src/db-init.js
+const email = process.env.ADMIN_EMAIL;
+const password = process.env.ADMIN_PASSWORD;
+
+if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+  console.error('Thiếu cấu hình Firebase. Sao chép frontend/.env.example thành frontend/.env và điền giá trị.');
+  process.exit(1);
+}
+if (!email || !password) {
+  console.error(
+    'Thiếu thông tin quản trị. Chạy lại kèm biến môi trường:\n' +
+      "  ADMIN_EMAIL=ban@example.com ADMIN_PASSWORD='matkhaucuaban' node src/db-init.js"
+  );
+  process.exit(1);
+}
+if (password.length < 6) {
+  console.error('ADMIN_PASSWORD cần tối thiểu 6 ký tự (yêu cầu của Firebase Auth).');
+  process.exit(1);
+}
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 async function run() {
   const dbJsonPath = path.join(__dirname, '../../backend/db.json');
   const data = JSON.parse(fs.readFileSync(dbJsonPath, 'utf8'));
 
-  const email = "ntlam2211@gmail.com";
-  const password = "adminpassword123"; 
-
-  console.log("Step 1: Authenticating/Creating admin user...");
+  console.log(`Step 1: Authenticating/Creating admin user (${email})...`);
   try {
     await createUserWithEmailAndPassword(auth, email, password);
     console.log("Admin user created successfully!");
@@ -41,6 +69,7 @@ async function run() {
         console.log("Logged in as admin user successfully!");
       } catch (loginErr) {
         console.error("Login failed:", loginErr.message);
+        process.exit(1);
       }
     } else if (err.code === 'auth/configuration-not-found') {
       console.warn("\n[IMPORTANT] Firebase Authentication Email/Password provider is not enabled yet.");

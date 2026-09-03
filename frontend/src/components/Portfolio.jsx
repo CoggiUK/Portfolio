@@ -1,4 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { db } from '../firebase';
 import {
   ExternalLink,
   TrendingUp,
@@ -336,7 +338,9 @@ const NAV_ITEMS = [
 export default function Portfolio({ profile, projects, onAdminClick, onOpenProject }) {
   const [hoveredSkill, setHoveredSkill] = useState(null);
   const [formSubmitted, setFormSubmitted] = useState(false);
-  const [contactForm, setContactForm] = useState({ name: '', email: '', message: '' });
+  const [formSending, setFormSending] = useState(false);
+  const [formError, setFormError] = useState('');
+  const [contactForm, setContactForm] = useState({ name: '', email: '', phone: '', message: '' });
   const [entered, setEntered] = useState(introSeen);
   const [menuOpen, setMenuOpen] = useState(false);
   const enterSite = () => { introSeen = true; setEntered(true); };
@@ -387,16 +391,39 @@ export default function Portfolio({ profile, projects, onAdminClick, onOpenProje
 
   const handleFormChange = (e) => {
     setContactForm({ ...contactForm, [e.target.name]: e.target.value });
+    if (formError) setFormError('');
   };
 
-  const handleFormSubmit = (e) => {
+  // Lưu thẳng vào Firestore `leads`. Cloud Function `onLeadCreated` sẽ đẩy
+  // push notification về app mobile ngay khi document được tạo.
+  const handleFormSubmit = async (e) => {
     e.preventDefault();
-    if (contactForm.name && contactForm.email && contactForm.message) {
+    const { name, email, phone, message } = contactForm;
+    if (!name.trim() || !email.trim() || !message.trim()) return;
+
+    setFormSending(true);
+    setFormError('');
+    try {
+      await addDoc(collection(db, 'leads'), {
+        name: name.trim().slice(0, 120),
+        email: email.trim().slice(0, 160),
+        phone: phone.trim().slice(0, 40),
+        message: message.trim().slice(0, 4000),
+        source: 'Website portfolio',
+        page: window.location.pathname.slice(0, 300),
+        userAgent: navigator.userAgent.slice(0, 300),
+        status: 'new',
+        read: false,
+        createdAt: serverTimestamp(),
+      });
       setFormSubmitted(true);
-      setTimeout(() => {
-        setFormSubmitted(false);
-        setContactForm({ name: '', email: '', message: '' });
-      }, 5000);
+      setContactForm({ name: '', email: '', phone: '', message: '' });
+      setTimeout(() => setFormSubmitted(false), 8000);
+    } catch (err) {
+      console.error('Gửi liên hệ thất bại', err);
+      setFormError('Không gửi được lời nhắn. Bạn thử lại, hoặc email trực tiếp giúp mình nhé.');
+    } finally {
+      setFormSending(false);
     }
   };
 
@@ -835,7 +862,7 @@ export default function Portfolio({ profile, projects, onAdminClick, onOpenProje
               <div className="form-success">
                 <div className="form-success-icon"><CheckCircle2 size={32} /></div>
                 <h3>Gửi tin nhắn thành công!</h3>
-                <p>Cảm ơn bạn đã liên hệ. Mình sẽ phản hồi lại sớm nhất có thể.</p>
+                <p>Cảm ơn bạn đã liên hệ. Tin nhắn đã tới thẳng điện thoại của mình — mình sẽ phản hồi sớm nhất có thể.</p>
               </div>
             ) : (
               <form onSubmit={handleFormSubmit} className="contact-form">
@@ -848,11 +875,16 @@ export default function Portfolio({ profile, projects, onAdminClick, onOpenProje
                   <input id="email" name="email" type="email" required value={contactForm.email} onChange={handleFormChange} className="glass-input" placeholder="email@example.com" />
                 </div>
                 <div>
+                  <label htmlFor="phone">Số điện thoại <span className="label-optional">(không bắt buộc)</span></label>
+                  <input id="phone" name="phone" type="tel" value={contactForm.phone} onChange={handleFormChange} className="glass-input" placeholder="09xx xxx xxx" />
+                </div>
+                <div>
                   <label htmlFor="message">Nội dung lời nhắn</label>
                   <textarea id="message" name="message" rows="4" required value={contactForm.message} onChange={handleFormChange} className="glass-input" placeholder="Mình muốn trao đổi với bạn về..." />
                 </div>
-                <button type="submit" className="btn-neon" style={{ justifyContent: 'center', width: '100%', marginTop: '4px' }}>
-                  Gửi lời nhắn <Send size={16} />
+                {formError && <p className="form-error" role="alert">{formError}</p>}
+                <button type="submit" className="btn-neon" disabled={formSending} style={{ justifyContent: 'center', width: '100%', marginTop: '4px' }}>
+                  {formSending ? 'Đang gửi…' : <>Gửi lời nhắn <Send size={16} /></>}
                 </button>
               </form>
             )}

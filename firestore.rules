@@ -1,0 +1,50 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // Nội dung portfolio: khách xem web đọc được, chỉ chủ sở hữu ghi.
+    match /settings/{docId} {
+      allow read: if true;
+      allow write: if signedIn();
+    }
+
+    // Form liên hệ trên website: khách gửi được nhưng không đọc lại được.
+    // Ràng buộc chặt để không ai dùng collection này làm nơi ghi dữ liệu tuỳ ý.
+    match /leads/{leadId} {
+      function validLead() {
+        let d = request.resource.data;
+        return d.keys().hasOnly(['name', 'email', 'phone', 'message', 'source', 'status', 'read', 'createdAt', 'userAgent', 'page'])
+          && d.keys().hasAll(['name', 'email', 'message', 'createdAt'])
+          && d.name is string && d.name.size() > 0 && d.name.size() <= 120
+          && d.email is string && d.email.size() <= 160 && d.email.matches('.+@.+[.].+')
+          && d.message is string && d.message.size() > 0 && d.message.size() <= 4000
+          && (!('phone' in d) || (d.phone is string && d.phone.size() <= 40))
+          && (!('source' in d) || (d.source is string && d.source.size() <= 80))
+          && (!('page' in d) || (d.page is string && d.page.size() <= 300))
+          && (!('userAgent' in d) || (d.userAgent is string && d.userAgent.size() <= 300))
+          // Khách chỉ được tạo lead ở trạng thái mặc định.
+          && d.status == 'new' && d.read == false
+          && d.createdAt == request.time;
+      }
+
+      allow create: if validLead();
+      allow read, update, delete: if signedIn();
+    }
+
+    // Toàn bộ dữ liệu cá nhân (lịch, việc, ghi chú, thói quen, chi tiêu,
+    // thiết bị nhận push, tuỳ chọn) — riêng tư tuyệt đối với chủ tài khoản.
+    match /users/{uid}/{document=**} {
+      allow read, write: if signedIn() && request.auth.uid == uid;
+    }
+
+    // Mặc định chặn mọi thứ khác.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

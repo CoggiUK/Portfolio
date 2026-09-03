@@ -960,6 +960,17 @@ h1, h2, h3, h4, h5, h6 {
 .contact-form { display: flex; flex-direction: column; gap: 14px; text-align: left; }
 .contact-form label { display: block; font-size: 0.88rem; margin-bottom: 6px; font-weight: 600; }
 .form-success { padding: 40px 0; display: flex; flex-direction: column; align-items: center; gap: 16px; text-align: center; }
+.label-optional { font-weight: 500; color: var(--text-muted); font-size: 0.8rem; }
+.form-error {
+  margin: -4px 0 0;
+  padding: 10px 12px;
+  font-size: 0.85rem;
+  color: #fca5a5;
+  background: rgba(248, 113, 113, 0.08);
+  border: 1px solid rgba(248, 113, 113, 0.28);
+  border-radius: var(--radius-sm);
+}
+.contact-form .btn-neon:disabled { opacity: 0.55; cursor: progress; }
 .form-success-icon {
   width: 60px; height: 60px;
   border-radius: 50%;

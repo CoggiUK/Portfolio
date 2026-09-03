@@ -1,6 +1,6 @@
 # 📚 Wiki — Portfolio & Firebase Admin Console
 
-> Bộ tài liệu chuẩn (single source of truth) cho dự án **Portfolio cá nhân của Tùng Lâm Nguyễn**.
+> Bộ tài liệu chuẩn (single source of truth) cho dự án **Portfolio cá nhân của Tùng Lâm Nguyễn** — gồm website, ứng dụng di động và Cloud Functions.
 > Đây không chỉ là tài liệu kỹ thuật — nó là minh chứng cho cách mình làm sản phẩm: **đi từ đặc tả (SRS) → quy tắc thiết kế (Design Rules) → quy tắc lập trình (Dev Rules) → bàn giao (Handoff) → tự động hoá bằng AI.**
 
 Đúng với công việc thực tế của mình tại **Học viện Minh Trí Thành** và dự án **SPACE**: mọi thay đổi trên hệ thống đều bắt nguồn từ một tài liệu đặc tả, được chuẩn hoá thành Design System, rồi mới đưa vào code và AI.
@@ -19,6 +19,7 @@
 | [05-design-fe-handoff.md](05-design-fe-handoff.md) | **Handoff** — Checklist bàn giao Design ↔ Front-end | Designer / FE |
 | [06-responsive.md](06-responsive.md) | **Responsive** — Quy tắc responsive từ design đến build | Designer / FE |
 | [07-deploy.md](07-deploy.md) | **Deploy** — Hướng dẫn deploy lên Firebase Hosting + Cloud Firestore | DevOps / Dev |
+| [08-mobile-app.md](08-mobile-app.md) | **Mobile App** — Kiến trúc app Expo, sơ đồ dữ liệu, cơ chế thông báo & đồng bộ lịch | Dev / PM |
 
 ---
 
@@ -51,5 +52,8 @@ Wiki không phải lý thuyết suông. Các quy tắc dưới đây đã đư�
 - **Đặc tả API & bảo mật** trong [01-srs.md](01-srs.md) / [03-dev-rules.md](03-dev-rules.md) ↔ [`frontend/src/firebase.js`](../frontend/src/firebase.js).
 - **Cấu trúc dữ liệu hồ sơ** (lấy từ CV) trong [01-srs.md](01-srs.md) ↔ Cloud Firestore (`settings/main`).
 - **Component & state** trong [02-design-rules.md](02-design-rules.md) ↔ [`frontend/src/components/Portfolio.jsx`](../frontend/src/components/Portfolio.jsx).
+- **Design tokens** ↔ [`mobile/src/theme/index.js`](../mobile/src/theme/index.js) — bản dịch sang React Native của cùng bộ token.
+- **Sơ đồ dữ liệu & thông báo** trong [08-mobile-app.md](08-mobile-app.md) ↔ [`mobile/src/services/db.js`](../mobile/src/services/db.js) và [`functions/index.js`](../functions/index.js).
+- **Quy tắc bảo mật** trong [03-dev-rules.md](03-dev-rules.md) ↔ [`firestore.rules`](../firestore.rules) ở gốc repo.
 
 > Mỗi khi đổi token trong Design Rules, hãy đổi đúng biến trong `frontend/src/index.css`. Một nguồn sự thật — không hardcode trùng lặp.
