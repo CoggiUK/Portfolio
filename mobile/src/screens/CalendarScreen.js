@@ -1,8 +1,9 @@
-import React, { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, FlatList } from 'react-native';
+import React, { useMemo, useState, useCallback, memo } from 'react';
+import { View, Text, StyleSheet, Pressable, FlatList, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Screen, Header, Card, FAB, Empty, IconBtn, Row } from '../components/ui';
-import { colors, space, radius, font, hexOf, tint } from '../theme';
+import * as Haptics from 'expo-haptics';
+import { Screen, Header, Card, FAB, Empty, IconBtn, Row, Badge } from '../components/ui';
+import { colors, space, radius, font, hexOf, tint, shadows } from '../theme';
 import { useApp } from '../contexts/AppContext';
 import {
   monthGrid, dayKey, isSameDay, startOfMonth, addMonths, fmtTime, fmtDayLabel,
@@ -11,12 +12,62 @@ import {
 
 const WEEK_HEAD = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
 
+// Component item được memo hóa để tối ưu render FlatList
+const EventItem = memo(function EventItem({ event, onPress }) {
+  const hex = hexOf(event.color);
+  const start = toDate(event.start);
+  const end = toDate(event.end);
+
+  return (
+    <Card
+      accent={hex}
+      style={[s.eventCard, { borderLeftColor: hex, borderLeftWidth: 4 }]}
+      onPress={onPress}
+    >
+      <View style={{ flex: 1 }}>
+        <Row style={{ justifyContent: 'space-between' }}>
+          <Text style={[font.body, { color: colors.text, fontWeight: '700', flex: 1 }]} numberOfLines={1}>
+            {event.title}
+          </Text>
+          {event.googleEventId ? (
+            <View style={s.googleSyncBadge}>
+              <Ionicons name="logo-google" size={11} color={colors.textSub} />
+            </View>
+          ) : null}
+        </Row>
+        <Row style={{ marginTop: space[1] + 2 }} gap={4}>
+          <Ionicons name="time-outline" size={13} color={colors.textSub} />
+          <Text style={[font.small, { color: colors.textSub }]}>
+            {event.allDay ? 'Cả ngày' : `${fmtTime(start)}${end ? ` – ${fmtTime(end)}` : ''}`}
+          </Text>
+        </Row>
+        {event.location ? (
+          <Row style={{ marginTop: 3 }} gap={4}>
+            <Ionicons name="location-outline" size={13} color={colors.textMuted} />
+            <Text style={[font.tiny, { color: colors.textMuted, flex: 1 }]} numberOfLines={1}>
+              {event.location}
+            </Text>
+          </Row>
+        ) : null}
+        {event.reminders?.length ? (
+          <Row style={{ marginTop: space[2] }} gap={4}>
+            <Ionicons name="notifications-outline" size={12} color={colors.primary} />
+            <Text style={[font.tiny, { color: colors.primary }]}>
+              Nhắc trước {event.reminders.map((m) => (m >= 60 ? `${m / 60}h` : `${m}p`)).join(', ')}
+            </Text>
+          </Row>
+        ) : null}
+      </View>
+    </Card>
+  );
+});
+
 export default function CalendarScreen({ navigation }) {
   const { events, googleConnected, syncing, syncGoogle } = useApp();
   const [anchor, setAnchor] = useState(startOfMonth(new Date()));
   const [selected, setSelected] = useState(new Date());
 
-  // Gom sự kiện theo ngày một lần cho cả lưới tháng lẫn danh sách bên dưới.
+  // Gom sự kiện theo ngày tối ưu qua useMemo
   const byDay = useMemo(() => {
     const map = {};
     events.forEach((e) => {
@@ -34,18 +85,37 @@ export default function CalendarScreen({ navigation }) {
   const dayEvents = byDay[dayKey(selected)] || [];
   const today = new Date();
 
-  const jumpToday = () => {
+  const jumpToday = useCallback(() => {
+    Haptics.selectionAsync().catch(() => {});
     setAnchor(startOfMonth(today));
     setSelected(today);
-  };
+  }, []);
+
+  const selectDate = useCallback((d) => {
+    Haptics.selectionAsync().catch(() => {});
+    setSelected(d);
+  }, []);
+
+  const keyExtractor = useCallback((e) => e.id, []);
+
+  const renderItem = useCallback(
+    ({ item }) => (
+      <EventItem
+        event={item}
+        onPress={() => navigation.navigate('EventForm', { id: item.id })}
+      />
+    ),
+    [navigation]
+  );
 
   return (
     <Screen>
       <Header
         title="Lịch làm việc"
-        subtitle={googleConnected ? 'Đã nối Google Calendar' : 'Chưa nối Google Calendar'}
+        subtitle={googleConnected ? 'Đồng bộ hai chiều Google Calendar' : 'Lưu trữ đám mây an toàn'}
+        badge={googleConnected ? 'GOOGLE' : undefined}
         right={
-          <Row>
+          <Row gap={space[2]}>
             <IconBtn
               icon={syncing ? 'sync' : 'sync-outline'}
               color={googleConnected ? colors.primary : colors.textMuted}
@@ -56,20 +126,35 @@ export default function CalendarScreen({ navigation }) {
         }
       />
 
+      {/* Month Selector Bar */}
       <View style={s.monthBar}>
         <IconBtn icon="chevron-back" onPress={() => setAnchor(addMonths(anchor, -1))} />
-        <Text style={[font.h3, { color: colors.text }]}>
-          {MONTHS[anchor.getMonth()]} {anchor.getFullYear()}
-        </Text>
+        <View style={s.monthPill}>
+          <Ionicons name="calendar-outline" size={14} color={colors.primary} />
+          <Text style={[font.h3, { color: colors.text, fontWeight: '800' }]}>
+            {MONTHS[anchor.getMonth()]} {anchor.getFullYear()}
+          </Text>
+        </View>
         <IconBtn icon="chevron-forward" onPress={() => setAnchor(addMonths(anchor, 1))} />
       </View>
 
+      {/* Week Header */}
       <View style={s.weekHead}>
-        {WEEK_HEAD.map((w) => (
-          <Text key={w} style={[font.tiny, s.weekHeadCell]}>{w}</Text>
+        {WEEK_HEAD.map((w, idx) => (
+          <Text
+            key={w}
+            style={[
+              font.tiny,
+              s.weekHeadCell,
+              idx >= 5 && { color: colors.cyan },
+            ]}
+          >
+            {w}
+          </Text>
         ))}
       </View>
 
+      {/* Calendar Month Grid */}
       <View style={s.grid}>
         {grid.map((d) => {
           const key = dayKey(d);
@@ -77,21 +162,42 @@ export default function CalendarScreen({ navigation }) {
           const outside = d.getMonth() !== anchor.getMonth();
           const isSel = isSameDay(d, selected);
           const isToday = isSameDay(d, today);
+
           return (
-            <Pressable key={key} onPress={() => setSelected(d)} style={s.cellWrap}>
-              <View style={[s.cell, isSel && s.cellSel, isToday && !isSel && s.cellToday]}>
+            <Pressable
+              key={key}
+              onPress={() => selectDate(d)}
+              style={s.cellWrap}
+            >
+              <View
+                style={[
+                  s.cell,
+                  isToday && !isSel && s.cellToday,
+                  isSel && s.cellSel,
+                ]}
+              >
                 <Text
                   style={[
                     font.small,
-                    { color: outside ? colors.textMuted : colors.text, opacity: outside ? 0.45 : 1 },
-                    isSel && { color: colors.primary, fontWeight: '800' },
+                    {
+                      color: outside ? colors.textMuted : colors.text,
+                      opacity: outside ? 0.35 : 1,
+                      fontWeight: isSel || isToday ? '800' : '500',
+                    },
+                    isSel && { color: colors.onPrimary },
                   ]}
                 >
                   {d.getDate()}
                 </Text>
                 <View style={s.cellDots}>
                   {list.slice(0, 3).map((e) => (
-                    <View key={e.id} style={[s.cellDot, { backgroundColor: hexOf(e.color) }]} />
+                    <View
+                      key={e.id}
+                      style={[
+                        s.cellDot,
+                        { backgroundColor: isSel ? colors.onPrimary : hexOf(e.color) },
+                      ]}
+                    />
                   ))}
                 </View>
               </View>
@@ -100,67 +206,37 @@ export default function CalendarScreen({ navigation }) {
         })}
       </View>
 
+      {/* Agenda Header */}
       <View style={s.agendaHead}>
-        <Text style={[font.h3, { color: colors.text }]}>{fmtDayLabel(selected)}</Text>
-        <Text style={[font.tiny, { color: colors.textMuted }]}>
-          {dayEvents.length ? `${dayEvents.length} lịch` : 'trống'}
+        <Row gap={space[2]}>
+          <Text style={[font.h3, { color: colors.text }]}>{fmtDayLabel(selected)}</Text>
+          {isSameDay(selected, today) ? (
+            <Badge label="HÔM NAY" color={colors.primary} />
+          ) : null}
+        </Row>
+        <Text style={[font.tiny, { color: colors.textMuted, fontWeight: '600' }]}>
+          {dayEvents.length ? `${dayEvents.length} lịch trình` : 'Trống lịch'}
         </Text>
       </View>
 
+      {/* Agenda Event List */}
       <FlatList
         data={dayEvents}
-        keyExtractor={(e) => e.id}
+        keyExtractor={keyExtractor}
+        renderItem={renderItem}
         contentContainerStyle={{ paddingHorizontal: space[4], paddingBottom: 110 }}
         showsVerticalScrollIndicator={false}
+        initialNumToRender={8}
+        maxToRenderPerBatch={10}
+        windowSize={5}
+        removeClippedSubviews={Platform.OS !== 'web'}
         ListEmptyComponent={
           <Empty
             icon="calendar-clear-outline"
-            title="Ngày này chưa có lịch"
-            hint="Bấm nút + để tạo lịch — app sẽ nhắc trước giờ và đẩy lên Google Calendar."
+            title="Không có lịch trong ngày này"
+            hint="Nhấn vào nút + bên dưới để tạo sự kiện mới và đồng bộ ngay."
           />
         }
-        renderItem={({ item: e }) => {
-          const hex = hexOf(e.color);
-          const start = toDate(e.start);
-          const end = toDate(e.end);
-          return (
-            <Card
-              accent={hex}
-              style={s.eventCard}
-              onPress={() => navigation.navigate('EventForm', { id: e.id })}
-            >
-              <View style={[s.stripe, { backgroundColor: hex }]} />
-              <View style={{ flex: 1 }}>
-                <Row style={{ justifyContent: 'space-between' }}>
-                  <Text style={[font.body, { color: colors.text, flex: 1 }]} numberOfLines={1}>{e.title}</Text>
-                  {e.googleEventId ? (
-                    <Ionicons name="logo-google" size={13} color={colors.textMuted} />
-                  ) : null}
-                </Row>
-                <Row style={{ marginTop: space[1] }}>
-                  <Ionicons name="time-outline" size={13} color={colors.textSub} />
-                  <Text style={[font.small, { color: colors.textSub }]}>
-                    {e.allDay ? 'Cả ngày' : `${fmtTime(start)}${end ? ` – ${fmtTime(end)}` : ''}`}
-                  </Text>
-                </Row>
-                {e.location ? (
-                  <Row style={{ marginTop: space[1] }}>
-                    <Ionicons name="location-outline" size={13} color={colors.textMuted} />
-                    <Text style={[font.tiny, { color: colors.textMuted, flex: 1 }]} numberOfLines={1}>{e.location}</Text>
-                  </Row>
-                ) : null}
-                {e.reminders?.length ? (
-                  <Row style={{ marginTop: space[2] }}>
-                    <Ionicons name="notifications-outline" size={12} color={colors.textMuted} />
-                    <Text style={[font.tiny, { color: colors.textMuted }]}>
-                      Nhắc trước {e.reminders.map((m) => (m >= 60 ? `${m / 60}h` : `${m}p`)).join(', ')}
-                    </Text>
-                  </Row>
-                ) : null}
-              </View>
-            </Card>
-          );
-        }}
       />
 
       <FAB onPress={() => navigation.navigate('EventForm', { date: selected.toISOString() })} />
@@ -170,26 +246,100 @@ export default function CalendarScreen({ navigation }) {
 
 const s = StyleSheet.create({
   monthBar: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: space[4], marginBottom: space[2],
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: space[4],
+    marginBottom: space[2],
   },
-  weekHead: { flexDirection: 'row', paddingHorizontal: space[3] },
-  weekHeadCell: { flex: 1, textAlign: 'center', color: colors.textMuted, paddingBottom: space[2] },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: space[3] },
-  cellWrap: { width: `${100 / 7}%`, paddingHorizontal: 2, paddingVertical: 2 },
+  monthPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[2],
+    paddingHorizontal: space[3],
+    paddingVertical: space[1] + 2,
+    borderRadius: radius.pill,
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  weekHead: {
+    flexDirection: 'row',
+    paddingHorizontal: space[3],
+    marginBottom: 4,
+  },
+  weekHeadCell: {
+    flex: 1,
+    textAlign: 'center',
+    color: colors.textMuted,
+    paddingVertical: space[1],
+    fontWeight: '700',
+  },
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    paddingHorizontal: space[3],
+  },
+  cellWrap: {
+    width: `${100 / 7}%`,
+    paddingHorizontal: 2,
+    paddingVertical: 2,
+  },
   cell: {
-    height: 46, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1, borderColor: 'transparent',
+    height: 48,
+    borderRadius: radius.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'transparent',
+    backgroundColor: 'rgba(255, 255, 255, 0.02)',
   },
-  cellSel: { backgroundColor: colors.primaryDim, borderColor: tint(colors.primary, 0.4) },
-  cellToday: { borderColor: colors.borderStrong },
-  cellDots: { flexDirection: 'row', gap: 3, marginTop: 3, height: 5 },
-  cellDot: { width: 4, height: 4, borderRadius: 2 },
+  cellSel: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+    shadowColor: colors.primary,
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  cellToday: {
+    borderColor: tint(colors.primary, 0.6),
+    backgroundColor: tint(colors.primary, 0.08),
+  },
+  cellDots: {
+    flexDirection: 'row',
+    gap: 3,
+    marginTop: 2,
+    height: 5,
+    alignItems: 'center',
+  },
+  cellDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+  },
   agendaHead: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: space[4], paddingTop: space[4], paddingBottom: space[3],
-    marginTop: space[2], borderTopWidth: 1, borderTopColor: colors.border,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: space[4],
+    paddingTop: space[4],
+    paddingBottom: space[3],
+    marginTop: space[2],
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
   },
-  eventCard: { flexDirection: 'row', gap: space[3], marginBottom: space[2], padding: space[3], overflow: 'hidden' },
-  stripe: { width: 3, borderRadius: 2 },
+  eventCard: {
+    flexDirection: 'row',
+    gap: space[3],
+    marginBottom: space[2],
+    padding: space[3] + 2,
+    overflow: 'hidden',
+  },
+  googleSyncBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: radius.pill,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+  },
 });

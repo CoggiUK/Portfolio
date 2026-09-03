@@ -1,9 +1,10 @@
-import React, { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, RefreshControl } from 'react-native';
+import React, { useMemo, useState, useCallback } from 'react';
+import { View, Text, StyleSheet, Pressable, RefreshControl, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Screen, Header, Card, SectionTitle, Empty, IconBtn, Badge, Row, Banner } from '../components/ui';
-import { colors, space, radius, font, hexOf, tint } from '../theme';
+import * as Haptics from 'expo-haptics';
+import { Screen, Header, Card, SectionTitle, Empty, IconBtn, Badge, Row, Banner, StatCard } from '../components/ui';
+import { colors, space, radius, font, hexOf, tint, shadows } from '../theme';
 import { useApp } from '../contexts/AppContext';
 import * as db from '../services/db';
 import {
@@ -22,7 +23,7 @@ export default function HomeScreen({ navigation }) {
 
   const todayEvents = useMemo(
     () => events.filter((e) => { const d = toDate(e.start); return d && isSameDay(d, now); }),
-    [events] // eslint-disable-line react-hooks/exhaustive-deps
+    [events]
   );
 
   const upcoming = useMemo(
@@ -32,8 +33,11 @@ export default function HomeScreen({ navigation }) {
 
   const openTasks = useMemo(() => tasks.filter((t) => !t.done), [tasks]);
   const dueToday = useMemo(
-    () => openTasks.filter((t) => { const d = toDate(t.due); return d && d <= new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59); }),
-    [openTasks] // eslint-disable-line react-hooks/exhaustive-deps
+    () => openTasks.filter((t) => {
+      const d = toDate(t.due);
+      return d && d <= new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+    }),
+    [openTasks]
   );
 
   const monthBalance = useMemo(() => {
@@ -43,20 +47,34 @@ export default function HomeScreen({ navigation }) {
       if (!d || d.getTime() < from) return sum;
       return sum + (t.type === 'income' ? Number(t.amount || 0) : -Number(t.amount || 0));
     }, 0);
-  }, [transactions]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [transactions]);
 
-  const habitsDone = habits.filter((h) => h.history?.[today]).length;
+  const habitsDone = useMemo(
+    () => habits.filter((h) => h.history?.[today]).length,
+    [habits, today]
+  );
 
-  const greeting = now.getHours() < 11 ? 'Chào buổi sáng' : now.getHours() < 18 ? 'Chào buổi chiều' : 'Chào buổi tối';
-  const firstName = (site.profile?.name || '').split(' ').slice(-1)[0] || 'bạn';
+  const greeting = now.getHours() < 12 ? 'Chào buổi sáng' : now.getHours() < 18 ? 'Chào buổi chiều' : 'Chào buổi tối';
+  const firstName = (site.profile?.name || '').split(' ').slice(-1)[0] || 'Tùng Lâm';
 
-  const onRefresh = async () => {
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
     if (googleConnected) await syncGoogle();
     setRefreshing(false);
-  };
+  }, [googleConnected, syncGoogle]);
 
-  const toggleHabit = (h) => db.toggleHabitDay(uid, h, today).catch(() => {});
+  const toggleHabit = useCallback((h) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    db.toggleHabitDay(uid, h, today).catch(() => {});
+  }, [uid, today]);
+
+  const toggleTask = useCallback((t) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    db.toggleTask(uid, t).catch(() => {});
+  }, [uid]);
+
+  const nextEvent = upcoming[0];
+  const nextColor = nextEvent ? hexOf(nextEvent.color) : colors.primary;
 
   return (
     <Screen
@@ -64,130 +82,295 @@ export default function HomeScreen({ navigation }) {
       refreshControl={<RefreshControl refreshing={refreshing || syncing} onRefresh={onRefresh} tintColor={colors.primary} />}
       style={{ padding: 0, paddingBottom: space[8] }}
     >
+      {/* Top Header */}
       <View style={{ paddingHorizontal: space[4] }}>
         <Header
           title={`${greeting}, ${firstName}`}
-          subtitle={fmtDayLabel(now)}
-          right={<IconBtn icon="settings-outline" onPress={() => navigation.navigate('Settings')} />}
+          subtitle={`${fmtDayLabel(now)} · Workspace`}
+          badge={googleConnected ? 'GOOGLE SYNC' : undefined}
+          right={
+            <Row gap={space[2]}>
+              <IconBtn
+                icon={syncing ? 'sync' : 'sync-outline'}
+                color={googleConnected ? colors.primary : colors.textMuted}
+                onPress={() => (googleConnected ? syncGoogle() : navigation.navigate('Settings'))}
+              />
+              <IconBtn icon="settings-outline" onPress={() => navigation.navigate('Settings')} />
+            </Row>
+          }
         />
         {toast ? <Banner type={toast.type} message={toast.message} /> : null}
       </View>
 
-      {/* Sự kiện kế tiếp */}
-      <View style={{ paddingHorizontal: space[4] }}>
-        {upcoming[0] ? (
-          <Pressable onPress={() => navigation.navigate('Lịch')}>
+      {/* Hero Banner: Sự kiện kế tiếp */}
+      <View style={{ paddingHorizontal: space[4], marginTop: space[2] }}>
+        {nextEvent ? (
+          <Pressable
+            onPress={() => {
+              Haptics.selectionAsync().catch(() => {});
+              navigation.navigate('Lịch');
+            }}
+            style={({ pressed }) => [pressed && { opacity: 0.9, transform: [{ scale: 0.99 }] }]}
+          >
             <LinearGradient
-              colors={[tint(hexOf(upcoming[0].color), 0.22), 'rgba(255,255,255,0.02)']}
+              colors={[tint(nextColor, 0.26), 'rgba(18, 18, 29, 0.92)']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              style={[s.next, { borderColor: tint(hexOf(upcoming[0].color), 0.35) }]}
+              style={[s.nextCard, { borderColor: tint(nextColor, 0.45) }, shadows.glow(nextColor, 0.25, 20)]}
             >
-              <Row>
-                <Badge label="SẮP DIỄN RA" color={hexOf(upcoming[0].color)} />
-                <Text style={[font.tiny, { color: colors.textSub }]}>
-                  {fmtCountdown(toDate(upcoming[0].start))}
-                </Text>
+              <Row style={{ justifyContent: 'space-between' }}>
+                <Badge label="SỰ KIỆN KẾ TIẾP" color={nextColor} dot />
+                <View style={[s.countdownPill, { backgroundColor: tint(nextColor, 0.16) }]}>
+                  <Ionicons name="time" size={12} color={nextColor} />
+                  <Text style={[font.tiny, { color: nextColor, fontWeight: '700' }]}>
+                    {fmtCountdown(toDate(nextEvent.start))}
+                  </Text>
+                </View>
               </Row>
               <Text style={[font.h2, { color: colors.text, marginTop: space[3] }]} numberOfLines={2}>
-                {upcoming[0].title}
+                {nextEvent.title}
               </Text>
-              <Row style={{ marginTop: space[2] }}>
-                <Ionicons name="time-outline" size={14} color={colors.textSub} />
-                <Text style={[font.small, { color: colors.textSub }]}>
-                  {fmtDayLabel(toDate(upcoming[0].start))} · {fmtTime(toDate(upcoming[0].start))}
-                </Text>
-                {upcoming[0].location ? (
-                  <>
-                    <Ionicons name="location-outline" size={14} color={colors.textSub} style={{ marginLeft: space[2] }} />
+              <Row style={{ marginTop: space[2] + 2, flexWrap: 'wrap' }} gap={space[3]}>
+                <Row gap={4}>
+                  <Ionicons name="calendar-outline" size={14} color={colors.textSub} />
+                  <Text style={[font.small, { color: colors.textSub }]}>
+                    {fmtDayLabel(toDate(nextEvent.start))} · {fmtTime(toDate(nextEvent.start))}
+                  </Text>
+                </Row>
+                {nextEvent.location ? (
+                  <Row gap={4}>
+                    <Ionicons name="location-outline" size={14} color={colors.textSub} />
                     <Text style={[font.small, { color: colors.textSub }]} numberOfLines={1}>
-                      {upcoming[0].location}
+                      {nextEvent.location}
                     </Text>
-                  </>
+                  </Row>
                 ) : null}
               </Row>
             </LinearGradient>
           </Pressable>
         ) : (
-          <Card>
-            <Text style={[font.body, { color: colors.textSub }]}>Không có lịch nào phía trước.</Text>
-            <Text style={[font.small, { color: colors.textMuted, marginTop: space[1] }]}>
-              Thêm lịch ở tab Lịch để được nhắc trước giờ.
-            </Text>
-          </Card>
+          <LinearGradient
+            colors={['rgba(255,255,255,0.04)', 'rgba(18, 18, 29, 0.7)']}
+            style={s.emptyNextCard}
+          >
+            <Row gap={space[3]}>
+              <View style={s.sparkleBox}>
+                <Ionicons name="sparkles" size={20} color={colors.primary} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[font.h3, { color: colors.text }]}>Lịch trình hôm nay thảnh thơi</Text>
+                <Text style={[font.small, { color: colors.textMuted, marginTop: 2 }]}>
+                  Chưa có sự kiện nào sắp diễn ra.
+                </Text>
+              </View>
+            </Row>
+          </LinearGradient>
         )}
       </View>
 
-      {/* Chỉ số nhanh */}
-      <View style={s.stats}>
-        <Stat icon="calendar-outline" color={colors.primary} value={todayEvents.length} label="Lịch hôm nay"
-          onPress={() => navigation.navigate('Lịch')} />
-        <Stat icon="checkbox-outline" color={colors.cyan} value={dueToday.length} sub={`/${openTasks.length}`} label="Việc đến hạn"
-          onPress={() => navigation.navigate('Cá nhân', { tab: 'tasks' })} />
-        <Stat icon="chatbubble-ellipses-outline" color={colors.secondary} value={unreadLeads} label="Liên hệ mới"
-          onPress={() => navigation.navigate('Liên hệ')} />
-        <Stat icon="wallet-outline" color={monthBalance >= 0 ? colors.primary : colors.danger}
-          value={money(monthBalance)} small label="Số dư tháng"
-          onPress={() => navigation.navigate('Cá nhân', { tab: 'finance' })} />
+      {/* Lối tắt tạo nhanh (Quick Actions) */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={s.quickActions}
+      >
+        <Pressable
+          style={s.quickActionBtn}
+          onPress={() => navigation.navigate('EventForm')}
+        >
+          <Ionicons name="add-circle" size={15} color={colors.primary} />
+          <Text style={[font.tiny, { color: colors.text }]}>+ Lịch mới</Text>
+        </Pressable>
+        <Pressable
+          style={s.quickActionBtn}
+          onPress={() => navigation.navigate('Cá nhân', { tab: 'tasks' })}
+        >
+          <Ionicons name="checkbox" size={15} color={colors.cyan} />
+          <Text style={[font.tiny, { color: colors.text }]}>+ Thêm việc</Text>
+        </Pressable>
+        <Pressable
+          style={s.quickActionBtn}
+          onPress={() => navigation.navigate('Cá nhân', { tab: 'habits' })}
+        >
+          <Ionicons name="flame" size={15} color={colors.amber} />
+          <Text style={[font.tiny, { color: colors.text }]}>+ Thói quen</Text>
+        </Pressable>
+        <Pressable
+          style={s.quickActionBtn}
+          onPress={() => navigation.navigate('Cá nhân', { tab: 'finance' })}
+        >
+          <Ionicons name="wallet" size={15} color={colors.secondary} />
+          <Text style={[font.tiny, { color: colors.text }]}>+ Chi tiêu</Text>
+        </Pressable>
+      </ScrollView>
+
+      {/* 4 Chỉ số nhanh (Stat Cards Grid) */}
+      <View style={s.statsGrid}>
+        <Row gap={space[3]}>
+          <StatCard
+            icon="calendar"
+            color={colors.primary}
+            value={todayEvents.length}
+            label="Lịch hôm nay"
+            sub={todayEvents.length ? 'Bận rộn' : 'Trống'}
+            onPress={() => navigation.navigate('Lịch')}
+          />
+          <StatCard
+            icon="checkbox"
+            color={colors.cyan}
+            value={dueToday.length}
+            label="Việc đến hạn"
+            sub={`/${openTasks.length} việc`}
+            onPress={() => navigation.navigate('Cá nhân', { tab: 'tasks' })}
+          />
+        </Row>
+        <Row gap={space[3]} style={{ marginTop: space[3] }}>
+          <StatCard
+            icon="chatbubbles"
+            color={colors.secondary}
+            value={unreadLeads}
+            label="Liên hệ công việc"
+            sub={unreadLeads > 0 ? 'Có tin mới' : 'Đã xem hết'}
+            onPress={() => navigation.navigate('Liên hệ')}
+          />
+          <StatCard
+            icon="wallet"
+            color={monthBalance >= 0 ? colors.emerald : colors.danger}
+            value={money(monthBalance)}
+            label="Số dư tháng này"
+            sub={monthBalance >= 0 ? '+Dương' : '-Âm'}
+            onPress={() => navigation.navigate('Cá nhân', { tab: 'finance' })}
+          />
+        </Row>
       </View>
 
+      {/* Thân trang: Các danh sách chi tiết */}
       <View style={{ paddingHorizontal: space[4] }}>
         {/* Lịch hôm nay */}
-        <SectionTitle right={<Pressable onPress={() => navigation.navigate('Lịch')}>
-          <Text style={[font.tiny, { color: colors.primary }]}>XEM LỊCH</Text></Pressable>}>
-          Hôm nay
+        <SectionTitle
+          right={
+            <Pressable onPress={() => navigation.navigate('Lịch')} hitSlop={8}>
+              <Row gap={2}>
+                <Text style={[font.tiny, { color: colors.primary, fontWeight: '700' }]}>XEM TẤT CẢ</Text>
+                <Ionicons name="chevron-forward" size={12} color={colors.primary} />
+              </Row>
+            </Pressable>
+          }
+        >
+          Lịch trình hôm nay
         </SectionTitle>
         {todayEvents.length ? (
-          todayEvents.map((e) => (
-            <Card key={e.id} style={s.rowCard} onPress={() => navigation.navigate('EventForm', { id: e.id })}>
-              <View style={[s.dot, { backgroundColor: hexOf(e.color) }]} />
-              <View style={{ flex: 1 }}>
-                <Text style={[font.body, { color: colors.text }]} numberOfLines={1}>{e.title}</Text>
-                <Text style={[font.tiny, { color: colors.textMuted, marginTop: 2 }]}>
-                  {e.allDay ? 'Cả ngày' : `${fmtTime(toDate(e.start))}${e.end ? ` – ${fmtTime(toDate(e.end))}` : ''}`}
-                </Text>
-              </View>
-              {e.googleEventId ? <Ionicons name="cloud-done-outline" size={16} color={colors.textMuted} /> : null}
-            </Card>
-          ))
+          todayEvents.map((e) => {
+            const hex = hexOf(e.color);
+            return (
+              <Card
+                key={e.id}
+                style={[s.rowCard, { borderLeftColor: hex, borderLeftWidth: 3 }]}
+                onPress={() => navigation.navigate('EventForm', { id: e.id })}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text style={[font.body, { color: colors.text, fontWeight: '600' }]} numberOfLines={1}>
+                    {e.title}
+                  </Text>
+                  <Text style={[font.tiny, { color: colors.textMuted, marginTop: 2 }]}>
+                    {e.allDay ? 'Cả ngày' : `${fmtTime(toDate(e.start))}${e.end ? ` – ${fmtTime(toDate(e.end))}` : ''}`}
+                    {e.location ? ` · ${e.location}` : ''}
+                  </Text>
+                </View>
+                {e.googleEventId ? (
+                  <View style={s.googlePill}>
+                    <Ionicons name="logo-google" size={11} color={colors.textMuted} />
+                  </View>
+                ) : null}
+              </Card>
+            );
+          })
         ) : (
-          <Empty icon="cafe-outline" title="Hôm nay trống lịch" hint="Một ngày để làm việc sâu." />
+          <Empty icon="cafe-outline" title="Hôm nay trống lịch" hint="Một ngày tuyệt vời để tập trung sáng tạo." />
         )}
 
         {/* Việc cần làm */}
         {openTasks.length ? (
           <>
-            <SectionTitle right={<Pressable onPress={() => navigation.navigate('Cá nhân', { tab: 'tasks' })}>
-              <Text style={[font.tiny, { color: colors.primary }]}>TẤT CẢ</Text></Pressable>}>
-              Việc cần làm
+            <SectionTitle
+              right={
+                <Pressable onPress={() => navigation.navigate('Cá nhân', { tab: 'tasks' })} hitSlop={8}>
+                  <Row gap={2}>
+                    <Text style={[font.tiny, { color: colors.cyan, fontWeight: '700' }]}>XEM TOÀN BỘ ({openTasks.length})</Text>
+                    <Ionicons name="chevron-forward" size={12} color={colors.cyan} />
+                  </Row>
+                </Pressable>
+              }
+            >
+              Việc ưu tiên
             </SectionTitle>
             {openTasks.slice(0, 4).map((t) => (
-              <Card key={t.id} style={s.rowCard} onPress={() => db.toggleTask(uid, t)}>
-                <Ionicons name="ellipse-outline" size={20} color={colors.textMuted} />
-                <Text style={[font.body, { color: colors.text, flex: 1 }]} numberOfLines={1}>{t.title}</Text>
-                {t.priority === 'high' ? <Badge label="GẤP" color={colors.danger} /> : null}
+              <Card key={t.id} style={s.rowCard} onPress={() => toggleTask(t)}>
+                <View style={s.checkCircle}>
+                  <Ionicons name="ellipse-outline" size={20} color={colors.textMuted} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[font.body, { color: colors.text }]} numberOfLines={1}>
+                    {t.title}
+                  </Text>
+                  {t.due ? (
+                    <Text style={[font.tiny, { color: colors.textMuted, marginTop: 2 }]}>
+                      Hạn: {fmtDayLabel(toDate(t.due))}
+                    </Text>
+                  ) : null}
+                </View>
+                {t.priority === 'high' ? (
+                  <Badge label="GẤP" color={colors.danger} dot />
+                ) : t.priority === 'normal' ? (
+                  <Badge label="BÌNH THƯỜNG" color={colors.cyan} />
+                ) : null}
               </Card>
             ))}
           </>
         ) : null}
 
-        {/* Thói quen */}
+        {/* Thói quen hàng ngày */}
         {habits.length ? (
           <>
-            <SectionTitle right={<Text style={[font.tiny, { color: colors.textMuted }]}>
-              {habitsDone}/{habits.length}</Text>}>
-              Thói quen hôm nay
+            <SectionTitle
+              right={
+                <Text style={[font.tiny, { color: colors.amber, fontWeight: '700' }]}>
+                  {habitsDone}/{habits.length} HOÀN THÀNH
+                </Text>
+              }
+            >
+              Duy trì thói quen
             </SectionTitle>
             <View style={s.habitRow}>
               {habits.map((h) => {
                 const on = !!h.history?.[today];
                 const hex = hexOf(h.color);
                 return (
-                  <Pressable key={h.id} onPress={() => toggleHabit(h)}
-                    style={[s.habitPill, on && { backgroundColor: tint(hex, 0.16), borderColor: tint(hex, 0.45) }]}>
-                    <Ionicons name={on ? 'checkmark-circle' : 'ellipse-outline'} size={16}
-                      color={on ? hex : colors.textMuted} />
-                    <Text style={[font.small, { color: on ? hex : colors.textSub }]} numberOfLines={1}>{h.name}</Text>
+                  <Pressable
+                    key={h.id}
+                    onPress={() => toggleHabit(h)}
+                    style={({ pressed }) => [
+                      s.habitPill,
+                      on
+                        ? { backgroundColor: tint(hex, 0.16), borderColor: tint(hex, 0.5) }
+                        : { borderColor: colors.border },
+                      pressed && { opacity: 0.8, transform: [{ scale: 0.96 }] },
+                    ]}
+                  >
+                    <Ionicons
+                      name={on ? 'checkmark-circle' : 'ellipse-outline'}
+                      size={17}
+                      color={on ? hex : colors.textMuted}
+                    />
+                    <Text
+                      style={[
+                        font.small,
+                        { color: on ? hex : colors.textSub, fontWeight: on ? '700' : '500' },
+                      ]}
+                      numberOfLines={1}
+                    >
+                      {h.name}
+                    </Text>
                   </Pressable>
                 );
               })}
@@ -195,25 +378,41 @@ export default function HomeScreen({ navigation }) {
           </>
         ) : null}
 
-        {/* Liên hệ mới nhất */}
+        {/* Liên hệ công việc gần đây */}
         {leads.length ? (
           <>
-            <SectionTitle right={<Pressable onPress={() => navigation.navigate('Liên hệ')}>
-              <Text style={[font.tiny, { color: colors.primary }]}>HỘP THƯ</Text></Pressable>}>
-              Liên hệ gần đây
+            <SectionTitle
+              right={
+                <Pressable onPress={() => navigation.navigate('Liên hệ')} hitSlop={8}>
+                  <Row gap={2}>
+                    <Text style={[font.tiny, { color: colors.secondary, fontWeight: '700' }]}>HỘP THƯ</Text>
+                    <Ionicons name="chevron-forward" size={12} color={colors.secondary} />
+                  </Row>
+                </Pressable>
+              }
+            >
+              Lời nhắn công việc mới
             </SectionTitle>
             {leads.slice(0, 3).map((l) => (
               <Card key={l.id} style={s.rowCard} onPress={() => navigation.navigate('Liên hệ')}>
-                <View style={[s.avatar, !l.read && { borderColor: colors.primary }]}>
-                  <Text style={[font.small, { color: colors.primary }]}>
+                <View style={[s.avatar, !l.read && s.avatarUnread]}>
+                  <Text style={[font.small, { color: !l.read ? colors.primary : colors.textSub, fontWeight: '700' }]}>
                     {(l.name || '?').trim().charAt(0).toUpperCase()}
                   </Text>
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={[font.body, { color: colors.text }]} numberOfLines={1}>{l.name || 'Khách ẩn danh'}</Text>
-                  <Text style={[font.tiny, { color: colors.textMuted }]} numberOfLines={1}>{l.message || l.email}</Text>
+                  <Text style={[font.body, { color: colors.text, fontWeight: '600' }]} numberOfLines={1}>
+                    {l.name || 'Khách truy cập website'}
+                  </Text>
+                  <Text style={[font.tiny, { color: colors.textMuted, marginTop: 2 }]} numberOfLines={1}>
+                    {l.message || l.phone || l.email}
+                  </Text>
                 </View>
-                {!l.read ? <View style={s.unreadDot} /> : null}
+                {!l.read ? (
+                  <View style={s.unreadDotWrap}>
+                    <View style={s.unreadDot} />
+                  </View>
+                ) : null}
               </Card>
             ))}
           </>
@@ -223,44 +422,110 @@ export default function HomeScreen({ navigation }) {
   );
 }
 
-function Stat({ icon, color, value, sub, label, small, onPress }) {
-  return (
-    <Pressable onPress={onPress} style={({ pressed }) => [s.stat, pressed && { opacity: 0.7 }]}>
-      <View style={[s.statIcon, { backgroundColor: tint(color, 0.12) }]}>
-        <Ionicons name={icon} size={16} color={color} />
-      </View>
-      <Row gap={2} style={{ marginTop: space[2] }}>
-        <Text style={[small ? font.h3 : font.h2, { color: colors.text }]} numberOfLines={1}>{value}</Text>
-        {sub ? <Text style={[font.small, { color: colors.textMuted }]}>{sub}</Text> : null}
-      </Row>
-      <Text style={[font.tiny, { color: colors.textMuted, marginTop: 2 }]} numberOfLines={1}>{label}</Text>
-    </Pressable>
-  );
-}
-
 const s = StyleSheet.create({
-  next: { borderRadius: radius.lg, borderWidth: 1, padding: space[4], marginBottom: space[4] },
-  stats: {
-    flexDirection: 'row', flexWrap: 'wrap', gap: space[3],
-    paddingHorizontal: space[4], marginBottom: space[2],
+  nextCard: {
+    borderRadius: radius.xl,
+    borderWidth: 1,
+    padding: space[4],
+    marginBottom: space[3],
   },
-  stat: {
-    flexGrow: 1, flexBasis: '45%',
-    backgroundColor: colors.card, borderRadius: radius.md, borderWidth: 1,
-    borderColor: colors.border, padding: space[3],
+  countdownPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: radius.pill,
   },
-  statIcon: { width: 30, height: 30, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center' },
-  rowCard: { flexDirection: 'row', alignItems: 'center', gap: space[3], marginBottom: space[2], padding: space[3] },
-  dot: { width: 8, height: 8, borderRadius: 4 },
-  habitRow: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
+  emptyNextCard: {
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: space[4],
+    marginBottom: space[3],
+  },
+  sparkleBox: {
+    width: 38,
+    height: 38,
+    borderRadius: radius.sm,
+    backgroundColor: colors.primaryDim,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: tint(colors.primary, 0.3),
+  },
+  quickActions: {
+    paddingHorizontal: space[4],
+    gap: space[2],
+    paddingVertical: space[2],
+  },
+  quickActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: space[3],
+    paddingVertical: space[2],
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  statsGrid: {
+    paddingHorizontal: space[4],
+    marginTop: space[2],
+    marginBottom: space[2],
+  },
+  rowCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[3],
+    marginBottom: space[2],
+    padding: space[3] + 2,
+  },
+  googlePill: {
+    padding: 4,
+    borderRadius: radius.pill,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  checkCircle: {
+    padding: 2,
+  },
+  habitRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: space[2],
+  },
   habitPill: {
-    flexDirection: 'row', alignItems: 'center', gap: space[1],
-    paddingHorizontal: space[3], paddingVertical: space[2],
-    borderRadius: radius.pill, borderWidth: 1, borderColor: colors.border,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[2],
+    paddingHorizontal: space[3],
+    paddingVertical: space[2],
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
   },
   avatar: {
-    width: 34, height: 34, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center',
-    backgroundColor: colors.primaryDim, borderWidth: 1, borderColor: 'transparent',
+    width: 36,
+    height: 36,
+    borderRadius: radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderWidth: 1,
+    borderColor: colors.border,
   },
-  unreadDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.primary },
+  avatarUnread: {
+    backgroundColor: colors.primaryDim,
+    borderColor: tint(colors.primary, 0.4),
+  },
+  unreadDotWrap: {
+    padding: 4,
+  },
+  unreadDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.primary,
+  },
 });

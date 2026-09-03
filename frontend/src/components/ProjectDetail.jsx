@@ -1,7 +1,9 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../firebase';
 import {
   ArrowLeft, ExternalLink, CheckCircle2, TrendingUp, Clock, Zap,
-  Sparkles, Layers, Monitor, Smartphone,
+  Sparkles, Layers, Monitor, Smartphone, Image as ImageIcon, X,
 } from 'lucide-react';
 import DeviceShowcase from './DeviceShowcase';
 import MockUI from './MockUI';
@@ -10,9 +12,31 @@ import useReveal from '../hooks/useReveal';
 /* Full detail page for an internal-system project: hero, interactive
    web+mobile device showcase, feature grid, metrics, tech, details. */
 export default function ProjectDetail({ project, showcase, onBack }) {
-  const accent = showcase.accent || '#00ff88';
-  useReveal([project.id]);
+  const accent = showcase?.accent || '#00ff88';
+  const [images, setImages] = useState([]);
+  const [lightbox, setLightbox] = useState(null);
+
   useEffect(() => { window.scrollTo(0, 0); }, [project.id]);
+
+  // Ảnh demo được lưu ở document riêng nên chỉ tải khi mở trang chi tiết.
+  useEffect(() => {
+    let alive = true;
+    setImages([]);
+    getDoc(doc(db, 'settings', `media-${project.id}`))
+      .then((snap) => { if (alive && snap.exists()) setImages(snap.data().images || []); })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, [project.id]);
+
+  useReveal([project.id, images.length]);
+
+  // Đóng lightbox bằng phím Esc.
+  useEffect(() => {
+    if (!lightbox) return;
+    const onKey = (e) => { if (e.key === 'Escape') setLightbox(null); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [lightbox]);
 
   const metrics = project.metrics ? Object.values(project.metrics).filter(Boolean) : [];
   const metricIcons = [<TrendingUp size={18} />, <Clock size={18} />, <Zap size={18} />];
@@ -24,27 +48,29 @@ export default function ProjectDetail({ project, showcase, onBack }) {
 
       <header className="navbar glass-card detail-nav">
         <button onClick={onBack} className="btn-secondary btn-sm"><ArrowLeft size={15} /> Portfolio</button>
-        <span className="detail-nav-label" style={{ color: accent }}>{showcase.label}</span>
+        <span className="detail-nav-label" style={{ color: accent }}>{showcase?.label || 'Dự án'}</span>
         <div className="detail-nav-devices"><Monitor size={15} /><Smartphone size={15} /></div>
       </header>
 
       <section className="container detail-hero" data-reveal>
         <span className="detail-eyebrow" style={{ borderColor: accent, color: accent }}>
-          <Sparkles size={14} /> {showcase.label}
+          <Sparkles size={14} /> {showcase?.label || 'Dự án'}
         </span>
         <h1 className="detail-title" style={{ backgroundImage: `linear-gradient(120deg, #ffffff, ${accent})`, WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{project.title}</h1>
         <p className="detail-sub" style={{ color: accent }}>{project.subtitle}</p>
-        <p className="detail-tagline">{showcase.tagline}</p>
+        {showcase?.tagline && <p className="detail-tagline">{showcase.tagline}</p>}
         <div className="detail-meta">
           <span className="badge purple">{project.role}</span>
           {project.period && <span className="badge">{project.period}</span>}
-          <span className="badge primary"><Layers size={13} /> Web &amp; Mobile</span>
+          {showcase && <span className="badge primary"><Layers size={13} /> Web &amp; Mobile</span>}
         </div>
       </section>
 
-      <section className="container detail-showcase-wrap" data-reveal>
-        <DeviceShowcase showcase={showcase} />
-      </section>
+      {showcase && (
+        <section className="container detail-showcase-wrap" data-reveal>
+          <DeviceShowcase showcase={showcase} />
+        </section>
+      )}
 
       {metrics.length > 0 && (
         <section className="container detail-metrics" data-reveal>
@@ -57,8 +83,43 @@ export default function ProjectDetail({ project, showcase, onBack }) {
         </section>
       )}
 
+      {/* Ảnh demo thực tế tải lên từ trang quản trị */}
+      {images.length > 0 && (
+        <section className="container detail-screens" data-reveal>
+          <div className="detail-screens-head">
+            <span className="detail-eyebrow" style={{ borderColor: accent, color: accent }}>
+              <ImageIcon size={14} /> Ảnh demo
+            </span>
+            <h2 style={{ color: accent }}>Hình ảnh thực tế của sản phẩm</h2>
+            <p>Nhấn vào ảnh để xem ở kích thước lớn.</p>
+          </div>
+          <div className="photo-gallery">
+            {images.map((img, i) => (
+              <figure
+                key={img.id || i}
+                className="glass-card photo-card"
+                data-reveal
+                style={{ transitionDelay: `${(i % 3) * 80}ms` }}
+                onClick={() => setLightbox(img)}
+              >
+                <img src={img.src} alt={img.caption || `${project.title} — ảnh ${i + 1}`} loading="lazy" />
+                {img.caption && <figcaption>{img.caption}</figcaption>}
+              </figure>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {lightbox && (
+        <div className="photo-lightbox" onClick={() => setLightbox(null)} role="dialog" aria-modal="true">
+          <button className="photo-lightbox-close" onClick={() => setLightbox(null)} aria-label="Đóng"><X size={20} /></button>
+          <img src={lightbox.src} alt={lightbox.caption || project.title} onClick={(e) => e.stopPropagation()} />
+          {lightbox.caption && <p>{lightbox.caption}</p>}
+        </div>
+      )}
+
       {/* Gallery of the actual designed feature screens */}
-      {Array.isArray(showcase.screens) && showcase.screens.length > 0 && (
+      {Array.isArray(showcase?.screens) && showcase.screens.length > 0 && (
         <section className="container detail-screens" data-reveal>
           <div className="detail-screens-head">
             <span className="detail-eyebrow" style={{ borderColor: accent, color: accent }}>Màn hình chức năng</span>
@@ -83,7 +144,7 @@ export default function ProjectDetail({ project, showcase, onBack }) {
         <div className="glass-card detail-panel">
           <h3>Vai trò &amp; Triển khai</h3>
           <ul className="detail-points">
-            {project.details.map((d, i) => (
+            {(project.details || []).map((d, i) => (
               <li key={i}><CheckCircle2 size={15} style={{ color: accent }} /> <span>{d}</span></li>
             ))}
           </ul>
@@ -91,7 +152,7 @@ export default function ProjectDetail({ project, showcase, onBack }) {
         <div className="detail-info-side">
           <div className="glass-card detail-panel">
             <h3>Công nghệ</h3>
-            <div className="tech-row">{project.tech.map((t) => <span key={t} className="badge">{t}</span>)}</div>
+            <div className="tech-row">{(project.tech || []).map((t) => <span key={t} className="badge">{t}</span>)}</div>
           </div>
           {project.links && Object.values(project.links).some(Boolean) && (
             <div className="glass-card detail-panel">

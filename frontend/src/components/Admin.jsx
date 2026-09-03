@@ -21,11 +21,18 @@ import {
   ArrowDown,
   ChevronLeft,
   ChevronRight,
-  GripVertical
+  GripVertical,
+  GraduationCap,
+  Image as ImageIcon,
+  Users,
+  Heart,
+  Star,
+  X
 } from 'lucide-react';
 import { api } from '../api';
 import { db, auth } from '../firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, deleteDoc } from 'firebase/firestore';
+import { compressImage, dataUrlBytes, formatBytes } from '../utils/image';
 import { updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
 
 
@@ -57,6 +64,16 @@ export default function Admin({ token, expiresAt, onLogout, onUpdateData }) {
     figma: ''
   });
 
+  // Ảnh demo của dự án đang mở (lưu ở doc riêng settings/media-<projectId>)
+  const [projectImages, setProjectImages] = useState([]);
+  const [imagesBusy, setImagesBusy] = useState(false);
+
+  // Ô nhập kỹ năng mới của từng nhóm + cờ báo có thay đổi chưa lưu
+  const [newSkillInputs, setNewSkillInputs] = useState({});
+  const [skillsDirty, setSkillsDirty] = useState(false);
+  const [journeyDirty, setJourneyDirty] = useState(false);
+  const [newInterest, setNewInterest] = useState('');
+
   // Password change state
   const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
 
@@ -65,6 +82,9 @@ export default function Admin({ token, expiresAt, onLogout, onUpdateData }) {
   const [errorMsg, setErrorMsg] = useState('');
   const [loading, setLoading] = useState(false);
   const [draggedGroupIdx, setDraggedGroupIdx] = useState(null);
+  // Chỉ bật draggable khi người dùng giữ tay cầm — nếu bật sẵn trên cả thẻ thì
+  // Firefox/Safari không cho gõ vào các ô input bên trong.
+  const [dragArmedIdx, setDragArmedIdx] = useState(null);
 
   // Time remaining on token calculation
   const [timeRemaining, setTimeRemaining] = useState('');
@@ -143,6 +163,7 @@ export default function Admin({ token, expiresAt, onLogout, onUpdateData }) {
       await setDoc(docRef, { profile: updatedProfile }, { merge: true });
       
       setProfile(updatedProfile);
+      setSkillsDirty(false);
       showSuccess('Danh sách kỹ năng đã cập nhật thành công.');
       onUpdateData(); // Trigger app refetch
     } catch (err) {
@@ -150,6 +171,33 @@ export default function Admin({ token, expiresAt, onLogout, onUpdateData }) {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Mọi thay đổi về kỹ năng đi qua đây để luôn bật cờ "chưa lưu".
+  const updateSkillGroups = (newGroups) => {
+    setProfile((p) => ({ ...p, skillGroups: newGroups }));
+    setSkillsDirty(true);
+  };
+
+  // Thêm kỹ năng vào một nhóm. Cho phép nhập nhiều kỹ năng cách nhau dấu phẩy.
+  const addSkillToGroup = (groupIdx) => {
+    const raw = (newSkillInputs[groupIdx] || '').trim();
+    if (!raw) return;
+    const groups = [...(profile.skillGroups || [])];
+    const current = [...(groups[groupIdx]?.items || [])];
+    const added = [];
+    raw.split(',').map((s) => s.trim()).filter(Boolean).forEach((item) => {
+      const dup = current.some((x) => x.toLowerCase() === item.toLowerCase());
+      if (!dup) { current.push(item); added.push(item); }
+    });
+    if (added.length === 0) {
+      showError('Kỹ năng này đã có trong nhóm.');
+      return;
+    }
+    groups[groupIdx] = { ...groups[groupIdx], items: current };
+    updateSkillGroups(groups);
+    setNewSkillInputs((prev) => ({ ...prev, [groupIdx]: '' }));
+    showSuccess(`Đã thêm: ${added.join(', ')}. Nhớ nhấn "Lưu thay đổi kỹ năng".`);
   };
 
   // Reorder skill groups
@@ -164,7 +212,7 @@ export default function Admin({ token, expiresAt, onLogout, onUpdateData }) {
       newGroups[idx] = newGroups[idx + 1];
       newGroups[idx + 1] = temp;
     }
-    setProfile({ ...profile, skillGroups: newGroups });
+    updateSkillGroups(newGroups);
   };
 
   // Reorder skill items within a group
@@ -181,7 +229,72 @@ export default function Admin({ token, expiresAt, onLogout, onUpdateData }) {
       items[itemIdx + 1] = temp;
     }
     newGroups[groupIdx] = { ...newGroups[groupIdx], items };
-    setProfile({ ...profile, skillGroups: newGroups });
+    updateSkillGroups(newGroups);
+  };
+
+  // ---------- HỌC VẤN / KINH NGHIỆM / HOẠT ĐỘNG ----------
+  // profile.education vốn là một object đơn. Chuẩn hoá thành mảng để có thể
+  // thêm nhiều bằng cấp (ví dụ văn bằng 2) mà vẫn đọc được dữ liệu cũ.
+  const eduList = Array.isArray(profile.education)
+    ? profile.education
+    : (profile.education && (profile.education.school || profile.education.major) ? [profile.education] : []);
+
+  const updateJourney = (patch) => {
+    setProfile((p) => ({ ...p, ...patch }));
+    setJourneyDirty(true);
+  };
+
+  const setEduList = (list) => updateJourney({ education: list });
+
+  const updateEdu = (idx, field, value) => {
+    const list = eduList.map((e, i) => (i === idx ? { ...e, [field]: value } : e));
+    setEduList(list);
+  };
+
+  // Thêm / sửa / xoá cho các danh sách dạng mảng (experience, activities).
+  const listOf = (key) => (Array.isArray(profile[key]) ? profile[key] : []);
+
+  const updateListItem = (key, idx, field, value) => {
+    const list = listOf(key).map((it, i) => (i === idx ? { ...it, [field]: value } : it));
+    updateJourney({ [key]: list });
+  };
+
+  const addListItem = (key, empty) => updateJourney({ [key]: [...listOf(key), empty] });
+
+  const removeListItem = (key, idx) => updateJourney({ [key]: listOf(key).filter((_, i) => i !== idx) });
+
+  const moveListItem = (key, idx, dir) => {
+    const list = [...listOf(key)];
+    const to = dir === 'up' ? idx - 1 : idx + 1;
+    if (to < 0 || to >= list.length) return;
+    [list[idx], list[to]] = [list[to], list[idx]];
+    updateJourney({ [key]: list });
+  };
+
+  // Lưu riêng phần hành trình (dùng chung document profile).
+  const handleSaveJourney = async () => {
+    setLoading(true);
+    try {
+      const cleanedEdu = eduList.filter((e) => (e.school || '').trim() || (e.major || '').trim());
+      // Dọn các dòng trống người dùng gõ ra trong lúc soạn thảo.
+      const cleanPoints = (list) =>
+        list.map((it) => ({ ...it, points: (it.points || []).map((x) => x.trim()).filter(Boolean) }));
+      const updatedProfile = {
+        ...profile,
+        education: cleanedEdu,
+        experience: cleanPoints(listOf('experience')),
+        activities: cleanPoints(listOf('activities')),
+      };
+      await setDoc(doc(db, 'settings', 'main'), { profile: updatedProfile }, { merge: true });
+      setProfile(updatedProfile);
+      setJourneyDirty(false);
+      showSuccess('Đã lưu học vấn, kinh nghiệm và hoạt động.');
+      onUpdateData();
+    } catch (err) {
+      showError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Read an image file, center-crop to a square and downscale to 320px before
@@ -218,9 +331,76 @@ export default function Admin({ token, expiresAt, onLogout, onUpdateData }) {
   // Initials fallback when no avatar image is set
   const adminInitials = (profile.name || '').trim().split(/\s+/).filter(Boolean).slice(-2).map((w) => w[0]).join('').toUpperCase() || '✦';
 
+  // ---------- ẢNH DEMO CỦA DỰ ÁN ----------
+  // Ảnh nặng hơn phần chữ rất nhiều nên được tách sang document riêng
+  // `settings/media-<projectId>` (giới hạn 1MB/document của Firestore).
+  const MEDIA_DOC = (projectId) => doc(db, 'settings', `media-${projectId}`);
+  const MEDIA_LIMIT = 900 * 1024; // chừa chỗ cho phần metadata của document
+  const imagesBytes = projectImages.reduce((sum, img) => sum + dataUrlBytes(img.src), 0);
+
+  const loadProjectImages = async (projectId) => {
+    setImagesBusy(true);
+    try {
+      const snap = await getDoc(MEDIA_DOC(projectId));
+      setProjectImages(snap.exists() ? (snap.data().images || []) : []);
+    } catch (err) {
+      setProjectImages([]);
+      showError('Không tải được ảnh demo của dự án: ' + err.message);
+    } finally {
+      setImagesBusy(false);
+    }
+  };
+
+  // Chọn nhiều ảnh → nén từng ảnh về tối đa 1600px trước khi giữ trong state.
+  const handleProjectImagesChange = async (e) => {
+    const files = Array.from(e.target.files || []);
+    e.target.value = '';
+    if (files.length === 0) return;
+    setImagesBusy(true);
+    try {
+      let bytes = imagesBytes;
+      const added = [];
+      for (const file of files) {
+        if (!file.type.startsWith('image/')) continue;
+        const src = await compressImage(file, { maxSize: 1600, quality: 0.78 });
+        const size = dataUrlBytes(src);
+        if (bytes + size > MEDIA_LIMIT) {
+          showError(`Đã đạt giới hạn ${formatBytes(MEDIA_LIMIT)} ảnh cho một dự án. Một số ảnh chưa được thêm.`);
+          break;
+        }
+        bytes += size;
+        added.push({ id: `img-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, src, caption: '' });
+      }
+      if (added.length) {
+        setProjectImages((prev) => [...prev, ...added]);
+        showSuccess(`Đã thêm ${added.length} ảnh. Nhấn "Lưu dự án" để cập nhật.`);
+      }
+    } catch (err) {
+      showError(err.message);
+    } finally {
+      setImagesBusy(false);
+    }
+  };
+
+  const removeProjectImage = (idx) => setProjectImages((prev) => prev.filter((_, i) => i !== idx));
+
+  const moveProjectImage = (idx, dir) => {
+    setProjectImages((prev) => {
+      const list = [...prev];
+      const to = dir === 'left' ? idx - 1 : idx + 1;
+      if (to < 0 || to >= list.length) return prev;
+      [list[idx], list[to]] = [list[to], list[idx]];
+      return list;
+    });
+  };
+
+  const setImageCaption = (idx, caption) =>
+    setProjectImages((prev) => prev.map((img, i) => (i === idx ? { ...img, caption } : img)));
+
   // Set project editor form from project object
   const selectProjectForEdit = (project) => {
     setSelectedProjectId(project.id);
+    loadProjectImages(project.id);
     setProjectForm({
       title: project.title || '',
       subtitle: project.subtitle || '',
@@ -239,6 +419,7 @@ export default function Admin({ token, expiresAt, onLogout, onUpdateData }) {
   // Reset project form for new project creation
   const handleNewProject = () => {
     setSelectedProjectId('new');
+    setProjectImages([]);
     setProjectForm({
       title: '',
       subtitle: '',
@@ -263,6 +444,7 @@ export default function Admin({ token, expiresAt, onLogout, onUpdateData }) {
       
       setProjects(updatedProjects);
       setSelectedProjectId(null);
+      setProjectImages([]);
       showSuccess('Danh sách dự án đã cập nhật thành công.');
       onUpdateData();
     } catch (err) {
@@ -273,11 +455,31 @@ export default function Admin({ token, expiresAt, onLogout, onUpdateData }) {
   };
 
   // Submit project form changes
-  const handleProjectSubmit = (e) => {
+  const handleProjectSubmit = async (e) => {
     e.preventDefault();
-    
+
+    if (imagesBytes > MEDIA_LIMIT) {
+      showError(`Bộ ảnh demo đang nặng ${formatBytes(imagesBytes)}, vượt giới hạn ${formatBytes(MEDIA_LIMIT)}. Hãy bớt vài ảnh.`);
+      return;
+    }
+
+    const projectId = selectedProjectId === 'new' ? `project-${Date.now()}` : selectedProjectId;
+
+    // Ảnh đầu tiên được nén nhỏ thành ảnh bìa lưu cùng dữ liệu dự án để trang
+    // chủ hiển thị ngay mà không phải tải cả bộ ảnh nặng.
+    let cover = '';
+    if (projectImages[0]?.src) {
+      try {
+        cover = await compressImage(projectImages[0].src, { maxSize: 560, quality: 0.62 });
+      } catch {
+        cover = '';
+      }
+    }
+
     const submittedProject = {
-      id: selectedProjectId === 'new' ? `project-${Date.now()}` : selectedProjectId,
+      id: projectId,
+      cover,
+      imageCount: projectImages.length,
       title: projectForm.title,
       subtitle: projectForm.subtitle,
       role: projectForm.role,
@@ -302,12 +504,24 @@ export default function Admin({ token, expiresAt, onLogout, onUpdateData }) {
       updatedList = projects.map(p => p.id === selectedProjectId ? submittedProject : p);
     }
 
+    try {
+      if (projectImages.length > 0) {
+        await setDoc(MEDIA_DOC(projectId), { images: projectImages, updatedAt: Date.now() });
+      } else {
+        await deleteDoc(MEDIA_DOC(projectId)).catch(() => {});
+      }
+    } catch (err) {
+      showError('Không lưu được ảnh demo: ' + err.message);
+      return;
+    }
+
     handleSaveProjects(updatedList);
   };
 
   // Delete project
-  const handleDeleteProject = (projectId) => {
-    if (window.confirm('Bạn có chắc chắn muốn xóa dự án này?')) {
+  const handleDeleteProject = async (projectId) => {
+    if (window.confirm('Bạn có chắc chắn muốn xóa dự án này? Ảnh demo kèm theo cũng sẽ bị xoá.')) {
+      await deleteDoc(MEDIA_DOC(projectId)).catch(() => {});
       const updatedList = projects.filter(p => p.id !== projectId);
       handleSaveProjects(updatedList);
     }
@@ -413,6 +627,19 @@ export default function Admin({ token, expiresAt, onLogout, onUpdateData }) {
             }}
           >
             <User size={16} /> Hồ sơ cá nhân
+          </button>
+
+          <button
+            onClick={() => { setActiveTab('journey'); setSelectedProjectId(null); }}
+            className="btn-secondary"
+            style={{
+              justifyContent: 'flex-start',
+              border: activeTab === 'journey' ? '1px solid var(--primary-color)' : '1px solid var(--border-color)',
+              background: activeTab === 'journey' ? 'rgba(0,255,136,0.05)' : 'none',
+              color: activeTab === 'journey' ? 'var(--primary-color)' : 'var(--text-main)'
+            }}
+          >
+            <GraduationCap size={16} /> Học vấn &amp; Kinh nghiệm
           </button>
           
           <button 
@@ -618,6 +845,175 @@ export default function Admin({ token, expiresAt, onLogout, onUpdateData }) {
             </form>
           )}
 
+          {/* TAB 6: JOURNEY — EDUCATION / EXPERIENCE / ACTIVITIES / INTERESTS */}
+          {activeTab === 'journey' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+              <div>
+                <h2 style={{ fontSize: '1.5rem' }} className="glow-text">Học vấn &amp; Hành trình</h2>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                  Nội dung hiển thị ở khối &ldquo;Kinh nghiệm &amp; Học vấn&rdquo; trên trang chủ.
+                </p>
+              </div>
+
+              {/* HỌC VẤN */}
+              <section style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <SectionHead
+                  icon={<GraduationCap size={16} />}
+                  title="Học vấn"
+                  hint="Có thể thêm nhiều bằng cấp (ví dụ văn bằng 2)."
+                  onAdd={() => setEduList([...eduList, { school: '', major: '', period: '', gpa: '' }])}
+                  addLabel="Thêm học vấn"
+                />
+                {eduList.length === 0 ? (
+                  <EmptyHint text="Chưa có thông tin học vấn nào. Nhấn “Thêm học vấn”." />
+                ) : eduList.map((edu, idx) => (
+                  <BlockCard
+                    key={idx}
+                    title={edu.school || 'Trường / cơ sở đào tạo'}
+                    onUp={idx > 0 ? () => setEduList(swap(eduList, idx, idx - 1)) : null}
+                    onDown={idx < eduList.length - 1 ? () => setEduList(swap(eduList, idx, idx + 1)) : null}
+                    onRemove={() => setEduList(eduList.filter((_, i) => i !== idx))}
+                  >
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                      <Field label="Trường / Cơ sở đào tạo" value={edu.school} onChange={(v) => updateEdu(idx, 'school', v)} placeholder="Ví dụ: Đại học FPT" />
+                      <Field label="Chuyên ngành" value={edu.major} onChange={(v) => updateEdu(idx, 'major', v)} placeholder="Ví dụ: Kỹ thuật phần mềm" />
+                      <Field label="Thời gian" value={edu.period} onChange={(v) => updateEdu(idx, 'period', v)} placeholder="Ví dụ: 2021 - 2024" />
+                      <Field label="GPA (không bắt buộc)" value={edu.gpa} onChange={(v) => updateEdu(idx, 'gpa', v)} placeholder="Ví dụ: 3.2" />
+                    </div>
+                  </BlockCard>
+                ))}
+              </section>
+
+              {/* KINH NGHIỆM LÀM VIỆC */}
+              <section style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <SectionHead
+                  icon={<Briefcase size={16} />}
+                  title="Kinh nghiệm làm việc"
+                  hint="Mỗi dòng trong ô mô tả là một gạch đầu dòng."
+                  onAdd={() => addListItem('experience', { role: '', company: '', period: '', points: [] })}
+                  addLabel="Thêm kinh nghiệm"
+                />
+                {listOf('experience').length === 0 ? (
+                  <EmptyHint text="Chưa có kinh nghiệm nào." />
+                ) : listOf('experience').map((exp, idx) => (
+                  <BlockCard
+                    key={idx}
+                    title={exp.role || 'Vị trí công việc'}
+                    onUp={idx > 0 ? () => moveListItem('experience', idx, 'up') : null}
+                    onDown={idx < listOf('experience').length - 1 ? () => moveListItem('experience', idx, 'down') : null}
+                    onRemove={() => removeListItem('experience', idx)}
+                  >
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 0.7fr', gap: '12px' }}>
+                      <Field label="Vị trí" value={exp.role} onChange={(v) => updateListItem('experience', idx, 'role', v)} placeholder="UI/UX Designer" />
+                      <Field label="Công ty" value={exp.company} onChange={(v) => updateListItem('experience', idx, 'company', v)} placeholder="Tên công ty" />
+                      <Field label="Thời gian" value={exp.period} onChange={(v) => updateListItem('experience', idx, 'period', v)} placeholder="04/2026 - Hiện tại" />
+                    </div>
+                    <Field
+                      label="Mô tả công việc (mỗi dòng một ý)"
+                      textarea
+                      value={(exp.points || []).join('\n')}
+                      onChange={(v) => updateListItem('experience', idx, 'points', v.split('\n'))}
+                      placeholder={'Thiết kế giao diện hệ thống nội bộ...\nXây dựng Design System...'}
+                    />
+                  </BlockCard>
+                ))}
+              </section>
+
+              {/* HOẠT ĐỘNG */}
+              <section style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <SectionHead
+                  icon={<Users size={16} />}
+                  title="Hoạt động / Câu lạc bộ"
+                  onAdd={() => addListItem('activities', { role: '', org: '', period: '', points: [] })}
+                  addLabel="Thêm hoạt động"
+                />
+                {listOf('activities').length === 0 ? (
+                  <EmptyHint text="Chưa có hoạt động nào." />
+                ) : listOf('activities').map((act, idx) => (
+                  <BlockCard
+                    key={idx}
+                    title={act.role || 'Vai trò'}
+                    onUp={idx > 0 ? () => moveListItem('activities', idx, 'up') : null}
+                    onDown={idx < listOf('activities').length - 1 ? () => moveListItem('activities', idx, 'down') : null}
+                    onRemove={() => removeListItem('activities', idx)}
+                  >
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 0.7fr', gap: '12px' }}>
+                      <Field label="Vai trò" value={act.role} onChange={(v) => updateListItem('activities', idx, 'role', v)} placeholder="Ban Văn Hoá" />
+                      <Field label="Tổ chức / CLB" value={act.org} onChange={(v) => updateListItem('activities', idx, 'org', v)} placeholder="FPTU AI Club" />
+                      <Field label="Thời gian" value={act.period} onChange={(v) => updateListItem('activities', idx, 'period', v)} placeholder="2021 - Hiện tại" />
+                    </div>
+                    <Field
+                      label="Mô tả (mỗi dòng một ý)"
+                      textarea
+                      value={(act.points || []).join('\n')}
+                      onChange={(v) => updateListItem('activities', idx, 'points', v.split('\n'))}
+                    />
+                  </BlockCard>
+                ))}
+              </section>
+
+              {/* SỞ THÍCH */}
+              <section style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <SectionHead icon={<Heart size={16} />} title="Sở thích" />
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                  {listOf('interests').length === 0 && <EmptyHint text="Chưa có sở thích nào." />}
+                  {listOf('interests').map((it, idx) => (
+                    <span key={idx} className="badge" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                      {it}
+                      <button
+                        type="button"
+                        onClick={() => updateJourney({ interests: listOf('interests').filter((_, i) => i !== idx) })}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#f87171', display: 'flex', padding: 0 }}
+                        title="Xoá sở thích"
+                      >
+                        <X size={12} />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <input
+                    type="text"
+                    className="glass-input"
+                    value={newInterest}
+                    placeholder="Thêm sở thích (Enter để thêm)"
+                    onChange={(e) => setNewInterest(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key !== 'Enter') return;
+                      e.preventDefault();
+                      const v = newInterest.trim();
+                      if (!v || listOf('interests').includes(v)) return;
+                      updateJourney({ interests: [...listOf('interests'), v] });
+                      setNewInterest('');
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    style={{ padding: '12px 16px' }}
+                    onClick={() => {
+                      const v = newInterest.trim();
+                      if (!v || listOf('interests').includes(v)) return;
+                      updateJourney({ interests: [...listOf('interests'), v] });
+                      setNewInterest('');
+                    }}
+                  >
+                    Thêm
+                  </button>
+                </div>
+              </section>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
+                <button type="button" className="btn-neon" onClick={handleSaveJourney} disabled={loading}>
+                  <Save size={16} /> {loading ? 'Đang lưu...' : 'Lưu học vấn & hành trình'}
+                </button>
+                {journeyDirty && (
+                  <span style={{ fontSize: '0.82rem', color: '#fbbf24' }}>Có thay đổi chưa được lưu.</span>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* TAB 5: SKILLS MANAGEMENT */}
           {activeTab === 'skills' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -633,7 +1029,7 @@ export default function Admin({ token, expiresAt, onLogout, onUpdateData }) {
                   onClick={() => {
                     const currentGroups = profile.skillGroups || [];
                     const newGroups = [...currentGroups, { label: 'Nhóm kỹ năng mới', items: [] }];
-                    setProfile({ ...profile, skillGroups: newGroups });
+                    updateSkillGroups(newGroups);
                   }} 
                   className="btn-neon" 
                   style={{ padding: '8px 16px', fontSize: '0.9rem' }}
@@ -651,7 +1047,7 @@ export default function Admin({ token, expiresAt, onLogout, onUpdateData }) {
                       <div 
                         key={groupIdx} 
                         className="glass-card" 
-                        draggable={true}
+                        draggable={dragArmedIdx === groupIdx}
                         onDragStart={(e) => {
                           setDraggedGroupIdx(groupIdx);
                           e.dataTransfer.effectAllowed = 'move';
@@ -666,11 +1062,11 @@ export default function Admin({ token, expiresAt, onLogout, onUpdateData }) {
                             const draggedGroup = newGroups[draggedGroupIdx];
                             newGroups.splice(draggedGroupIdx, 1);
                             newGroups.splice(groupIdx, 0, draggedGroup);
-                            setProfile({ ...profile, skillGroups: newGroups });
+                            updateSkillGroups(newGroups);
                           }
                           setDraggedGroupIdx(null);
                         }}
-                        onDragEnd={() => setDraggedGroupIdx(null)}
+                        onDragEnd={() => { setDraggedGroupIdx(null); setDragArmedIdx(null); }}
                         style={{ 
                           padding: '24px', 
                           border: draggedGroupIdx === groupIdx ? '1px dashed var(--primary-color)' : '1px solid rgba(255,255,255,0.05)', 
@@ -679,14 +1075,22 @@ export default function Admin({ token, expiresAt, onLogout, onUpdateData }) {
                           transition: 'all 0.2s ease',
                           display: 'flex',
                           flexDirection: 'column',
-                          gap: '16px',
-                          cursor: 'grab'
+                          gap: '16px'
                         }}
                       >
                         {/* Group Header */}
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexGrow: 1 }}>
-                            <GripVertical size={20} style={{ color: 'var(--text-muted)', cursor: 'grab', flexShrink: 0, marginTop: '22px' }} />
+                            <span
+                              onMouseDown={() => setDragArmedIdx(groupIdx)}
+                              onMouseUp={() => setDragArmedIdx(null)}
+                              onTouchStart={() => setDragArmedIdx(groupIdx)}
+                              onTouchEnd={() => setDragArmedIdx(null)}
+                              title="Giữ và kéo để đổi thứ tự nhóm"
+                              style={{ display: 'flex', cursor: 'grab', flexShrink: 0, marginTop: '22px', color: 'var(--text-muted)' }}
+                            >
+                              <GripVertical size={20} />
+                            </span>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flexGrow: 1 }}>
                               <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>Tên nhóm kỹ năng</label>
                               <input
@@ -696,29 +1100,26 @@ export default function Admin({ token, expiresAt, onLogout, onUpdateData }) {
                                 onChange={(e) => {
                                   const newGroups = [...(profile.skillGroups || [])];
                                   newGroups[groupIdx] = { ...newGroups[groupIdx], label: e.target.value };
-                                  setProfile({ ...profile, skillGroups: newGroups });
+                                  updateSkillGroups(newGroups);
                                 }}
                                 placeholder="Ví dụ: UI/UX Design, Lập trình..."
                               />
                             </div>
                           </div>
-                          <button
-                            type="button"
-                            className="btn-secondary"
-                            style={{ 
-                              marginTop: '22px', 
-                              borderColor: 'rgba(239, 68, 68, 0.3)', 
-                              color: '#f87171',
-                              padding: '10px'
-                            }}
-                            onClick={() => {
-                              const newGroups = (profile.skillGroups || []).filter((_, i) => i !== groupIdx);
-                              setProfile({ ...profile, skillGroups: newGroups });
-                            }}
-                            title="Xóa nhóm kỹ năng này"
-                          >
-                            <Trash2 size={16} />
-                          </button>
+                          <div style={{ display: 'flex', gap: '6px', marginTop: '22px' }}>
+                            <IconAction onClick={() => moveGroup(groupIdx, 'up')} title="Đưa nhóm lên trên"><ArrowUp size={16} /></IconAction>
+                            <IconAction onClick={() => moveGroup(groupIdx, 'down')} title="Đưa nhóm xuống dưới"><ArrowDown size={16} /></IconAction>
+                            <IconAction
+                              danger
+                              onClick={() => {
+                                const newGroups = (profile.skillGroups || []).filter((_, i) => i !== groupIdx);
+                                updateSkillGroups(newGroups);
+                              }}
+                              title="Xóa nhóm kỹ năng này"
+                            >
+                              <Trash2 size={16} />
+                            </IconAction>
+                          </div>
                         </div>
 
                         {/* Skills Items (Pills Layout) */}
@@ -800,7 +1201,7 @@ export default function Admin({ token, expiresAt, onLogout, onUpdateData }) {
                                       const newGroups = [...(profile.skillGroups || [])];
                                       const newItems = (newGroups[groupIdx].items || []).filter((_, i) => i !== itemIdx);
                                       newGroups[groupIdx] = { ...newGroups[groupIdx], items: newItems };
-                                      setProfile({ ...profile, skillGroups: newGroups });
+                                      updateSkillGroups(newGroups);
                                     }}
                                     title="Xóa kỹ năng này"
                                   >
@@ -817,21 +1218,14 @@ export default function Admin({ token, expiresAt, onLogout, onUpdateData }) {
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flexGrow: 1 }}>
                             <input
                               type="text"
-                              id={`new-skill-input-${groupIdx}`}
                               className="glass-input"
-                              placeholder="Thêm kỹ năng mới (Ví dụ: Figma, Git, Claude...)"
+                              placeholder="Thêm kỹ năng mới (Figma, Git, Claude — cách nhau dấu phẩy)"
+                              value={newSkillInputs[groupIdx] || ''}
+                              onChange={(e) => setNewSkillInputs((prev) => ({ ...prev, [groupIdx]: e.target.value }))}
                               onKeyDown={(e) => {
                                 if (e.key === 'Enter') {
                                   e.preventDefault();
-                                  const val = e.target.value.trim();
-                                  if (!val) return;
-                                  const newGroups = [...(profile.skillGroups || [])];
-                                  const currentItems = newGroups[groupIdx].items || [];
-                                  if (!currentItems.includes(val)) {
-                                    newGroups[groupIdx] = { ...newGroups[groupIdx], items: [...currentItems, val] };
-                                    setProfile({ ...profile, skillGroups: newGroups });
-                                  }
-                                  e.target.value = '';
+                                  addSkillToGroup(groupIdx);
                                 }
                               }}
                             />
@@ -839,21 +1233,10 @@ export default function Admin({ token, expiresAt, onLogout, onUpdateData }) {
                           <button
                             type="button"
                             className="btn-secondary"
-                            onClick={() => {
-                              const input = document.getElementById(`new-skill-input-${groupIdx}`);
-                              const val = input ? input.value.trim() : '';
-                              if (!val) return;
-                              const newGroups = [...(profile.skillGroups || [])];
-                              const currentItems = newGroups[groupIdx].items || [];
-                              if (!currentItems.includes(val)) {
-                                newGroups[groupIdx] = { ...newGroups[groupIdx], items: [...currentItems, val] };
-                                setProfile({ ...profile, skillGroups: newGroups });
-                              }
-                              if (input) input.value = '';
-                            }}
+                            onClick={() => addSkillToGroup(groupIdx)}
                             style={{ padding: '12px 16px' }}
                           >
-                            Thêm
+                            <Plus size={14} /> Thêm
                           </button>
                         </div>
                       </div>
@@ -863,14 +1246,19 @@ export default function Admin({ token, expiresAt, onLogout, onUpdateData }) {
               </div>
 
               <div style={{ marginTop: '10px' }}>
-                <button
-                  type="button"
-                  className="btn-neon"
-                  onClick={() => handleSaveSkills(profile.skillGroups || [])}
-                  disabled={loading}
-                >
-                  <Save size={16} /> {loading ? 'Đang lưu...' : 'Lưu thay đổi kỹ năng'}
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    className="btn-neon"
+                    onClick={() => handleSaveSkills(profile.skillGroups || [])}
+                    disabled={loading}
+                  >
+                    <Save size={16} /> {loading ? 'Đang lưu...' : 'Lưu thay đổi kỹ năng'}
+                  </button>
+                  {skillsDirty && (
+                    <span style={{ fontSize: '0.82rem', color: '#fbbf24' }}>Có thay đổi chưa được lưu.</span>
+                  )}
+                </div>
               </div>
             </div>
           )}
@@ -1047,6 +1435,81 @@ export default function Admin({ token, expiresAt, onLogout, onUpdateData }) {
                       placeholder="Thiết kế UX/UI cho Dashboard...&#10;Tích hợp API quảng cáo...&#10;Phân tích phễu chuyển đổi..."
                       required
                     />
+                  </div>
+
+                  {/* PROJECT DEMO IMAGES */}
+                  <div style={{
+                    background: 'rgba(255,255,255,0.01)',
+                    padding: '16px',
+                    borderRadius: '12px',
+                    border: '1px dashed rgba(255,255,255,0.08)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '14px'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                      <div>
+                        <p style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--secondary-color)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <ImageIcon size={16} /> Ảnh demo dự án
+                        </p>
+                        <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                          Ảnh đầu tiên được dùng làm ảnh bìa. Ảnh tự nén về tối đa 1600px trước khi lưu.
+                        </p>
+                      </div>
+                      <label className="btn-secondary btn-sm" style={{ cursor: imagesBusy ? 'wait' : 'pointer', margin: 0 }}>
+                        <Camera size={14} /> {imagesBusy ? 'Đang xử lý…' : 'Tải ảnh lên'}
+                        <input type="file" accept="image/*" multiple onChange={handleProjectImagesChange} style={{ display: 'none' }} disabled={imagesBusy} />
+                      </label>
+                    </div>
+
+                    <p style={{ fontSize: '0.75rem', color: imagesBytes > MEDIA_LIMIT ? '#f87171' : 'var(--text-muted)' }}>
+                      {projectImages.length} ảnh · {formatBytes(imagesBytes)} / {formatBytes(MEDIA_LIMIT)}
+                    </p>
+
+                    {projectImages.length === 0 ? (
+                      <p style={{ color: 'var(--text-muted)', fontStyle: 'italic', fontSize: '0.85rem' }}>
+                        Chưa có ảnh demo nào. Ảnh sẽ hiển thị trong trang chi tiết dự án.
+                      </p>
+                    ) : (
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '14px' }}>
+                        {projectImages.map((img, idx) => (
+                          <div key={img.id || idx} style={{
+                            border: '1px solid rgba(255,255,255,0.07)',
+                            borderRadius: '10px',
+                            overflow: 'hidden',
+                            background: 'rgba(0,0,0,0.25)',
+                            display: 'flex',
+                            flexDirection: 'column'
+                          }}>
+                            <div style={{ position: 'relative' }}>
+                              <img src={img.src} alt={img.caption || `Ảnh ${idx + 1}`} style={{ width: '100%', height: '120px', objectFit: 'cover', display: 'block' }} />
+                              {idx === 0 && (
+                                <span className="badge primary" style={{ position: 'absolute', top: '8px', left: '8px', fontSize: '0.68rem', padding: '2px 8px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                  <Star size={10} /> Ảnh bìa
+                                </span>
+                              )}
+                            </div>
+                            <div style={{ padding: '8px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                              <input
+                                type="text"
+                                className="glass-input"
+                                style={{ padding: '8px 10px', fontSize: '0.8rem' }}
+                                placeholder="Chú thích ảnh"
+                                value={img.caption || ''}
+                                onChange={(e) => setImageCaption(idx, e.target.value)}
+                              />
+                              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '6px' }}>
+                                <div style={{ display: 'flex', gap: '6px' }}>
+                                  <IconAction onClick={() => moveProjectImage(idx, 'left')} title="Chuyển lên trước"><ChevronLeft size={14} /></IconAction>
+                                  <IconAction onClick={() => moveProjectImage(idx, 'right')} title="Chuyển ra sau"><ChevronRight size={14} /></IconAction>
+                                </div>
+                                <IconAction onClick={() => removeProjectImage(idx)} title="Xoá ảnh" danger><Trash2 size={14} /></IconAction>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   {/* PROJECT LINKS */}
@@ -1235,6 +1698,109 @@ export default function Admin({ token, expiresAt, onLogout, onUpdateData }) {
 
         </div>
       </div>
+    </div>
+  );
+}
+
+
+// ---------- Các khối UI dùng lại trong bảng quản trị ----------
+
+// Đổi chỗ hai phần tử, trả về mảng mới.
+const swap = (list, a, b) => {
+  const next = [...list];
+  [next[a], next[b]] = [next[b], next[a]];
+  return next;
+};
+
+function SectionHead({ icon, title, hint, onAdd, addLabel }) {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: '16px', flexWrap: 'wrap' }}>
+      <div>
+        <h3 style={{ fontSize: '1.05rem', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--primary-color)' }}>
+          {icon} {title}
+        </h3>
+        {hint && <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '4px' }}>{hint}</p>}
+      </div>
+      {onAdd && (
+        <button type="button" className="btn-secondary" style={{ padding: '8px 14px', fontSize: '0.85rem' }} onClick={onAdd}>
+          <Plus size={14} /> {addLabel || 'Thêm'}
+        </button>
+      )}
+    </div>
+  );
+}
+
+function EmptyHint({ text }) {
+  return <p style={{ color: 'var(--text-muted)', fontStyle: 'italic', fontSize: '0.88rem' }}>{text}</p>;
+}
+
+function BlockCard({ title, onUp, onDown, onRemove, children }) {
+  return (
+    <div style={{
+      border: '1px solid rgba(255,255,255,0.06)',
+      background: 'rgba(255,255,255,0.015)',
+      borderRadius: '12px',
+      padding: '18px',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '12px'
+    }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
+        <p style={{ fontWeight: 600, fontSize: '0.95rem', color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{title}</p>
+        <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
+          {onUp && <IconAction onClick={onUp} title="Đưa lên trên"><ArrowUp size={14} /></IconAction>}
+          {onDown && <IconAction onClick={onDown} title="Đưa xuống dưới"><ArrowDown size={14} /></IconAction>}
+          {onRemove && <IconAction onClick={onRemove} title="Xoá mục này" danger><Trash2 size={14} /></IconAction>}
+        </div>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function IconAction({ onClick, title, danger, children }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={title}
+      style={{
+        background: 'none',
+        border: `1px solid ${danger ? 'rgba(239,68,68,0.3)' : 'var(--border-color)'}`,
+        color: danger ? '#f87171' : 'var(--text-sub)',
+        borderRadius: '8px',
+        padding: '6px',
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center'
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+function Field({ label, value, onChange, placeholder, textarea, rows = 4 }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+      <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>{label}</label>
+      {textarea ? (
+        <textarea
+          rows={rows}
+          className="glass-input"
+          value={value || ''}
+          placeholder={placeholder}
+          onChange={(e) => onChange(e.target.value)}
+        />
+      ) : (
+        <input
+          type="text"
+          className="glass-input"
+          value={value || ''}
+          placeholder={placeholder}
+          onChange={(e) => onChange(e.target.value)}
+        />
+      )}
     </div>
   );
 }

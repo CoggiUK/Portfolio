@@ -313,6 +313,11 @@ export default function App() {
   const [profile, setProfile] = useState(fallbackData.profile);
   const [projects, setProjects] = useState(fallbackData.projects);
   const [activeProject, setActiveProject] = useState(null); // opened project (detail/landing)
+  const [pendingProjectId, setPendingProjectId] = useState(null); // deep-link ?p=<id> chờ dữ liệu
+  const [dataLoaded, setDataLoaded] = useState(false);
+
+  // Dự án mở được khi có showcase dựng sẵn, hoặc khi đã tải ảnh demo từ trang quản trị.
+  const canOpenProject = (p) => Boolean(getShowcase(p.id) || p.cover || p.imageCount);
 
   // Read data from settings on mount or refresh from Firestore
   const loadPortfolioData = async () => {
@@ -326,6 +331,8 @@ export default function App() {
       }
     } catch (err) {
       console.warn('Firebase error fetching data. Falling back to default static local data.', err);
+    } finally {
+      setDataLoaded(true);
     }
   };
 
@@ -354,10 +361,7 @@ export default function App() {
     } else {
       // Deep-link to a project/landing via ?p=<id> (shareable URL)
       const pid = new URLSearchParams(window.location.search).get('p');
-      if (pid && getShowcase(pid)) {
-        const proj = fallbackData.projects.find((p) => p.id === pid);
-        if (proj) { setActiveProject(proj); setView('project'); }
-      }
+      if (pid) setPendingProjectId(pid);
     }
 
     // Handle back/forward buttons
@@ -368,10 +372,7 @@ export default function App() {
         return;
       }
       const pid = new URLSearchParams(window.location.search).get('p');
-      if (pid && getShowcase(pid)) {
-        const proj = fallbackData.projects.find((x) => x.id === pid);
-        if (proj) { setActiveProject(proj); setView('project'); return; }
-      }
+      if (pid) { setPendingProjectId(pid); return; }
       setActiveProject(null);
       setView('portfolio');
     };
@@ -381,6 +382,19 @@ export default function App() {
       unsubscribe();
     };
   }, [token, expiresAt]);
+
+  // Deep-link chỉ mở được sau khi danh sách dự án (Firestore hoặc fallback) sẵn sàng.
+  useEffect(() => {
+    if (!pendingProjectId) return;
+    const proj = projects.find((p) => p.id === pendingProjectId);
+    if (proj && canOpenProject(proj)) {
+      setActiveProject(proj);
+      setView('project');
+      setPendingProjectId(null);
+    } else if (dataLoaded) {
+      setPendingProjectId(null);
+    }
+  }, [pendingProjectId, projects, dataLoaded]);
 
   const handleLoginSuccess = (jwtToken, expiry) => {
     setToken(jwtToken);
@@ -413,7 +427,7 @@ export default function App() {
   };
 
   const openProject = (project) => {
-    if (!getShowcase(project.id)) return; // only projects with a showcase are openable
+    if (!canOpenProject(project)) return; // không có showcase lẫn ảnh demo thì không có gì để mở
     setActiveProject(project);
     setView('project');
     window.scrollTo(0, 0);
@@ -441,8 +455,7 @@ export default function App() {
 
       {view === 'project' && activeProject && (() => {
         const showcase = getShowcase(activeProject.id);
-        if (!showcase) { closeProject(); return null; }
-        return showcase.type === 'landing'
+        return showcase?.type === 'landing'
           ? <LandingPage project={activeProject} showcase={showcase} onBack={closeProject} />
           : <ProjectDetail project={activeProject} showcase={showcase} onBack={closeProject} />;
       })()}
