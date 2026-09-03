@@ -132,6 +132,13 @@ export function AppProvider({ children }) {
   }, [uid, leads]);
 
   /* ── Trạng thái kết nối Google Calendar ──────────────────────── */
+
+  // Client ID nhập trong app được đẩy xuống service để cả những hàm ngoài
+  // React (làm mới access token) dùng được — không phải sửa .env rồi build lại.
+  useEffect(() => {
+    gcal.setClientIds(prefs.googleClientIds);
+  }, [prefs.googleClientIds]);
+
   const refreshGoogleStatus = useCallback(async () => {
     setGoogleConnected(await gcal.isConnected());
   }, []);

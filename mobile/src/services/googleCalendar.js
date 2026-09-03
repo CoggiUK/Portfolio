@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, useCallback } from 'react';
 import * as WebBrowser from 'expo-web-browser';
 import * as SecureStore from 'expo-secure-store';
 import * as Google from 'expo-auth-session/providers/google';
+import * as Application from 'expo-application';
 import { exchangeCodeAsync, refreshAsync, revokeAsync, ResponseType } from 'expo-auth-session';
 import { Platform } from 'react-native';
 import { toRFC3339, timeZone, toDate } from '../utils/date';
@@ -15,7 +16,8 @@ const SCOPES = [
   'https://www.googleapis.com/auth/calendar.readonly',
 ];
 
-export const CLIENT_IDS = {
+/** Giá trị nạp lúc build từ .env — nay chỉ còn là mặc định, có thể bỏ trống. */
+const ENV_CLIENT_IDS = {
   android: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID || undefined,
   ios: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || undefined,
   web: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || undefined,
@@ -28,8 +30,34 @@ export const CLIENT_IDS = {
  */
 const PLACEHOLDER_CLIENT_ID = 'unconfigured.apps.googleusercontent.com';
 
-export const isConfigured = () =>
-  Boolean(Platform.OS === 'android' ? CLIENT_IDS.android : Platform.OS === 'ios' ? CLIENT_IDS.ios : CLIENT_IDS.web);
+/**
+ * Bản sao của prefs.googleClientIds cho những hàm nằm ngoài React
+ * (getAccessToken → refreshAsync) — chúng không đọc được context.
+ * Phía React luôn truyền thẳng prefs vào `resolveClientIds`, không đụng biến này:
+ * effect của màn hình con chạy trước effect của AppProvider nên đọc ở đây sẽ trễ
+ * một nhịp.
+ */
+let runtimeClientIds = {};
+export const setClientIds = (ids) => {
+  runtimeClientIds = ids || {};
+};
+
+const clean = (v) => (typeof v === 'string' && v.trim() ? v.trim() : undefined);
+
+/** Thứ tự ưu tiên: giá trị nhập trong app → mặc định trong .env. */
+export const resolveClientIds = (override) => ({
+  android: clean(override?.android) || ENV_CLIENT_IDS.android,
+  ios: clean(override?.ios) || ENV_CLIENT_IDS.ios,
+  web: clean(override?.web) || ENV_CLIENT_IDS.web,
+});
+
+/** Khoá client id ứng với nền tảng đang chạy. */
+export const CLIENT_ID_KEY = Platform.OS === 'android' ? 'android' : Platform.OS === 'ios' ? 'ios' : 'web';
+
+export const isConfigured = (override) => Boolean(resolveClientIds(override)[CLIENT_ID_KEY]);
+
+/** Chuỗi Google gọi ngược về app — phải khai đúng nó trong Google Cloud Console. */
+export const redirectUri = () => `${Application.applicationId}:/oauthredirect`;
 
 /* ── Lưu trữ token ──────────────────────────────────────────────── */
 
@@ -45,8 +73,7 @@ const readTokens = async () => {
 const writeTokens = (t) => SecureStore.setItemAsync(STORE_KEY, JSON.stringify(t));
 export const clearTokens = () => SecureStore.deleteItemAsync(STORE_KEY);
 
-const platformClientId = () =>
-  Platform.OS === 'android' ? CLIENT_IDS.android : Platform.OS === 'ios' ? CLIENT_IDS.ios : CLIENT_IDS.web;
+const platformClientId = () => clean(runtimeClientIds[CLIENT_ID_KEY]) || ENV_CLIENT_IDS[CLIENT_ID_KEY];
 
 /**
  * Access token còn hạn. Tự làm mới bằng refresh_token khi sắp hết hạn.
@@ -89,14 +116,15 @@ export const isConnected = async () => Boolean(await getAccessToken());
  * Lưu ý: OAuth với custom scheme KHÔNG chạy trong Expo Go, cần development
  * build (`npx expo run:android`) hoặc bản build EAS.
  */
-export function useGoogleAuth(onDone) {
+export function useGoogleAuth(onDone, clientIdOverride) {
   const [busy, setBusy] = useState(false);
-  const configured = isConfigured();
+  const ids = resolveClientIds(clientIdOverride);
+  const configured = Boolean(ids[CLIENT_ID_KEY]);
   const [request, response, promptAsync] = Google.useAuthRequest({
-    androidClientId: CLIENT_IDS.android || PLACEHOLDER_CLIENT_ID,
-    iosClientId: CLIENT_IDS.ios || PLACEHOLDER_CLIENT_ID,
-    webClientId: CLIENT_IDS.web || PLACEHOLDER_CLIENT_ID,
-    clientId: CLIENT_IDS.web || PLACEHOLDER_CLIENT_ID,
+    androidClientId: ids.android || PLACEHOLDER_CLIENT_ID,
+    iosClientId: ids.ios || PLACEHOLDER_CLIENT_ID,
+    webClientId: ids.web || PLACEHOLDER_CLIENT_ID,
+    clientId: ids.web || PLACEHOLDER_CLIENT_ID,
     responseType: ResponseType.Code,
     scopes: SCOPES,
     shouldAutoExchangeCode: false,
@@ -109,7 +137,7 @@ export function useGoogleAuth(onDone) {
     (async () => {
       setBusy(true);
       try {
-        const clientId = platformClientId() || CLIENT_IDS.web;
+        const clientId = ids[CLIENT_ID_KEY] || ids.web;
         const result = await exchangeCodeAsync(
           {
             clientId,
@@ -140,7 +168,7 @@ export function useGoogleAuth(onDone) {
 
   const connect = useCallback(async () => {
     if (!configured) {
-      onDone?.(false, 'Chưa cấu hình Google OAuth Client ID (xem mobile/.env.example).');
+      onDone?.(false, 'Chưa có Google OAuth Client ID — dán vào ô bên dưới trước đã.');
       return;
     }
     await promptAsync();

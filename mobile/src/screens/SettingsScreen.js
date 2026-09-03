@@ -2,16 +2,25 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, Alert, Platform, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Notifications from 'expo-notifications';
+import * as Application from 'expo-application';
 import {
   Screen, Header, Card, Btn, SwitchRow, SectionTitle, Row, Field, Chip, Banner, IconBtn,
 } from '../components/ui';
 import { colors, space, radius, font, tint } from '../theme';
 import { useApp } from '../contexts/AppContext';
 import { useAuth, authMessage } from '../contexts/AuthContext';
-import { useGoogleAuth, listCalendars, isConfigured } from '../services/googleCalendar';
+import {
+  useGoogleAuth, listCalendars, isConfigured, resolveClientIds, redirectUri, CLIENT_ID_KEY,
+} from '../services/googleCalendar';
 import { fmtDateTime, toDate } from '../utils/date';
 
 const HOURS = [6, 8, 12, 18, 20, 21, 22];
+
+const CLIENT_ID_LABEL = {
+  android: 'Android OAuth Client ID',
+  ios: 'iOS OAuth Client ID',
+  web: 'Web OAuth Client ID',
+}[CLIENT_ID_KEY];
 
 export default function SettingsScreen({ navigation }) {
   const { user, signOut, changePassword } = useAuth();
@@ -26,6 +35,11 @@ export default function SettingsScreen({ navigation }) {
   const [pwBusy, setPwBusy] = useState(false);
   const [permission, setPermission] = useState(null);
 
+  const clientIds = prefs.googleClientIds;
+  const googleConfigured = isConfigured(clientIds);
+  const [clientIdDraft, setClientIdDraft] = useState('');
+  const [showClientIdForm, setShowClientIdForm] = useState(false);
+
   const google = useGoogleAuth(async (ok, err) => {
     await refreshGoogleStatus();
     setMessage(
@@ -33,7 +47,7 @@ export default function SettingsScreen({ navigation }) {
         ? { type: 'error', text: err }
         : { type: 'success', text: ok ? 'Đã kết nối Google Calendar.' : 'Đã ngắt kết nối Google Calendar.' }
     );
-  });
+  }, clientIds);
 
   useEffect(() => {
     Notifications.getPermissionsAsync().then((p) => setPermission(p.status));
@@ -43,6 +57,28 @@ export default function SettingsScreen({ navigation }) {
     if (!googleConnected) return setCalendars([]);
     listCalendars().then(setCalendars).catch(() => setCalendars([]));
   }, [googleConnected]);
+
+  // Ô nhập luôn phản chiếu giá trị đang dùng, kể cả khi máy khác vừa sửa.
+  useEffect(() => {
+    setClientIdDraft(resolveClientIds(clientIds)[CLIENT_ID_KEY] || '');
+  }, [clientIds]);
+
+  const saveClientId = () => {
+    const value = clientIdDraft.trim();
+    if (value && !value.endsWith('.apps.googleusercontent.com')) {
+      return setMessage({ type: 'error', text: 'Client ID phải kết thúc bằng .apps.googleusercontent.com' });
+    }
+    // Firestore ghi vào cache trước rồi mới đẩy lên server, nên không chờ ack —
+    // chờ sẽ treo nút khi máy đang mất mạng.
+    savePrefs({ googleClientIds: { ...(clientIds || {}), [CLIENT_ID_KEY]: value || null } }).catch((err) =>
+      setMessage({ type: 'error', text: err.message })
+    );
+    setShowClientIdForm(false);
+    setMessage({
+      type: 'success',
+      text: value ? 'Đã lưu Client ID — bấm "Kết nối Google Calendar" để đăng nhập.' : 'Đã xoá Client ID.',
+    });
+  };
 
   const doChangePassword = async () => {
     if (pw.next.length < 6) return setMessage({ type: 'error', text: 'Mật khẩu mới cần ít nhất 6 ký tự.' });
@@ -98,12 +134,51 @@ export default function SettingsScreen({ navigation }) {
             </Row>
           </Row>
 
-          {!isConfigured() ? (
-            <Banner
-              type="info"
-              message="Chưa cấu hình Google OAuth Client ID. Xem hướng dẫn trong mobile/.env.example."
+          {!googleConfigured || showClientIdForm ? (
+            <View style={{ marginTop: space[3] }}>
+              {!googleConfigured ? (
+                <Banner
+                  type="info"
+                  message="Dán OAuth Client ID vào đây một lần — không cần sửa .env hay build lại app."
+                />
+              ) : null}
+              <Field
+                label={CLIENT_ID_LABEL}
+                placeholder="1098…-abc.apps.googleusercontent.com"
+                value={clientIdDraft}
+                onChangeText={setClientIdDraft}
+                autoCapitalize="none"
+                autoCorrect={false}
+                autoComplete="off"
+              />
+              <Text style={[font.tiny, { color: colors.textMuted, marginBottom: space[2] }]}>
+                Tạo OAuth client trong Google Cloud Console với đúng hai giá trị dưới đây
+                (nhấn giữ để sao chép):
+              </Text>
+              <Text selectable style={[font.tiny, s.mono]}>
+                Package: {Application.applicationId}
+              </Text>
+              <Text selectable style={[font.tiny, s.mono]}>
+                Redirect URI: {redirectUri()}
+              </Text>
+              <Btn
+                title="Lưu Client ID"
+                icon="save-outline"
+                variant="secondary"
+                style={{ marginTop: space[3] }}
+                onPress={saveClientId}
+              />
+            </View>
+          ) : (
+            <Btn
+              title="Đổi OAuth Client ID"
+              icon="key-outline"
+              variant="ghost"
+              small
+              style={{ marginTop: space[2], alignSelf: 'flex-start' }}
+              onPress={() => setShowClientIdForm(true)}
             />
-          ) : null}
+          )}
 
           <Row style={{ marginTop: space[4] }} gap={space[2]}>
             {googleConnected ? (
@@ -117,7 +192,7 @@ export default function SettingsScreen({ navigation }) {
                 icon="link-outline"
                 onPress={google.connect}
                 loading={google.busy}
-                disabled={!google.configured}
+                disabled={!googleConfigured}
                 style={{ flex: 1 }}
               />
             )}
@@ -258,6 +333,11 @@ function DataStat({ icon, label, value, color }) {
 const s = {
   icon: { width: 36, height: 36, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center' },
   divider: { height: 1, backgroundColor: colors.border, marginVertical: space[3] },
+  mono: {
+    color: colors.textSub,
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    marginBottom: space[1],
+  },
   statGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
   dataStat: {
     flexGrow: 1, flexBasis: '30%', alignItems: 'center', paddingVertical: space[3],
