@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback, memo } from 'react';
+import React, { useMemo, useState, useEffect, useCallback, memo } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -126,11 +126,19 @@ const HabitCard = memo(function HabitCard({ habit, week, last30, onToggleDay, on
   );
 });
 
-export default function HabitsPane() {
+export default function HabitsPane({ initialCreate }) {
   const { uid, habits, create, update, remove } = useApp();
   const [sheet, setSheet] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(emptyForm);
+
+  useEffect(() => {
+    if (initialCreate) {
+      setEditing(null);
+      setForm(emptyForm);
+      setSheet(true);
+    }
+  }, [initialCreate]);
 
   const week = useMemo(() => {
     const start = startOfWeek(new Date());

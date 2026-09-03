@@ -102,10 +102,10 @@ export default function SettingsScreen({ navigation }) {
     ]);
 
   return (
-    <Screen>
+    <Screen edges={['top', 'bottom']}>
       <Header title="Cài đặt" subtitle={user?.email} onBack={() => navigation.goBack()} />
       <ScrollView
-        contentContainerStyle={{ padding: space[4], paddingBottom: space[8] }}
+        contentContainerStyle={{ padding: space[4], paddingBottom: space[8] + 24 }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >

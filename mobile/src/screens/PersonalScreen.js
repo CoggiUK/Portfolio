@@ -16,11 +16,13 @@ const TABS = [
 
 export default function PersonalScreen({ navigation, route }) {
   const [tab, setTab] = useState(route.params?.tab || 'tasks');
+  const [createTrigger, setCreateTrigger] = useState(route.params?.create ? Date.now() : 0);
 
   // Điều hướng từ Dashboard có thể chỉ định thẳng module cần mở.
   useEffect(() => {
     if (route.params?.tab) setTab(route.params.tab);
-  }, [route.params?.tab]);
+    if (route.params?.create) setCreateTrigger(Date.now());
+  }, [route.params?.tab, route.params?.create]);
 
   const meta = TABS.find((t) => t.value === tab);
 
@@ -34,10 +36,10 @@ export default function PersonalScreen({ navigation, route }) {
       <View style={{ paddingHorizontal: space[4], paddingBottom: space[3] }}>
         <Segmented items={TABS} value={tab} onChange={setTab} />
       </View>
-      {tab === 'tasks' && <TasksPane />}
+      {tab === 'tasks' && <TasksPane initialCreate={createTrigger} />}
       {tab === 'notes' && <NotesPane />}
-      {tab === 'habits' && <HabitsPane />}
-      {tab === 'finance' && <FinancePane />}
+      {tab === 'habits' && <HabitsPane initialCreate={createTrigger} />}
+      {tab === 'finance' && <FinancePane initialCreate={createTrigger} />}
     </Screen>
   );
 }

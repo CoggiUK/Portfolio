@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback, memo } from 'react';
+import React, { useMemo, useState, useEffect, useCallback, memo } from 'react';
 import { View, Text, StyleSheet, Pressable, FlatList, Alert, Platform } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
@@ -73,13 +73,21 @@ const TransactionItem = memo(function TransactionItem({ item, onEdit, onDelete }
   );
 });
 
-export default function FinancePane() {
+export default function FinancePane({ initialCreate }) {
   const { transactions, create, update, remove } = useApp();
   const [month, setMonth] = useState(startOfMonth(new Date()));
   const [sheet, setSheet] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [showPicker, setShowPicker] = useState(false);
+
+  useEffect(() => {
+    if (initialCreate) {
+      setEditing(null);
+      setForm({ ...emptyForm, date: new Date() });
+      setSheet(true);
+    }
+  }, [initialCreate]);
 
   const monthTx = useMemo(() => {
     const from = month.getTime();

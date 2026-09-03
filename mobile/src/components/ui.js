@@ -40,7 +40,14 @@ export function Header({ title, subtitle, right, onBack, badge }) {
       ) : null}
       <View style={{ flex: 1, justifyContent: 'center' }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
-          <Text style={[font.h1, { color: colors.text }]} numberOfLines={1}>{title}</Text>
+          <Text
+            style={[font.h1, { color: colors.text, flexShrink: 1 }]}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.8}
+          >
+            {title}
+          </Text>
           {badge ? <Badge label={badge} color={colors.primary} /> : null}
         </View>
         {subtitle ? <Text style={[font.small, { color: colors.textSub, marginTop: 2 }]}>{subtitle}</Text> : null}

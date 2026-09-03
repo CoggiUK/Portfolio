@@ -55,7 +55,11 @@ export default function HomeScreen({ navigation }) {
   );
 
   const greeting = now.getHours() < 12 ? 'Chào buổi sáng' : now.getHours() < 18 ? 'Chào buổi chiều' : 'Chào buổi tối';
-  const firstName = (site.profile?.name || '').split(' ').slice(-1)[0] || 'Tùng Lâm';
+  const rawName = site.profile?.name || '';
+  const cleanName = rawName.replace(/\(.*?\)/g, '').trim();
+  const firstName = cleanName.includes('Tùng Lâm')
+    ? 'Lâm'
+    : (cleanName.split(/\s+/).pop() || 'Lâm');
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -87,7 +91,7 @@ export default function HomeScreen({ navigation }) {
         <Header
           title={`${greeting}, ${firstName}`}
           subtitle={`${fmtDayLabel(now)} · Workspace`}
-          badge={googleConnected ? 'GOOGLE SYNC' : undefined}
+          badge={googleConnected ? 'GOOGLE' : undefined}
           right={
             <Row gap={space[2]}>
               <IconBtn
@@ -183,21 +187,21 @@ export default function HomeScreen({ navigation }) {
         </Pressable>
         <Pressable
           style={s.quickActionBtn}
-          onPress={() => navigation.navigate('Cá nhân', { tab: 'tasks' })}
+          onPress={() => navigation.navigate('Cá nhân', { tab: 'tasks', create: true })}
         >
           <Ionicons name="checkbox" size={15} color={colors.cyan} />
           <Text style={[font.tiny, { color: colors.text }]}>+ Thêm việc</Text>
         </Pressable>
         <Pressable
           style={s.quickActionBtn}
-          onPress={() => navigation.navigate('Cá nhân', { tab: 'habits' })}
+          onPress={() => navigation.navigate('Cá nhân', { tab: 'habits', create: true })}
         >
           <Ionicons name="flame" size={15} color={colors.amber} />
           <Text style={[font.tiny, { color: colors.text }]}>+ Thói quen</Text>
         </Pressable>
         <Pressable
           style={s.quickActionBtn}
-          onPress={() => navigation.navigate('Cá nhân', { tab: 'finance' })}
+          onPress={() => navigation.navigate('Cá nhân', { tab: 'finance', create: true })}
         >
           <Ionicons name="wallet" size={15} color={colors.secondary} />
           <Text style={[font.tiny, { color: colors.text }]}>+ Chi tiêu</Text>

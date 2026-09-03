@@ -112,14 +112,14 @@ export default function EventFormScreen({ navigation, route }) {
     ]);
 
   return (
-    <Screen>
+    <Screen edges={['top', 'bottom']}>
       <Header
         title={id ? 'Sửa lịch' : 'Lịch mới'}
         onBack={() => navigation.goBack()}
         right={id ? <IconBtn icon="trash-outline" color={colors.danger} onPress={confirmDelete} /> : null}
       />
       <ScrollView
-        contentContainerStyle={{ padding: space[4], paddingBottom: space[8] }}
+        contentContainerStyle={{ padding: space[4], paddingBottom: space[8] + 24 }}
         keyboardShouldPersistTaps="handled"
       >
         <Banner type="error" message={error} onClose={() => setError('')} />

@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback, memo } from 'react';
+import React, { useMemo, useState, useEffect, useCallback, memo } from 'react';
 import { View, Text, StyleSheet, Pressable, FlatList, Alert, Platform } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
@@ -97,13 +97,21 @@ const TaskItem = memo(function TaskItem({ item, onToggle, onEdit, onDelete }) {
   );
 });
 
-export default function TasksPane() {
+export default function TasksPane({ initialCreate }) {
   const { uid, tasks, create, update, remove } = useApp();
   const [filter, setFilter] = useState('open');
   const [sheet, setSheet] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [showPicker, setShowPicker] = useState(false);
+
+  useEffect(() => {
+    if (initialCreate) {
+      setEditing(null);
+      setForm(emptyForm);
+      setSheet(true);
+    }
+  }, [initialCreate]);
 
   const counts = useMemo(() => {
     const endToday = new Date();

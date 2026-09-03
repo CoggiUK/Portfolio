@@ -78,7 +78,7 @@ export default function ProjectFormScreen({ navigation, route }) {
     ]);
 
   return (
-    <Screen>
+    <Screen edges={['top', 'bottom']}>
       <Header
         title={existing ? 'Sửa dự án' : 'Dự án mới'}
         subtitle="Hiển thị trên portfolio"
@@ -86,7 +86,7 @@ export default function ProjectFormScreen({ navigation, route }) {
         right={existing ? <IconBtn icon="trash-outline" color={colors.danger} onPress={confirmDelete} /> : null}
       />
       <ScrollView
-        contentContainerStyle={{ padding: space[4], paddingBottom: space[8] }}
+        contentContainerStyle={{ padding: space[4], paddingBottom: space[8] + 24 }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
