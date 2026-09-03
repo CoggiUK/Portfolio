@@ -1,6 +1,9 @@
 # 07 — Deploy · Đưa dự án lên Production (Firebase)
 
-> Hướng dẫn đưa code lên GitHub và deploy trang web tĩnh lên **Firebase Hosting**, cấu hình cơ sở dữ liệu trên **Cloud Firestore** và xác thực qua **Firebase Authentication**.
+> Hướng dẫn đưa code lên GitHub và deploy trang web tĩnh lên **Firebase Hosting**, cấu hình cơ sở dữ liệu trên **Cloud Firestore**, xác thực qua **Firebase Authentication**, triển khai **Cloud Functions** (push notification) và build **app di động**.
+
+> [!IMPORTANT]
+> Từ phiên bản có app di động, toàn bộ cấu hình Firebase đã chuyển về **thư mục gốc** của repo: `firebase.json`, `.firebaserc`, `firestore.rules`, `firestore.indexes.json`. Mọi lệnh `firebase-tools` chạy ở gốc repo, không còn chạy trong `frontend/`.
 
 ---
 
@@ -11,12 +14,20 @@ GitHub repo ──▶ Đẩy lên GitHub Fork của bạn (origin)
                   │ 
                   ▼
               Máy cục bộ (Local Machine)
-                  ├── Chạy lệnh build: npm run build
-                  └── Deploy lên Firebase Hosting: npx firebase-tools deploy
+                  ├── frontend: npm run build ──▶ Firebase Hosting
+                  ├── firestore.rules          ──▶ Firestore Security Rules
+                  ├── functions/               ──▶ Cloud Functions (Blaze)
+                  └── mobile/: eas build       ──▶ APK / TestFlight
                          │
                          ▼
-              Người dùng truy cập URL Firebase Hosting (https://tunglamng.web.app)
-              Kết nối trực tiếp đến Cloud Firestore (Database) & Firebase Auth (Xác thực)
+   ┌───────────────────────────────────────────────────────────────────┐
+   │  Cloud Firestore  ·  Firebase Auth  ·  Cloud Functions            │
+   └───────┬───────────────────────────────────────────────┬───────────┘
+           │                                               │
+   Website (tunglamng.web.app)                    App "Tùng Lâm Workspace"
+   • Khách gửi form → collection `leads`          • Nhận push realtime khi có lead
+   • Đọc nội dung từ `settings/main`              • Lịch ⟷ Google Calendar
+                                                  • Sửa `settings/main` → web đổi ngay
 ```
 
 ---
@@ -28,18 +39,19 @@ Trước khi deploy mã nguồn, bạn cần kích hoạt các dịch vụ sau t
 ### 2.1 Kích hoạt Cloud Firestore
 1. Truy cập dự án của bạn, chọn **Cloud Firestore** trên thanh điều hướng bên trái.
 2. Nhấn **Create database** (Tạo cơ sở dữ liệu), chọn **Production mode** và khu vực đặt máy chủ gần bạn nhất (ví dụ: Singapore - `asia-southeast1`).
-3. Đi tới tab **Rules** (Quy tắc), cập nhật quy tắc bảo mật sau và nhấn **Publish**:
-   ```javascript
-   rules_version = '2';
-   service cloud.firestore {
-     match /databases/{database}/documents {
-       match /settings/main {
-         allow read: if true;
-         allow write: if request.auth != null;
-       }
-     }
-   }
+3. **Không sửa Rules bằng tay trên Console nữa** — quy tắc đã được viết sẵn tại [`firestore.rules`](../firestore.rules) ở gốc repo và deploy bằng CLI:
+   ```bash
+   npx firebase-tools deploy --only firestore:rules
    ```
+   Bộ quy tắc này quy định:
+   | Đường dẫn | Quyền |
+   | :--- | :--- |
+   | `settings/{docId}` | Ai cũng đọc (website công khai) · chỉ tài khoản đăng nhập được ghi |
+   | `leads/{leadId}` | Khách **chỉ được tạo** (có kiểm tra kiểu & độ dài từng trường) · chỉ admin đọc/sửa/xoá |
+   | `users/{uid}/**` | Chỉ chính chủ tài khoản đó đọc/ghi — lịch, việc, ghi chú, thói quen, chi tiêu, token thiết bị |
+   | Còn lại | Chặn hoàn toàn |
+
+   > ⚠️ Nếu bỏ qua bước này, form liên hệ trên website sẽ bị Firestore từ chối và app không nhận được thông báo nào.
 
 ### 2.2 Kích hoạt Authentication Email/Password
 1. Chọn mục **Authentication** ở menu bên trái.
@@ -83,11 +95,47 @@ npm run build
 *Kết quả build sẽ được xuất ra thư mục `frontend/dist/`.*
 
 ### 4.3 Thực hiện Deploy lên Hosting
-Đẩy toàn bộ thư mục `dist` lên Firebase Hosting:
+Chạy tại **gốc repo** (không phải trong `frontend/`):
 ```bash
 npx firebase-tools@13.29.0 deploy --only hosting:tunglamng
 ```
 Sau khi hoàn tất, Firebase sẽ cung cấp **Hosting URL** công khai của bạn, ví dụ: **`https://tunglamng.web.app`**.
+
+---
+
+## 4b. Bước 4 — Deploy Cloud Functions (push notification)
+
+Cloud Functions lo 4 việc, xem mã nguồn tại [`functions/index.js`](../functions/index.js):
+
+| Hàm | Kích hoạt | Việc làm |
+| :--- | :--- | :--- |
+| `onLeadCreated` | Có document mới trong `leads` | Bắn push **ngay lập tức** về mọi thiết bị đã đăng ký |
+| `eventReminders` | Mỗi 5 phút | Nhắc lịch theo từng mốc `reminders` của sự kiện |
+| `dailyDigest` | 07:00 hằng ngày (giờ VN) | Tóm tắt lịch, việc đến hạn, lead chưa đọc |
+| `cleanupReminders` | 03:00 hằng ngày | Dọn cờ `notified` của sự kiện đã qua |
+
+```bash
+# Cần nâng project lên gói Blaze trước (Firebase Console → Upgrade)
+cd functions && npm install && cd ..
+npx firebase-tools deploy --only functions
+```
+
+> [!NOTE]
+> Nếu chưa bật Blaze: website và app vẫn chạy đầy đủ. App **vẫn tự nhắc lịch** bằng thông báo cục bộ đặt sẵn trên máy, và **vẫn hiện thông báo lead mới** khi app đang chạy nền — chỉ mất push khi app đã bị tắt hẳn.
+
+---
+
+## 4c. Bước 5 — Build ứng dụng di động
+
+Chi tiết đầy đủ (Google OAuth, EAS project ID) nằm trong [`mobile/README.md`](../mobile/README.md).
+
+```bash
+cd mobile
+npm install
+npx eas login && npx eas init          # ghi extra.eas.projectId vào app.json — bắt buộc để có push
+npx expo start                          # thử nhanh bằng Expo Go
+npx eas build --profile preview --platform android   # xuất file APK
+```
 
 ---
 

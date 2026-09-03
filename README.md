@@ -6,6 +6,8 @@ Nội dung được lấy trực tiếp từ CV: tư duy thiết kế lấy ngư
 
 Giao diện theo phong cách **Deep Obsidian Dark Mode**, hiệu ứng kính mờ (Glassmorphism), mạng lưới hạt Canvas tương tác theo con trỏ, và cơ chế highlight liên kết Dự án – Kỹ năng.
 
+Dự án gồm **3 phần chạy trên cùng một project Firebase**: website portfolio (`frontend/`), ứng dụng di động quản lý cá nhân & điều hành website (`mobile/`), và các Cloud Functions lo push notification + nhắc lịch (`functions/`).
+
 > 📚 Toàn bộ quy chuẩn (SRS · Design · Dev · AI · Handoff) nằm trong thư mục **[`wiki/`](wiki/README.md)** — và đã được áp dụng trực tiếp vào mã nguồn của dự án này.
 
 ---
@@ -24,6 +26,12 @@ Giao diện theo phong cách **Deep Obsidian Dark Mode**, hiệu ứng kính m�
    - Dữ liệu cấu hình và dự án được tải trực tuyến thời gian thực từ **Cloud Firestore** (`settings/main`).
    - Quản lý Hồ sơ cá nhân, chỉnh sửa các liên kết dự án (Figma, GitHub, Live Demo), và cập nhật chỉ số đo lường hiệu suất (Performance Metrics).
 5. **Hỗ Trợ Mọi Màn Hình (Fully Responsive)**: Giao diện tương thích hoàn hảo từ màn hình di động (320px), máy tính bảng (768px), laptop (1024px) đến màn hình máy tính lớn (1440px+).
+6. **Form Liên Hệ Ghi Thẳng Vào Firestore**: Khách để lại lời nhắn trên web → document mới trong collection `leads` → Cloud Function bắn **push notification realtime** về điện thoại.
+7. **Ứng Dụng Di Động `Tùng Lâm Workspace`** (thư mục [`mobile/`](mobile/README.md)):
+   - **Lịch làm việc** với khung tháng, nhãn màu, nhắc trước nhiều mốc, **đồng bộ hai chiều Google Calendar**.
+   - **Thông báo realtime** khi có người để lại thông tin liên hệ trên website, kèm hộp thư quản lý trạng thái lead.
+   - **Quản lý cá nhân**: công việc (ưu tiên/deadline), ghi chú có thẻ, thói quen kèm streak & heatmap, thu chi theo danh mục.
+   - **Quản trị website ngay trên điện thoại**: sửa hồ sơ, nhóm kỹ năng, thêm/sửa/xoá & sắp xếp dự án — lưu là web đổi ngay.
 
 ---
 
@@ -44,9 +52,27 @@ Giao diện theo phong cách **Deep Obsidian Dark Mode**, hiệu ứng kính m�
 │   ├── 06-responsive.md       # Quy tắc responsive từ design đến build
 │   └── 07-deploy.md           # Hướng dẫn deploy lên Firebase Hosting + Firestore
 │
+├── firebase.json              # ★ Cấu hình gốc: Hosting + Firestore rules + Functions
+├── firestore.rules            # ★ Quy tắc bảo mật Firestore (leads, settings, dữ liệu cá nhân)
+│
+├── mobile/                    # ── APP DI ĐỘNG (Expo / React Native) ──
+│   ├── README.md              # Hướng dẫn cài đặt, cấu hình OAuth & build APK
+│   ├── app.json               # Cấu hình Expo, quyền, notification channel
+│   ├── eas.json               # Profile build development / preview / production
+│   └── src/
+│       ├── theme/             # Design token dùng chung với web
+│       ├── lib/firebase.js    # Firebase client (Auth lưu phiên bằng AsyncStorage)
+│       ├── contexts/          # AuthContext & AppContext (realtime + đồng bộ + thông báo)
+│       ├── services/          # db.js · notifications.js · googleCalendar.js
+│       ├── components/ui.js   # Bộ UI kit
+│       ├── navigation/        # Tab + Stack, xử lý chạm vào thông báo
+│       └── screens/           # Trang chủ · Lịch · Cá nhân · Liên hệ · Web · Cài đặt
+│
+├── functions/                 # ── CLOUD FUNCTIONS (Node 20) ──
+│   ├── index.js               # onLeadCreated · eventReminders · dailyDigest · cleanupReminders
+│   └── push.js                # Gửi Expo push & dọn token hỏng
+│
 ├── frontend/                  # ── FRONTEND (React + Vite + Firebase) ──
-│   ├── firebase.json          # Cấu hình Firebase Hosting
-│   ├── .firebaserc            # Project target mapping của Firebase
 │   ├── index.html             # Cấu hình SEO & Google Fonts
 │   ├── vite.config.js         # Vite configuration (Vite v5 tương thích Node 18)
 │   ├── package.json           # Thư viện Frontend & Firebase Client SDK
@@ -103,12 +129,40 @@ npm run dev
 
 ---
 
-## 🚀 Đẩy ứng dụng lên Production (Firebase Hosting)
+## 📱 Chạy Ứng Dụng Di Động
 
-Đọc tài liệu chi tiết tại **[`wiki/07-deploy.md`](wiki/07-deploy.md)** hoặc chạy nhanh 3 lệnh sau trong thư mục `frontend`:
+```bash
+cd mobile
+npm install
+npx expo start          # quét QR bằng app Expo Go
+```
+
+Xem **[`mobile/README.md`](mobile/README.md)** để biết cách khai báo EAS project ID (bắt buộc để nhận push notification), cấu hình Google OAuth cho đồng bộ Google Calendar, và build file APK cài thẳng vào máy.
+
+Đăng nhập app bằng **đúng tài khoản Firebase Auth của `/portal-admin`**.
+
+---
+
+## 🚀 Đẩy ứng dụng lên Production
+
+Đọc tài liệu chi tiết tại **[`wiki/07-deploy.md`](wiki/07-deploy.md)**. Toàn bộ cấu hình Firebase nằm ở **thư mục gốc** (`firebase.json`, `.firebaserc`, `firestore.rules`).
+
 ```bash
 npx firebase-tools login
-npm run build
+
+# 1. Website
+cd frontend && npm run build && cd ..
 npx firebase-tools deploy --only hosting:tunglamng
+
+# 2. Quy tắc bảo mật Firestore (bắt buộc — nếu không form liên hệ sẽ bị chặn)
+npx firebase-tools deploy --only firestore:rules
+
+# 3. Cloud Functions (cần nâng project lên gói Blaze)
+cd functions && npm install && cd ..
+npx firebase-tools deploy --only functions
 ```
+
 Trang web sẽ được tải lên trực tiếp tại URL: **`https://tunglamng.web.app`**
+
+> [!NOTE]
+> Cloud Functions yêu cầu project ở gói **Blaze** (trả theo mức dùng). Nếu chưa bật, website và app vẫn chạy đầy đủ — chỉ mất push notification khi app đã đóng; app vẫn tự nhắc lịch bằng thông báo cục bộ.
