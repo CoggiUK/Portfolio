@@ -28,12 +28,24 @@ export default function LoginScreen() {
     }
   };
 
-  const fillDemo = () => {
+  const quickLogin = async () => {
     Haptics.selectionAsync().catch(() => {});
-    setEmail('ntlam2211@gmail.com');
-    setPassword('adminTungLam02');
+    const adminEmail = 'ntlam2211@gmail.com';
+    const adminPassword = 'adminTungLam02';
+    setEmail(adminEmail);
+    setPassword(adminPassword);
     setError('');
+    setBusy(true);
+    try {
+      await signIn(adminEmail, adminPassword);
+    } catch (err) {
+      setError(authMessage(err));
+    } finally {
+      setBusy(false);
+    }
   };
+
+  const fillDemo = quickLogin;
 
   const forgot = async () => {
     if (!email) return setError('Nhập email trước rồi bấm quên mật khẩu.');
