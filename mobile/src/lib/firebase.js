@@ -5,16 +5,26 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // scoped mới có điều kiện resolve "react-native" chứa `getReactNativePersistence`.
 import { initializeAuth, getAuth, getReactNativePersistence } from '@firebase/auth';
 
-const env = process.env;
-
+// Cấu hình đọc từ mobile/.env (Expo tự nhúng biến EXPO_PUBLIC_* khi bundle).
+// Web API key của Firebase là định danh công khai, không phải mật khẩu — bảo mật
+// thật nằm ở firestore.rules. Vẫn để ngoài mã nguồn để đổi project không phải
+// sửa code và không kích hoạt secret scanning.
 export const firebaseConfig = {
-  apiKey: env.EXPO_PUBLIC_FIREBASE_API_KEY || 'AIzaSyCzds1ECsDEFio21dKaFfXJ5gxfUXhcMwU',
-  authDomain: env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN || 'portfolio-42c34.firebaseapp.com',
-  projectId: env.EXPO_PUBLIC_FIREBASE_PROJECT_ID || 'portfolio-42c34',
-  storageBucket: env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET || 'portfolio-42c34.firebasestorage.app',
-  messagingSenderId: env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '1098886400519',
-  appId: env.EXPO_PUBLIC_FIREBASE_APP_ID || '1:1098886400519:web:b4ad245801d323fb4038a2',
+  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
 };
+
+const missing = ['apiKey', 'authDomain', 'projectId', 'appId'].filter((k) => !firebaseConfig[k]);
+if (missing.length) {
+  throw new Error(
+    `Thiếu cấu hình Firebase: ${missing.join(', ')}. ` +
+      'Sao chép mobile/.env.example thành mobile/.env rồi khởi động lại Metro (npx expo start -c).'
+  );
+}
 
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 

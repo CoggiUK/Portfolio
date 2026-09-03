@@ -53,10 +53,41 @@ Trước khi deploy mã nguồn, bạn cần kích hoạt các dịch vụ sau t
 
    > ⚠️ Nếu bỏ qua bước này, form liên hệ trên website sẽ bị Firestore từ chối và app không nhận được thông báo nào.
 
-### 2.2 Kích hoạt Authentication Email/Password
+### 2.2 Giới hạn Web API key (quan trọng)
+
+Firebase Web API key **không phải mật khẩu** — nó luôn nằm trong bundle JS mà trình duyệt tải về và trong APK của app, ai cũng đọc được. Vì vậy đừng tốn công giấu nó; hãy **giới hạn phạm vi dùng**:
+
+1. Mở [Google Cloud Console → APIs & Services → Credentials](https://console.cloud.google.com/apis/credentials), chọn API key của web app (thường tên `Browser key (auto created by Firebase)`).
+2. **Application restrictions** → chọn **Websites**, thêm:
+   - `tunglamng.web.app/*`
+   - `tunglamng.firebaseapp.com/*`
+   - `localhost/*` (để chạy local)
+3. **API restrictions** → chọn **Restrict key**, chỉ bật những API thực sự dùng: *Identity Toolkit API*, *Cloud Firestore API*, *Token Service API*.
+4. App di động dùng **key riêng** (Android/iOS key) với giới hạn theo package name + SHA-1, không dùng chung key với web.
+
+> Nếu GitHub secret scanning báo `google_api_key` cho file `firebase.js`: đó là cảnh báo đúng về mặt kỹ thuật nhưng **không phải sự cố rò rỉ** với loại key này. Việc cần làm là (a) chuyển key ra `.env` để lần sau không lặp lại, (b) thiết lập giới hạn ở trên, (c) đóng alert. Xem thêm mục 2.4.
+
+### 2.3 Kích hoạt Authentication Email/Password
 1. Chọn mục **Authentication** ở menu bên trái.
 2. Nhấn **Get Started**, sau đó sang tab **Sign-in method**.
 3. Chọn **Email/Password**, gạt nút **Enable** đầu tiên và nhấn **Save** để lưu.
+
+### 2.4 Những thứ THẬT SỰ là bí mật
+
+| Loại | Có phải bí mật? | Để ở đâu |
+| :--- | :--- | :--- |
+| Firebase Web API key | ❌ Không — luôn lộ ở client | `.env` (cho gọn) + giới hạn referrer |
+| `projectId`, `appId`, `authDomain` | ❌ Không | `.env` |
+| **Mật khẩu tài khoản quản trị** | ✅ **Có** | Biến môi trường lúc chạy, không bao giờ vào Git |
+| Service account JSON (Admin SDK) | ✅ **Có** | Secret Manager / biến môi trường của Functions |
+| Google OAuth **client secret** | ✅ **Có** | Không dùng trong dự án này — app di động dùng PKCE, không cần secret |
+
+> ⚠️ Mật khẩu quản trị mặc định `adminpassword123` từng được hardcode trong `frontend/src/db-init.js` và in trong README của repo công khai. Nó **đã bị lộ vĩnh viễn trong lịch sử Git**. Nếu tài khoản còn dùng mật khẩu đó, hãy đổi ngay tại Firebase Console → Authentication → Users, hoặc trong mục "Đổi mật khẩu" của Trang Quản Trị / app di động.
+>
+> Từ nay `db-init.js` nhận thông tin qua biến môi trường:
+> ```bash
+> ADMIN_EMAIL='ban@example.com' ADMIN_PASSWORD='matkhau-moi' node src/db-init.js
+> ```
 
 ---
 

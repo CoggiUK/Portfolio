@@ -95,19 +95,25 @@ Dự án gồm **3 phần chạy trên cùng một project Firebase**: website p
 
 Dự án yêu cầu cài đặt sẵn **Node.js** (v18+) và **npm**.
 
-### Bước 1: Cài đặt thư viện Frontend
-Mở terminal, vào thư mục `frontend` và cài đặt các thư viện:
+### Bước 1: Cài đặt thư viện & khai báo biến môi trường
+Mở terminal, vào thư mục `frontend`, cài thư viện và tạo file cấu hình:
 ```bash
 cd frontend
 npm install
+cp .env.example .env      # rồi mở .env và điền cấu hình Firebase của bạn
 ```
+
+Giá trị lấy ở **Firebase Console → Project settings → General → Your apps → SDK setup and configuration**.
+
+> [!NOTE]
+> Web API key của Firebase **không phải mật khẩu** — nó luôn nằm trong bundle JS mà trình duyệt tải về, ai xem source cũng thấy. Việc bảo vệ dữ liệu là của [`firestore.rules`](firestore.rules) và của phần giới hạn HTTP referrer cho API key trên Google Cloud Console. Để key ngoài mã nguồn chỉ nhằm đổi project không phải sửa code và không kích hoạt cảnh báo secret scanning của GitHub.
 
 ### Bước 2: Đồng bộ hóa dữ liệu mặc định lên Cloud Firestore
 Nếu đây là lần đầu tiên chạy dự án và bạn đã kích hoạt Cloud Firestore + Authentication (Email/Password) trên Firebase Console:
 ```bash
-node src/db-init.js
+ADMIN_EMAIL='ban@example.com' ADMIN_PASSWORD='matkhau-cua-ban' node src/db-init.js
 ```
-*Script này sẽ đăng nhập/tạo tài khoản quản trị và tự động đẩy dữ liệu portfolio từ file local lên Cloud Firestore.*
+*Script này sẽ đăng nhập/tạo tài khoản quản trị và tự động đẩy dữ liệu portfolio từ file local lên Cloud Firestore. Thông tin đăng nhập truyền qua biến môi trường để không bao giờ nằm trong mã nguồn.*
 
 ### Bước 3: Chạy ứng dụng ở local
 Khởi chạy máy chủ phát triển cục bộ:
@@ -120,12 +126,13 @@ npm run dev
 
 ## 🔑 Thông Tin Đăng Nhập Quản Trị Mặc Định
 
-Để truy cập Trang Quản Trị bí mật tại địa chỉ: `http://localhost:5173/portal-admin`:
-- **Email đăng nhập**: `ntlam2211@gmail.com`
-- **Mật khẩu**: `adminpassword123`
+Trang Quản Trị bí mật nằm tại `http://localhost:5173/portal-admin` (bản production: `https://tunglamng.web.app/portal-admin`). Đăng nhập bằng tài khoản **Firebase Authentication** của chính bạn — cũng là tài khoản dùng cho app di động.
 
 > [!IMPORTANT]
-> Bạn có thể thay đổi mật khẩu của tài khoản quản trị trực tiếp ngay trong mục "Đổi mật khẩu" tại Trang Quản Trị Admin hoặc thông qua bảng điều khiển Firebase Console.
+> **Không lưu mật khẩu trong repo.** Tài khoản quản trị được tạo bằng biến môi trường ở Bước 2, và đổi mật khẩu ở mục "Đổi mật khẩu" trong Trang Quản Trị, trong **Cài đặt** của app di động, hoặc tại Firebase Console → Authentication → Users.
+
+> [!WARNING]
+> Mật khẩu mặc định `adminpassword123` từng nằm trong lịch sử Git công khai của repo này. Nếu tài khoản của bạn vẫn dùng mật khẩu đó, **hãy đổi ngay**.
 
 ---
 
@@ -134,6 +141,7 @@ npm run dev
 ```bash
 cd mobile
 npm install
+cp .env.example .env    # điền cùng cấu hình Firebase như frontend/.env
 npx expo start          # quét QR bằng app Expo Go
 ```
 
