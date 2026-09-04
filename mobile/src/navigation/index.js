@@ -54,17 +54,17 @@ function Tabs() {
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
         tabBarStyle: {
-          backgroundColor: 'rgba(15, 15, 24, 0.96)',
-          borderTopColor: colors.borderStrong,
+          backgroundColor: colors.card,
+          borderTopColor: colors.border,
           borderTopWidth: 1,
           height: Platform.OS === 'ios' ? 84 : 66,
           paddingTop: 8,
           paddingBottom: Platform.OS === 'ios' ? 24 : 10,
-          elevation: 16,
-          shadowColor: '#000',
-          shadowOpacity: 0.4,
-          shadowRadius: 16,
-          shadowOffset: { width: 0, height: -4 },
+          elevation: 4,
+          shadowColor: '#0F172A',
+          shadowOpacity: 0.05,
+          shadowRadius: 10,
+          shadowOffset: { width: 0, height: -2 },
         },
         tabBarLabelStyle: { fontSize: 12, fontWeight: '600', letterSpacing: 0.1, marginTop: 2 },
         tabBarBadgeStyle: {
@@ -159,6 +159,6 @@ const s = StyleSheet.create({
     justifyContent: 'center',
   },
   tabIconActive: {
-    backgroundColor: 'rgba(0, 255, 136, 0.12)',
+    backgroundColor: colors.primaryDim,
   },
 });

@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Notifications from 'expo-notifications';
 import * as Application from 'expo-application';
 import {
-  Screen, Header, Card, Btn, SwitchRow, SectionTitle, Row, Field, Chip, Banner, IconBtn,
+  Screen, Header, Card, Btn, SwitchRow, SectionTitle, Row, Field, Chip, Banner, IconBtn, Badge,
 } from '../components/ui';
 import { colors, space, radius, font, tint } from '../theme';
 import { useApp } from '../contexts/AppContext';
@@ -278,6 +278,25 @@ export default function SettingsScreen({ navigation }) {
               ))}
             </Row>
           ) : null}
+        </Card>
+
+        {/* ── Giao diện ── */}
+        <SectionTitle>Giao diện</SectionTitle>
+        <Card>
+          <Row style={{ justifyContent: 'space-between' }}>
+            <Row gap={space[3]} style={{ flex: 1 }}>
+              <View style={[s.iconBox, { backgroundColor: colors.bgSurface, borderColor: colors.border }]}>
+                <Ionicons name="sunny-outline" size={18} color={colors.primary} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[font.body, { color: colors.text, fontWeight: '600' }]}>Giao diện sáng (Light Mode)</Text>
+                <Text style={[font.tiny, { color: colors.textMuted, marginTop: 2 }]}>
+                  Chuẩn Slate-50, nền sáng thanh lịch, tối ưu thị giác ban ngày
+                </Text>
+              </View>
+            </Row>
+            <Badge label="ĐANG BẬT" color={colors.primary} />
+          </Row>
         </Card>
 
         {/* ── Dữ liệu ── */}

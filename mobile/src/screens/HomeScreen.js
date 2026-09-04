@@ -144,10 +144,10 @@ export default function HomeScreen({ navigation }) {
             style={({ pressed }) => [pressed && { opacity: 0.9, transform: [{ scale: 0.99 }] }]}
           >
             <LinearGradient
-              colors={[tint(nextColor, 0.26), 'rgba(18, 18, 29, 0.92)']}
+              colors={[tint(nextColor, 0.12), colors.card]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              style={[s.nextCard, { borderColor: tint(nextColor, 0.45) }, shadows.glow(nextColor, 0.25, 20)]}
+              style={[s.nextCard, { borderColor: tint(nextColor, 0.45) }, shadows.glow(nextColor, 0.15, 12)]}
             >
               <Row style={{ justifyContent: 'space-between' }}>
                 <Badge label={isOngoing ? 'ĐANG DIỄN RA' : 'SỰ KIỆN KẾ TIẾP'} color={nextColor} dot />
@@ -181,7 +181,7 @@ export default function HomeScreen({ navigation }) {
           </Pressable>
         ) : (
           <LinearGradient
-            colors={['rgba(255,255,255,0.04)', 'rgba(18, 18, 29, 0.7)']}
+            colors={[colors.bgSurface, colors.card]}
             style={s.emptyNextCard}
           >
             <Row gap={space[3]}>
@@ -496,7 +496,7 @@ const s = StyleSheet.create({
     gap: 6,
     paddingHorizontal: space[3],
     paddingVertical: space[2],
-    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    backgroundColor: colors.bgSurface,
     borderRadius: radius.pill,
     borderWidth: 1,
     borderColor: colors.border,
@@ -516,7 +516,7 @@ const s = StyleSheet.create({
   googlePill: {
     padding: 4,
     borderRadius: radius.pill,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: colors.bgSurface,
   },
   checkCircle: {
     padding: 2,
@@ -534,7 +534,7 @@ const s = StyleSheet.create({
     paddingVertical: space[2],
     borderRadius: radius.pill,
     borderWidth: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    backgroundColor: colors.bgSurface,
   },
   avatar: {
     width: 36,
@@ -542,7 +542,7 @@ const s = StyleSheet.create({
     borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    backgroundColor: colors.bgSurface,
     borderWidth: 1,
     borderColor: colors.border,
   },

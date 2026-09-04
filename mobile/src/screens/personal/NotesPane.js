@@ -266,7 +266,7 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: space[2],
-    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    backgroundColor: colors.bgSurface,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius.md,

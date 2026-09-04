@@ -322,7 +322,7 @@ const s = StyleSheet.create({
   },
   itemDone: {
     opacity: 0.65,
-    backgroundColor: 'rgba(18, 18, 29, 0.4)',
+    backgroundColor: colors.bgSurface,
   },
   checkBtn: {
     paddingTop: 1,
@@ -331,7 +331,7 @@ const s = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 1,
     borderRadius: radius.pill,
-    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    backgroundColor: colors.bgSurface,
   },
   deleteBtn: {
     padding: 4,
@@ -345,6 +345,6 @@ const s = StyleSheet.create({
     borderRadius: radius.sm,
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    backgroundColor: colors.bgSurface,
   },
 });

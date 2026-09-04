@@ -286,7 +286,7 @@ const s = StyleSheet.create({
     borderWidth: 3,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(0, 255, 136, 0.06)',
+    backgroundColor: colors.primaryDim,
   },
   streakBadge: {
     flexDirection: 'row',
@@ -308,7 +308,7 @@ const s = StyleSheet.create({
     borderRadius: radius.sm,
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: 'rgba(255, 255, 255, 0.02)',
+    backgroundColor: colors.bgSurface,
   },
   checkMicroDot: {
     width: 4,

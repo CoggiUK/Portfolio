@@ -440,7 +440,7 @@ export function Skeleton({ width = '100%', height = 20, style, radiusVal = radiu
         {
           width,
           height,
-          backgroundColor: 'rgba(255, 255, 255, 0.06)',
+          backgroundColor: colors.bgSurface,
           borderRadius: radiusVal,
         },
         style,
@@ -492,7 +492,7 @@ const s = StyleSheet.create({
   },
   backBtn: {
     width: 44, height: 44, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1, borderColor: colors.border,
+    backgroundColor: colors.bgSurface, borderWidth: 1, borderColor: colors.border,
   },
   sectionTitle: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
@@ -504,6 +504,7 @@ const s = StyleSheet.create({
   },
   statCard: {
     backgroundColor: colors.card, borderRadius: radius.md, borderWidth: 1,
+    borderColor: colors.border,
     padding: space[3] + 2, minHeight: 92, justifyContent: 'space-between',
   },
   statCardHead: {
@@ -531,7 +532,7 @@ const s = StyleSheet.create({
   iconBtn: {
     minWidth: 44, minHeight: 44, borderRadius: radius.pill,
     alignItems: 'center', justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.04)', borderWidth: 1, borderColor: colors.border,
+    backgroundColor: colors.bgSurface, borderWidth: 1, borderColor: colors.border,
   },
   fab: {
     position: 'absolute', right: space[4], bottom: space[5],
@@ -540,7 +541,7 @@ const s = StyleSheet.create({
   },
   input: {
     minHeight: 44,
-    backgroundColor: 'rgba(255,255,255,0.04)', borderWidth: 1, borderColor: colors.border,
+    backgroundColor: colors.bgSurface, borderWidth: 1, borderColor: colors.border,
     borderRadius: radius.sm, paddingHorizontal: space[3], paddingVertical: space[2] + 2,
     color: colors.text, fontSize: 15,
   },
@@ -554,7 +555,7 @@ const s = StyleSheet.create({
   },
   segmented: {
     flexDirection: 'row', gap: space[1], padding: 3,
-    backgroundColor: 'rgba(255,255,255,0.04)', borderRadius: radius.sm + 2,
+    backgroundColor: colors.bgSurface, borderRadius: radius.sm + 2,
     borderWidth: 1, borderColor: colors.border,
   },
   segItem: {
@@ -567,9 +568,9 @@ const s = StyleSheet.create({
   switchIcon: { width: 34, height: 34, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
   track: {
     width: 46, height: 26, borderRadius: radius.pill, padding: 3,
-    backgroundColor: 'rgba(255,255,255,0.08)', justifyContent: 'center',
+    backgroundColor: colors.borderStrong, justifyContent: 'center',
   },
-  knob: { width: 20, height: 20, borderRadius: radius.pill, backgroundColor: colors.textMuted },
+  knob: { width: 20, height: 20, borderRadius: radius.pill, backgroundColor: colors.card },
   badge: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
     paddingHorizontal: space[2], paddingVertical: 3, borderRadius: radius.pill, borderWidth: 1,
@@ -580,15 +581,15 @@ const s = StyleSheet.create({
   emptyIcon: {
     width: 56, height: 56, borderRadius: radius.pill, marginBottom: space[4],
     alignItems: 'center', justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.03)', borderWidth: 1, borderColor: colors.border,
+    backgroundColor: colors.bgSurface, borderWidth: 1, borderColor: colors.border,
   },
   banner: {
     flexDirection: 'row', alignItems: 'center', gap: space[2],
     padding: space[3], borderRadius: radius.sm, borderWidth: 1, marginBottom: space[3],
   },
-  sheetBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.65)' },
+  sheetBackdrop: { flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.45)' },
   sheet: {
-    backgroundColor: colors.bgElevated, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl,
+    backgroundColor: colors.card, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl,
     borderWidth: 1, borderBottomWidth: 0, borderColor: colors.borderStrong,
     paddingHorizontal: space[4], paddingBottom: space[5], maxHeight: '88%',
     ...shadows.sheet,

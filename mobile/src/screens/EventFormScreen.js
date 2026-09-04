@@ -250,7 +250,7 @@ const s = StyleSheet.create({
   pill: {
     paddingHorizontal: space[3], paddingVertical: space[2],
     borderRadius: radius.sm, borderWidth: 1, borderColor: colors.border,
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    backgroundColor: colors.bgSurface,
   },
   swatch: {
     width: 44, height: 36, borderRadius: radius.sm, borderWidth: 2,
