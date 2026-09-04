@@ -37,14 +37,12 @@ export async function ensureChannels() {
     importance: Notifications.AndroidImportance.MAX,
     vibrationPattern: [0, 250, 250, 250],
     lightColor: colors.primary,
-    sound: 'default',
   });
   await Notifications.setNotificationChannelAsync(CHANNELS.reminders, {
     name: 'Nhắc lịch',
     importance: Notifications.AndroidImportance.HIGH,
     vibrationPattern: [0, 200, 150, 200],
     lightColor: colors.cyan,
-    sound: 'default',
   });
 }
 
@@ -129,7 +127,7 @@ export async function syncEventReminders(events) {
               ? `Bắt đầu ngay bây giờ${ev.location ? ` · ${ev.location}` : ''}`
               : `${ev.title} — ${fmtTime(start)}${ev.location ? ` · ${ev.location}` : ''}`,
           data: { kind: EVENT_KIND, eventId: ev.id },
-          sound: 'default',
+          sound: Platform.OS === 'ios' ? 'default' : true,
           ...(Platform.OS === 'android' ? { channelId: CHANNELS.reminders } : {}),
         },
         trigger: { type: DATE_TRIGGER, date: at, channelId: CHANNELS.reminders },
@@ -170,7 +168,7 @@ export async function notifyNow(title, body, data = {}, channel = CHANNELS.leads
       title,
       body,
       data,
-      sound: 'default',
+      sound: Platform.OS === 'ios' ? 'default' : true,
       ...(Platform.OS === 'android' ? { channelId: channel } : {}),
     },
     trigger: null,
