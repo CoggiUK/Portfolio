@@ -2,7 +2,7 @@
   "expo": {
     "name": "Tùng Lâm Workspace",
     "slug": "tunglam-workspace",
-    "scheme": "tunglamworkspace",
+    "scheme": ["tunglamworkspace", "vn.minhtrithanh.tunglam.workspace"],
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
