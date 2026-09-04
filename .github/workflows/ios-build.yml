@@ -1,0 +1,78 @@
+name: Build iOS App
+
+on:
+  workflow_dispatch:
+    inputs:
+      configuration:
+        description: 'Build Configuration (Debug or Release)'
+        required: true
+        default: 'Debug'
+        type: choice
+        options:
+          - Debug
+          - Release
+
+jobs:
+  build-ios:
+    name: Build iOS Simulator App
+    runs-on: macos-14
+    timeout-minutes: 45
+
+    steps:
+      - name: ⬇️ Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: mobile/package-lock.json
+
+      - name: 📦 Install NPM Dependencies
+        working-directory: ./mobile
+        run: npm ci || npm install
+
+      - name: ⚙️ Generate Native iOS Project (Expo Prebuild)
+        working-directory: ./mobile
+        run: npx expo prebuild --platform ios --clean
+
+      - name: 🍎 Setup CocoaPods Cache
+        uses: actions/cache@v4
+        with:
+          path: mobile/ios/Pods
+          key: ${{ runner.os }}-pods-${{ hashFiles('mobile/ios/Podfile.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pods-
+
+      - name: 📦 Install CocoaPods
+        working-directory: ./mobile/ios
+        run: pod install
+
+      - name: 🔨 Compile iOS App (Xcodebuild)
+        working-directory: ./mobile/ios
+        run: |
+          CONFIG="${{ github.event.inputs.configuration || 'Debug' }}"
+          xcodebuild \
+            -workspace TngLmWorkspace.xcworkspace \
+            -scheme TngLmWorkspace \
+            -configuration "$CONFIG" \
+            -sdk iphonesimulator \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            COMPILER_INDEX_STORE_ENABLE=NO
+
+      - name: 📦 Zip Built iOS Application
+        working-directory: ./mobile/ios/build/Build/Products
+        run: |
+          CONFIG="${{ github.event.inputs.configuration || 'Debug' }}"
+          cd "${CONFIG}-iphonesimulator"
+          zip -r ../../../../TungLam-Workspace-iOS.zip TngLmWorkspace.app
+
+      - name: 🚀 Upload iOS Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: TungLam-Workspace-iOS-Simulator
+          path: mobile/TungLam-Workspace-iOS.zip
+          retention-days: 14

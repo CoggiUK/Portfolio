@@ -16,11 +16,23 @@ const TABS = [
 
 export default function PersonalScreen({ navigation, route }) {
   const [tab, setTab] = useState(route.params?.tab || 'tasks');
+  const [createTarget, setCreateTarget] = useState(
+    route.params?.create ? { tab: route.params.tab || 'tasks', id: Date.now() } : null
+  );
 
   // Điều hướng từ Dashboard có thể chỉ định thẳng module cần mở.
   useEffect(() => {
     if (route.params?.tab) setTab(route.params.tab);
-  }, [route.params?.tab]);
+    if (route.params?.create) {
+      setCreateTarget({ tab: route.params.tab || 'tasks', id: Date.now() });
+      navigation.setParams({ create: undefined });
+    }
+  }, [route.params?.tab, route.params?.create, navigation]);
+
+  const handleTabChange = (nextTab) => {
+    setTab(nextTab);
+    setCreateTarget(null);
+  };
 
   const meta = TABS.find((t) => t.value === tab);
 
@@ -32,12 +44,12 @@ export default function PersonalScreen({ navigation, route }) {
         right={<IconBtn icon="settings-outline" onPress={() => navigation.navigate('Settings')} />}
       />
       <View style={{ paddingHorizontal: space[4], paddingBottom: space[3] }}>
-        <Segmented items={TABS} value={tab} onChange={setTab} />
+        <Segmented items={TABS} value={tab} onChange={handleTabChange} />
       </View>
-      {tab === 'tasks' && <TasksPane />}
+      {tab === 'tasks' && <TasksPane initialCreate={createTarget?.tab === 'tasks' ? createTarget.id : 0} />}
       {tab === 'notes' && <NotesPane />}
-      {tab === 'habits' && <HabitsPane />}
-      {tab === 'finance' && <FinancePane />}
+      {tab === 'habits' && <HabitsPane initialCreate={createTarget?.tab === 'habits' ? createTarget.id : 0} />}
+      {tab === 'finance' && <FinancePane initialCreate={createTarget?.tab === 'finance' ? createTarget.id : 0} />}
     </Screen>
   );
 }

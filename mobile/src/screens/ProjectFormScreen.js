@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, ScrollView, Alert } from 'react-native';
 import {
-  Screen, Header, Card, Field, Btn, SectionTitle, Row, IconBtn, Banner,
+  Screen, Header, Card, Field, Btn, SectionTitle, Row, IconBtn, Banner, Chip,
 } from '../components/ui';
 import { colors, space, font } from '../theme';
 import { useApp } from '../contexts/AppContext';
@@ -14,6 +14,7 @@ const slugify = (s) =>
 const blank = {
   id: '', title: '', subtitle: '', role: '', period: '',
   tech: [], metrics: {}, details: [], links: { live: '', github: '', figma: '' },
+  cover: '', imageCount: 0,
 };
 
 export default function ProjectFormScreen({ navigation, route }) {
@@ -26,17 +27,40 @@ export default function ProjectFormScreen({ navigation, route }) {
   );
 
   const [form, setForm] = useState(() => ({ ...blank, ...(existing || {}) }));
+  const [newTech, setNewTech] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
   const setLink = (k, v) => setForm((f) => ({ ...f, links: { ...(f.links || {}), [k]: v } }));
 
+  const addTech = (t) => {
+    const val = (t || newTech).trim();
+    if (!val) return;
+    if (!(form.tech || []).includes(val)) {
+      set('tech', [...(form.tech || []), val]);
+    }
+    setNewTech('');
+  };
+
+  const removeTech = (idx) => {
+    set('tech', (form.tech || []).filter((_, i) => i !== idx));
+  };
+
   const metricEntries = Object.entries(form.metrics || {});
 
   const setMetric = (i, key, value) => {
     const next = metricEntries.map(([k, v], x) => (x === i ? [key, value] : [k, v]));
     set('metrics', Object.fromEntries(next.filter(([k]) => k)));
+  };
+
+  const addMetric = () => {
+    const nextKey = `metric_${Date.now()}`;
+    set('metrics', { ...(form.metrics || {}), [nextKey]: '' });
+  };
+
+  const addDetail = () => {
+    set('details', [...(form.details || []), '']);
   };
 
   const save = async () => {
@@ -50,6 +74,7 @@ export default function ProjectFormScreen({ navigation, route }) {
         title: form.title.trim(),
         tech: (form.tech || []).filter(Boolean),
         details: (form.details || []).map((d) => d.trim()).filter(Boolean),
+        imageCount: Number(form.imageCount || 0),
       };
       const next = [...projects];
       if (typeof index === 'number') next[index] = payload;
@@ -78,7 +103,7 @@ export default function ProjectFormScreen({ navigation, route }) {
     ]);
 
   return (
-    <Screen>
+    <Screen edges={['top', 'bottom']}>
       <Header
         title={existing ? 'Sửa dự án' : 'Dự án mới'}
         subtitle="Hiển thị trên portfolio"
@@ -86,12 +111,13 @@ export default function ProjectFormScreen({ navigation, route }) {
         right={existing ? <IconBtn icon="trash-outline" color={colors.danger} onPress={confirmDelete} /> : null}
       />
       <ScrollView
-        contentContainerStyle={{ padding: space[4], paddingBottom: space[8] }}
+        contentContainerStyle={{ padding: space[4], paddingBottom: space[8] + 24 }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
         <Banner type="error" message={error} onClose={() => setError('')} />
 
+        <SectionTitle>Thông tin cơ bản</SectionTitle>
         <Card>
           <Field label="Tiêu đề" value={form.title} onChangeText={(v) => set('title', v)}
             placeholder="MTT Monitor — GA4 & Ads Tracking Dashboard" />
@@ -101,71 +127,162 @@ export default function ProjectFormScreen({ navigation, route }) {
             placeholder="End-to-End Product Designer" />
           <Field label="Thời gian" value={form.period} onChangeText={(v) => set('period', v)}
             placeholder="07/2025 - Hiện tại" />
-          <Field
-            label="Công nghệ"
-            hint="Cách nhau bởi dấu phẩy — cũng là nguồn tính khối Kỹ năng trên web"
-            value={(form.tech || []).join(', ')}
-            onChangeText={(v) => set('tech', v.split(',').map((t) => t.trim()).filter(Boolean))}
-            multiline
-          />
         </Card>
 
+        {/* ── Kỹ năng & Công nghệ ── */}
         <SectionTitle right={
-          <IconBtn icon="add" color={colors.primary}
-            onPress={() => set('metrics', { ...(form.metrics || {}), [`metric${metricEntries.length + 1}`]: '' })} />
+          <Text style={[font.tiny, { color: colors.cyan, fontWeight: '700' }]}>
+            {(form.tech || []).length} KỸ NĂNG
+          </Text>
         }>
-          Chỉ số hiệu quả
+          Kỹ năng & Công nghệ
         </SectionTitle>
         <Card>
-          {metricEntries.length ? (
-            metricEntries.map(([k, v], i) => (
-              <Row key={i} gap={space[2]} style={{ marginBottom: space[2] }}>
-                <View style={{ flex: 1 }}>
-                  <Field style={{ marginBottom: 0 }} value={k} placeholder="efficiency"
-                    onChangeText={(nk) => setMetric(i, nk, v)} autoCapitalize="none" />
-                </View>
-                <View style={{ flex: 1.3 }}>
-                  <Field style={{ marginBottom: 0 }} value={v} placeholder="3-in-1 GA4 + FB + Ads"
-                    onChangeText={(nv) => setMetric(i, k, nv)} />
-                </View>
-                <IconBtn icon="close" color={colors.danger}
-                  onPress={() => set('metrics', Object.fromEntries(metricEntries.filter((_, x) => x !== i)))} />
-              </Row>
-            ))
+          <Row gap={space[2]} style={{ marginBottom: space[3] }}>
+            <View style={{ flex: 1 }}>
+              <Field
+                style={{ marginBottom: 0 }}
+                placeholder="Nhập kỹ năng (vd: Figma, Next.js...)"
+                value={newTech}
+                onChangeText={setNewTech}
+                onSubmitEditing={() => addTech()}
+                returnKeyType="done"
+              />
+            </View>
+            <Btn title="+ Thêm" icon="add" small variant="secondary" onPress={() => addTech()} />
+          </Row>
+
+          {(form.tech || []).length > 0 ? (
+            <Row style={{ flexWrap: 'wrap' }} gap={space[2]}>
+              {form.tech.map((t, idx) => (
+                <Chip
+                  key={idx}
+                  label={`${t}  ✕`}
+                  active
+                  color={colors.primary}
+                  onPress={() => removeTech(idx)}
+                />
+              ))}
+            </Row>
           ) : (
             <Text style={[font.small, { color: colors.textMuted }]}>
-              Chưa có chỉ số. Bấm + để thêm cặp khoá – giá trị (ví dụ roi → +18% chuyển đổi).
+              Chưa có kỹ năng. Nhập tên kỹ năng vào ô trên và bấm + Thêm.
             </Text>
           )}
         </Card>
 
+        {/* ── Chỉ số hiệu quả (Metrics) ── */}
         <SectionTitle right={
-          <IconBtn icon="add" color={colors.primary} onPress={() => set('details', [...(form.details || []), ''])} />
+          <Btn title="Thêm chỉ số" icon="add" small variant="secondary" onPress={addMetric} />
         }>
-          Điểm nổi bật
+          Chỉ số hiệu quả ({metricEntries.length})
+        </SectionTitle>
+        <Card>
+          {metricEntries.length ? (
+            metricEntries.map(([k, v], i) => (
+              <Row key={i} gap={space[2]} style={{ marginBottom: space[2], alignItems: 'center' }}>
+                <View style={{ flex: 1 }}>
+                  <Field
+                    style={{ marginBottom: 0 }}
+                    value={k}
+                    placeholder="Khoá (vd: leads)"
+                    onChangeText={(nk) => setMetric(i, nk, v)}
+                    autoCapitalize="none"
+                  />
+                </View>
+                <View style={{ flex: 1.3 }}>
+                  <Field
+                    style={{ marginBottom: 0 }}
+                    value={v}
+                    placeholder="Giá trị (vd: +350%)"
+                    onChangeText={(nv) => setMetric(i, k, nv)}
+                  />
+                </View>
+                <IconBtn
+                  icon="trash-outline"
+                  color={colors.danger}
+                  onPress={() => set('metrics', Object.fromEntries(metricEntries.filter((_, x) => x !== i)))}
+                />
+              </Row>
+            ))
+          ) : (
+            <Text style={[font.small, { color: colors.textMuted }]}>
+              Chưa có chỉ số. Bấm nút bên dưới để thêm cặp khoá – giá trị (ví dụ leads → +50% Leads).
+            </Text>
+          )}
+
+          <Btn
+            title="+ Thêm chỉ số hiệu quả"
+            icon="add"
+            variant="secondary"
+            small
+            style={{ marginTop: space[3] }}
+            onPress={addMetric}
+          />
+        </Card>
+
+        {/* ── Điểm nổi bật (Details) ── */}
+        <SectionTitle right={
+          <Btn title="Thêm điểm nổi bật" icon="add" small variant="secondary" onPress={addDetail} />
+        }>
+          Điểm nổi bật ({(form.details || []).length})
         </SectionTitle>
         <Card>
           {(form.details || []).length ? (
             form.details.map((d, i) => (
-              <Row key={i} gap={space[2]} style={{ alignItems: 'flex-start' }}>
+              <Row key={i} gap={space[2]} style={{ alignItems: 'flex-start', marginBottom: space[2] }}>
                 <View style={{ flex: 1 }}>
                   <Field
-                    style={{ marginBottom: space[2] }}
+                    style={{ marginBottom: 0 }}
                     value={d}
                     multiline
                     placeholder="Mô tả một điểm nổi bật của dự án…"
                     onChangeText={(v) => set('details', form.details.map((x, xi) => (xi === i ? v : x)))}
                   />
                 </View>
-                <IconBtn icon="close" color={colors.danger}
-                  onPress={() => set('details', form.details.filter((_, xi) => xi !== i))} />
+                <IconBtn
+                  icon="trash-outline"
+                  color={colors.danger}
+                  onPress={() => set('details', form.details.filter((_, xi) => xi !== i))}
+                />
               </Row>
             ))
           ) : (
-            <Text style={[font.small, { color: colors.textMuted }]}>Bấm + để thêm gạch đầu dòng.</Text>
+            <Text style={[font.small, { color: colors.textMuted }]}>
+              Chưa có điểm nổi bật. Bấm nút bên dưới để thêm gạch đầu dòng mô tả dự án.
+            </Text>
           )}
+
+          <Btn
+            title="+ Thêm điểm nổi bật"
+            icon="add"
+            variant="secondary"
+            small
+            style={{ marginTop: space[3] }}
+            onPress={addDetail}
+          />
         </Card>
 
+        {/* ── Hình ảnh & Demo ── */}
+        <SectionTitle>Hình ảnh & Demo</SectionTitle>
+        <Card>
+          <Field
+            label="Ảnh bìa (URL)"
+            value={form.cover || ''}
+            onChangeText={(v) => set('cover', v)}
+            placeholder="https://…/cover.png hoặc để trống"
+            autoCapitalize="none"
+          />
+          <Field
+            label="Số lượng ảnh demo"
+            value={String(form.imageCount || 0)}
+            onChangeText={(v) => set('imageCount', v.replace(/[^0-9]/g, ''))}
+            placeholder="0"
+            keyboardType="number-pad"
+          />
+        </Card>
+
+        {/* ── Liên kết ── */}
         <SectionTitle>Liên kết</SectionTitle>
         <Card>
           <Field label="Live demo" value={form.links?.live || ''} onChangeText={(v) => setLink('live', v)}
@@ -176,8 +293,22 @@ export default function ProjectFormScreen({ navigation, route }) {
             placeholder="https://figma.com/…" autoCapitalize="none" />
         </Card>
 
-        <Btn title={existing ? 'Lưu thay đổi' : 'Thêm vào website'} icon="cloud-upload-outline"
-          onPress={save} loading={busy} style={{ marginTop: space[5] }} />
+        <View style={{ flexDirection: 'row', gap: space[3], marginTop: space[5] }}>
+          <Btn
+            title="Huỷ"
+            variant="secondary"
+            onPress={() => navigation.goBack()}
+            style={{ flex: 1 }}
+          />
+          <Btn
+            title={existing ? 'Lưu thay đổi' : 'Thêm vào website'}
+            icon="cloud-upload-outline"
+            onPress={save}
+            loading={busy}
+            loadingTitle="Đang lưu…"
+            style={{ flex: 2 }}
+          />
+        </View>
       </ScrollView>
     </Screen>
   );

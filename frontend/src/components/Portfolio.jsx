@@ -379,6 +379,15 @@ export default function Portfolio({ profile, projects, onAdminClick, onOpenProje
     return parts.slice(-2).map((w) => w[0]).join('').toUpperCase() || '✦';
   }, [profile.name]);
 
+  // Học vấn: dữ liệu cũ là một object, dữ liệu mới từ trang quản trị là mảng
+  // (cho phép thêm nhiều bằng cấp) — chuẩn hoá về mảng để render chung.
+  const educations = useMemo(() => {
+    const edu = profile.education;
+    if (Array.isArray(edu)) return edu.filter((e) => e && (e.school || e.major));
+    if (edu && (edu.school || edu.major)) return [edu];
+    return [];
+  }, [profile.education]);
+
   // Skill groups come from the CV; fall back to tech compiled from projects.
   const skillGroups = useMemo(() => {
     if (Array.isArray(profile.skillGroups) && profile.skillGroups.length > 0) {
@@ -778,16 +787,16 @@ export default function Portfolio({ profile, projects, onAdminClick, onOpenProje
           </div>
 
           <aside className="journey-side">
-            {profile.education && (
-              <div className="glass-card edu-card">
+            {educations.map((edu, i) => (
+              <div key={i} className="glass-card edu-card">
                 <div className="timeline-icon"><GraduationCap size={18} /></div>
-                <h3>{profile.education.major}</h3>
-                <p className="timeline-org">{profile.education.school}</p>
+                <h3>{edu.major}</h3>
+                <p className="timeline-org">{edu.school}</p>
                 <div className="edu-meta">
                   <span className="badge">{profile.education.period}</span>
                 </div>
               </div>
-            )}
+            ))}
 
             {Array.isArray(profile.interests) && profile.interests.length > 0 && (
               <div className="glass-card edu-card">
@@ -839,7 +848,7 @@ export default function Portfolio({ profile, projects, onAdminClick, onOpenProje
         <div className="section-head" data-reveal>
           <span className="eyebrow">Liên hệ</span>
           <h2 className="glow-text">Kết Nối Với Mình</h2>
-          <p>Bạn có ý tưởng sản phẩm hoặc cần một người thiết kế tỉ mỉ, hiểu cả quy trình dev? Nhắn cho mình nhé!</p>
+          <p>Bạn đang tìm người cho một vị trí, cần thêm người cho dự án đang chạy, hoặc muốn trao đổi cơ hội hợp tác? Nhắn cho mình nhé!</p>
         </div>
 
         <div className="grid-2" style={{ alignItems: 'stretch' }}>
@@ -862,7 +871,7 @@ export default function Portfolio({ profile, projects, onAdminClick, onOpenProje
               <div className="form-success">
                 <div className="form-success-icon"><CheckCircle2 size={32} /></div>
                 <h3>Gửi tin nhắn thành công!</h3>
-                <p>Cảm ơn bạn đã liên hệ. Tin nhắn đã tới thẳng điện thoại của mình — mình sẽ phản hồi sớm nhất có thể.</p>
+                <p>Cảm ơn bạn đã dành thời gian cho mình. Tin nhắn đã tới thẳng điện thoại của mình — mình sẽ phản hồi sớm nhất có thể.</p>
               </div>
             ) : (
               <form onSubmit={handleFormSubmit} className="contact-form">
@@ -879,8 +888,8 @@ export default function Portfolio({ profile, projects, onAdminClick, onOpenProje
                   <input id="phone" name="phone" type="tel" value={contactForm.phone} onChange={handleFormChange} className="glass-input" placeholder="09xx xxx xxx" />
                 </div>
                 <div>
-                  <label htmlFor="message">Nội dung lời nhắn</label>
-                  <textarea id="message" name="message" rows="4" required value={contactForm.message} onChange={handleFormChange} className="glass-input" placeholder="Mình muốn trao đổi với bạn về..." />
+                  <label htmlFor="message">Nội dung công việc muốn trao đổi</label>
+                  <textarea id="message" name="message" rows="4" required value={contactForm.message} onChange={handleFormChange} className="glass-input" placeholder="Vị trí / dự án, phạm vi công việc, thời gian bắt đầu..." />
                 </div>
                 {formError && <p className="form-error" role="alert">{formError}</p>}
                 <button type="submit" className="btn-neon" disabled={formSending} style={{ justifyContent: 'center', width: '100%', marginTop: '4px' }}>
@@ -931,11 +940,25 @@ function ProjectCard({ project, showcase, hoveredSkill, onOpen, index = 0, layou
   const activeFeature = features.find((f) => f.zone === active);
   const metrics = project.metrics ? Object.values(project.metrics).filter(Boolean) : [];
 
-  // No showcase (e.g. a project added later via Admin) → simple fallback card.
+  // No showcase (e.g. a project added later via Admin) → simple fallback card,
+  // dùng ảnh bìa tải từ trang quản trị nếu có.
   if (!showcase) {
+    const openable = Boolean(project.cover || project.imageCount);
     return (
-      <div className={`glass-card project-card ${isHighlighted ? 'is-highlighted' : ''} ${dimmed ? 'is-dimmed' : ''}`}>
+      <div
+        className={`glass-card project-card ${isHighlighted ? 'is-highlighted' : ''} ${dimmed ? 'is-dimmed' : ''}`}
+        onClick={openable ? () => onOpen?.(project) : undefined}
+        style={openable ? { cursor: 'pointer' } : undefined}
+      >
         <div className="spotlight" />
+        {project.cover && (
+          <div className="project-cover">
+            <img src={project.cover} alt={project.title} loading="lazy" />
+            {project.imageCount > 1 && (
+              <span className="project-cover-count"><ImageIcon size={13} /> {project.imageCount} ảnh</span>
+            )}
+          </div>
+        )}
         <div className="project-head"><h3>{project.title}</h3><div className="badge purple project-role">{project.role}</div></div>
         <p className="project-subtitle">{project.subtitle}</p>
         <div className="project-details">
@@ -944,6 +967,11 @@ function ProjectCard({ project, showcase, hoveredSkill, onOpen, index = 0, layou
           ))}
         </div>
         <div className="tech-row">{(project.tech || []).map((t) => <span key={t} className="badge" style={{ fontSize: '0.78rem', padding: '4px 10px' }}>{t}</span>)}</div>
+        {openable && (
+          <span className="btn-secondary btn-sm" style={{ marginTop: '14px', width: 'fit-content' }}>
+            Xem ảnh demo <ArrowRight size={14} />
+          </span>
+        )}
       </div>
     );
   }

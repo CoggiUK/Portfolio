@@ -21,7 +21,7 @@ export const onLeadCreated = onDocumentCreated('leads/{leadId}', async (event) =
 
   const tokens = await tokensFor(null);
   const sent = await sendPush(tokens, {
-    title: `💬 ${lead.name || 'Khách'} vừa để lại liên hệ`,
+    title: `💬 ${lead.name || 'Ai đó'} vừa liên hệ công việc`,
     body: (lead.message || lead.email || 'Mở app để xem chi tiết').slice(0, 160),
     data: { kind: 'lead', leadId: event.params.leadId },
     channelId: 'leads',

@@ -112,14 +112,14 @@ export default function EventFormScreen({ navigation, route }) {
     ]);
 
   return (
-    <Screen>
+    <Screen edges={['top', 'bottom']}>
       <Header
         title={id ? 'Sửa lịch' : 'Lịch mới'}
         onBack={() => navigation.goBack()}
         right={id ? <IconBtn icon="trash-outline" color={colors.danger} onPress={confirmDelete} /> : null}
       />
       <ScrollView
-        contentContainerStyle={{ padding: space[4], paddingBottom: space[8] }}
+        contentContainerStyle={{ padding: space[4], paddingBottom: space[8] + 24 }}
         keyboardShouldPersistTaps="handled"
       >
         <Banner type="error" message={error} onClose={() => setError('')} />
@@ -197,13 +197,22 @@ export default function EventFormScreen({ navigation, route }) {
           </Text>
         </Card>
 
-        <Btn
-          title={id ? 'Lưu thay đổi' : 'Tạo lịch'}
-          icon="checkmark"
-          onPress={submit}
-          loading={busy}
-          style={{ marginTop: space[4] }}
-        />
+        <View style={{ flexDirection: 'row', gap: space[3], marginTop: space[5] }}>
+          <Btn
+            title="Huỷ"
+            variant="secondary"
+            onPress={() => navigation.goBack()}
+            style={{ flex: 1 }}
+          />
+          <Btn
+            title={id ? 'Lưu thay đổi' : 'Tạo lịch'}
+            icon="checkmark"
+            onPress={submit}
+            loading={busy}
+            loadingTitle={id ? 'Đang lưu…' : 'Đang tạo…'}
+            style={{ flex: 2 }}
+          />
+        </View>
       </ScrollView>
 
       {picker ? (
@@ -241,7 +250,7 @@ const s = StyleSheet.create({
   pill: {
     paddingHorizontal: space[3], paddingVertical: space[2],
     borderRadius: radius.sm, borderWidth: 1, borderColor: colors.border,
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    backgroundColor: colors.bgSurface,
   },
   swatch: {
     width: 44, height: 36, borderRadius: radius.sm, borderWidth: 2,

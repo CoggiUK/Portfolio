@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, Image, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, Image, ActivityIndicator, StyleSheet, Platform } from 'react-native';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -54,17 +54,36 @@ function Tabs() {
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
         tabBarStyle: {
-          backgroundColor: colors.bgElevated,
+          backgroundColor: colors.card,
           borderTopColor: colors.border,
-          height: 62,
-          paddingTop: 6,
-          paddingBottom: 8,
+          borderTopWidth: 1,
+          height: Platform.OS === 'ios' ? 84 : 66,
+          paddingTop: 8,
+          paddingBottom: Platform.OS === 'ios' ? 24 : 10,
+          elevation: 4,
+          shadowColor: '#0F172A',
+          shadowOpacity: 0.05,
+          shadowRadius: 10,
+          shadowOffset: { width: 0, height: -2 },
         },
-        tabBarLabelStyle: { fontSize: 10, fontWeight: '600' },
-        tabBarBadgeStyle: { backgroundColor: colors.primary, color: colors.onPrimary, fontSize: 10 },
-        tabBarIcon: ({ focused, color, size }) => {
+        tabBarLabelStyle: { fontSize: 12, fontWeight: '600', letterSpacing: 0.1, marginTop: 2 },
+        tabBarBadgeStyle: {
+          backgroundColor: colors.primary,
+          color: colors.onPrimary,
+          fontSize: 12,
+          fontWeight: '700',
+          minWidth: 18,
+          height: 18,
+          borderRadius: 9,
+          lineHeight: 18,
+        },
+        tabBarIcon: ({ focused, color }) => {
           const [on, off] = ICONS[route.name] || ICONS['Trang chủ'];
-          return <Ionicons name={focused ? on : off} size={size - 2} color={color} />;
+          return (
+            <View style={s.tabIconWrap}>
+              <Ionicons name={focused ? on : off} size={22} color={color} />
+            </View>
+          );
         },
       })}
     >
@@ -132,4 +151,10 @@ export default function RootNavigator() {
 const s = StyleSheet.create({
   splash: { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
   logo: { width: 84, height: 84, marginBottom: space[5] },
+  tabIconWrap: {
+    width: 32,
+    height: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });
