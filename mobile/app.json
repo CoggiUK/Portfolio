@@ -2,7 +2,7 @@
   "expo": {
     "name": "Tùng Lâm Workspace",
     "slug": "tunglam-workspace",
-    "scheme": ["tunglamworkspace", "vn.minhtrithanh.tunglam.workspace"],
+    "scheme": ["tunglamworkspace", "tunglam.workspace"],
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -16,7 +16,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "vn.minhtrithanh.tunglam.workspace",
+      "bundleIdentifier": "tunglam.workspace",
       "userInterfaceStyle": "dark",
       "infoPlist": {
         "UIBackgroundModes": [
@@ -27,7 +27,7 @@
       }
     },
     "android": {
-      "package": "vn.minhtrithanh.tunglam.workspace",
+      "package": "tunglam.workspace",
       "edgeToEdgeEnabled": true,
       "adaptiveIcon": {
         "backgroundColor": "#07070A",
