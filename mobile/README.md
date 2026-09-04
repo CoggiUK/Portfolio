@@ -42,8 +42,8 @@ Lệnh này tự ghi `extra.eas.projectId` vào `app.json`. Nếu bỏ qua, app 
 2. **APIs & Services → Library** → bật **Google Calendar API**.
 3. **APIs & Services → OAuth consent screen** → chọn External, thêm chính email của bạn vào *Test users*.
 4. **Credentials → Create credentials → OAuth client ID**:
-   - Loại **Android**: package name `vn.minhtrithanh.tunglam.workspace`, SHA-1 lấy bằng `npx eas credentials` (hoặc `keytool` với debug keystore khi chạy `expo run:android`).
-   - Loại **iOS** (nếu build iOS): bundle ID `vn.minhtrithanh.tunglam.workspace`.
+   - Loại **Android**: package name `com.tunglam.workspace`, SHA-1 lấy bằng `npx eas credentials` (hoặc `keytool` với debug keystore khi chạy `expo run:android`).
+   - Loại **iOS** (nếu build iOS): bundle ID `com.tunglam.workspace`.
 5. Dán các client ID vào `.env`:
 
 ```dotenv

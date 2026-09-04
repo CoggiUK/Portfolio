@@ -16,18 +16,15 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "vn.minhtrithanh.tunglam.workspace",
+      "bundleIdentifier": "com.tunglam.workspace",
       "userInterfaceStyle": "dark",
       "infoPlist": {
-        "UIBackgroundModes": [
-          "remote-notification"
-        ],
         "ITSAppUsesNonExemptEncryption": false,
         "UIStatusBarStyle": "UIStatusBarStyleLightContent"
       }
     },
     "android": {
-      "package": "vn.minhtrithanh.tunglam.workspace",
+      "package": "com.tunglam.workspace",
       "edgeToEdgeEnabled": true,
       "adaptiveIcon": {
         "backgroundColor": "#07070A",
