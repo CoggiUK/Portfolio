@@ -285,13 +285,13 @@ export default function SettingsScreen({ navigation }) {
         <Card>
           <Row style={{ justifyContent: 'space-between' }}>
             <Row gap={space[3]} style={{ flex: 1 }}>
-              <View style={[s.iconBox, { backgroundColor: colors.bgSurface, borderColor: colors.border }]}>
-                <Ionicons name="sunny-outline" size={18} color={colors.primary} />
+              <View style={[s.icon, { backgroundColor: colors.bgSurface, borderColor: colors.border, borderWidth: 1 }]}>
+                <Ionicons name="moon-outline" size={18} color={colors.primary} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={[font.body, { color: colors.text, fontWeight: '600' }]}>Giao diện sáng (Light Mode)</Text>
+                <Text style={[font.body, { color: colors.text, fontWeight: '600' }]}>Giao diện tối (Dark Mode)</Text>
                 <Text style={[font.tiny, { color: colors.textMuted, marginTop: 2 }]}>
-                  Chuẩn Slate-50, nền sáng thanh lịch, tối ưu thị giác ban ngày
+                  Chuẩn Deep Slate, phong cách Linear/Stripe, tối ưu cho màn hình OLED
                 </Text>
               </View>
             </Row>
@@ -360,7 +360,7 @@ const s = {
   statGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
   dataStat: {
     flexGrow: 1, flexBasis: '30%', alignItems: 'center', paddingVertical: space[3],
-    borderRadius: radius.sm, backgroundColor: 'rgba(255,255,255,0.03)',
+    borderRadius: radius.sm, backgroundColor: colors.bgSurface,
     borderWidth: 1, borderColor: colors.border,
   },
 };

@@ -14,7 +14,7 @@ export default function App() {
       <SafeAreaProvider>
         <AuthProvider>
           <AppProvider>
-            <StatusBar style="dark" />
+            <StatusBar style="light" />
             <ErrorBoundary>
               <RootNavigator />
             </ErrorBoundary>
