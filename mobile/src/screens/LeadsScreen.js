@@ -35,8 +35,8 @@ const LeadItem = memo(function LeadItem({ item, onOpen, onQuickCall, onQuickMail
       style={[
         s.item,
         !item.read && {
-          borderColor: tint(colors.primary, 0.45),
-          backgroundColor: tint(colors.primary, 0.04),
+          borderLeftWidth: 3,
+          borderLeftColor: colors.primary,
         },
       ]}
       onPress={() => onOpen(item)}
@@ -97,7 +97,7 @@ const LeadItem = memo(function LeadItem({ item, onOpen, onQuickCall, onQuickMail
                 hitSlop={8}
                 style={s.quickCallBtn}
               >
-                <Ionicons name="mail" size={13} color={colors.cyan} />
+                <Ionicons name="mail" size={13} color={colors.primary} />
               </Pressable>
             ) : null}
           </Row>

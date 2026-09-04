@@ -208,7 +208,7 @@ export default function CalendarScreen({ navigation }) {
                       key={e.id}
                       style={[
                         s.cellDot,
-                        { backgroundColor: isSel ? colors.onPrimary : hexOf(e.color) },
+                        { backgroundColor: isSel ? colors.onPrimary : colors.primary },
                       ]}
                     />
                   ))}
@@ -299,25 +299,25 @@ const s = StyleSheet.create({
     paddingVertical: 2,
   },
   cell: {
-    height: 48,
-    borderRadius: radius.sm,
+    height: 44,
+    borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: 'transparent',
-    backgroundColor: colors.bgSurface,
+    backgroundColor: 'transparent',
   },
   cellSel: {
     backgroundColor: colors.primary,
     borderColor: colors.primary,
     shadowColor: colors.primary,
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.25,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 2 },
   },
   cellToday: {
-    borderColor: tint(colors.primary, 0.6),
-    backgroundColor: tint(colors.primary, 0.08),
+    borderColor: colors.primaryBorder,
+    backgroundColor: colors.primarySurface,
   },
   cellDots: {
     flexDirection: 'row',

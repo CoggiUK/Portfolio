@@ -61,7 +61,7 @@ export default function ProjectsPane({ navigation }) {
 
             <Row style={{ marginTop: space[3], flexWrap: 'wrap' }} gap={space[1]}>
               {(p.tech || []).slice(0, 5).map((t) => (
-                <View key={t} style={s.tech}><Text style={[font.tiny, { color: colors.cyan }]}>{t}</Text></View>
+                <View key={t} style={s.tech}><Text style={[font.tiny, { color: colors.textSub, fontWeight: '600' }]}>{t}</Text></View>
               ))}
               {(p.tech || []).length > 5 ? (
                 <Text style={[font.tiny, { color: colors.textMuted }]}>+{p.tech.length - 5}</Text>
@@ -76,7 +76,7 @@ export default function ProjectsPane({ navigation }) {
                     onPress={() => Linking.openURL(p.links.live)} />
                 ) : null}
                 {p.links?.figma ? (
-                  <IconBtn icon="color-palette-outline" size={16} color={colors.secondary}
+                  <IconBtn icon="color-palette-outline" size={16} color={colors.textSub}
                     onPress={() => Linking.openURL(p.links.figma)} />
                 ) : null}
               </Row>
@@ -94,6 +94,6 @@ export default function ProjectsPane({ navigation }) {
 const s = StyleSheet.create({
   tech: {
     paddingHorizontal: space[2], paddingVertical: 3, borderRadius: radius.pill,
-    backgroundColor: colors.cyanDim, borderWidth: 1, borderColor: colors.border,
+    backgroundColor: colors.bgSurface, borderWidth: 1, borderColor: colors.border,
   },
 });

@@ -16,8 +16,8 @@ const NoteItem = memo(function NoteItem({ item, onEdit, onTogglePin, onDelete })
       style={[
         s.note,
         item.pinned && {
-          borderColor: tint(colors.amber, 0.45),
-          backgroundColor: tint(colors.amber, 0.05),
+          borderLeftWidth: 3,
+          borderLeftColor: colors.amber,
         },
       ]}
       onPress={() => onEdit(item)}

@@ -6,47 +6,58 @@ export const lightColors = {
   bg: '#F8FAFC',              // slate-50 clean light background (60% ratio)
   bgElevated: '#FFFFFF',      // pure white surface
   bgSurface: '#F1F5F9',       // slate-100 for input backgrounds, pills, icon buttons
+  bgSurfaceHover: '#E2E8F0',  // slate-200 hover
   card: '#FFFFFF',            // pure white card (30% structural neutral surface)
   cardSolid: '#FFFFFF',
   cardElevated: '#FFFFFF',    // white elevated cards
-  cardHover: '#F1F5F9',       // slate-100 hover
+  cardHover: '#F8FAFC',       // slate-50 hover
   border: '#E2E8F0',          // slate-200 subtle 1px border
   borderStrong: '#CBD5E1',    // slate-300 emphasized border / dividers
-  borderGlow: 'rgba(5, 150, 105, 0.22)',
+  borderGlow: 'rgba(5, 150, 105, 0.15)',
 
-  // Semantic brand & accents (<= 10% screen ratio)
-  primary: '#059669',         // Emerald-600: crisp contrast (> 4.8:1 on white/slate-50)
+  // Signature Primary Accent: Emerald-600 (Executive, crisp contrast >= 4.8:1)
+  primary: '#059669',
   primaryDark: '#047857',
-  primaryGlow: 'rgba(5, 150, 105, 0.20)',
-  primaryDim: 'rgba(5, 150, 105, 0.10)',
+  primarySurface: '#ECFDF5',  // emerald-50: subtle, elegant surface for active tags & pills
+  primaryBorder: '#A7F3D0',   // emerald-200: subtle border for active items
+  primaryGlow: 'rgba(5, 150, 105, 0.16)',
+  primaryDim: 'rgba(5, 150, 105, 0.08)',
 
-  secondary: '#7C3AED',       // Violet-600
-  secondaryGlow: 'rgba(124, 58, 237, 0.20)',
-  secondaryDim: 'rgba(124, 58, 237, 0.08)',
+  // Secondary & Accents — Calibrated to avoid clashing
+  secondary: '#475569',       // Slate-600 for neutral secondary elements
+  secondarySurface: '#F1F5F9',
+  secondaryGlow: 'rgba(15, 23, 42, 0.08)',
+  secondaryDim: 'rgba(71, 85, 105, 0.08)',
 
-  cyan: '#0891B2',           // Cyan-600
-  cyanGlow: 'rgba(8, 145, 178, 0.20)',
-  cyanDim: 'rgba(8, 145, 178, 0.08)',
+  cyan: '#0284C7',           // Sky/Blue-600
+  cyanSurface: '#F0F9FF',
+  cyanGlow: 'rgba(2, 132, 199, 0.15)',
+  cyanDim: 'rgba(2, 132, 199, 0.08)',
 
   amber: '#D97706',          // Amber-600 (warning)
-  amberGlow: 'rgba(217, 119, 6, 0.20)',
+  amberSurface: '#FFFBEB',
+  amberGlow: 'rgba(217, 119, 6, 0.15)',
   amberDim: 'rgba(217, 119, 6, 0.08)',
 
   danger: '#DC2626',         // Red-600 (destructive)
+  dangerSurface: '#FEF2F2',
+  dangerBorder: '#FECACA',
   dangerDim: 'rgba(220, 38, 38, 0.08)',
   destructive: '#DC2626',
   destructiveDim: 'rgba(220, 38, 38, 0.08)',
 
   emerald: '#059669',
-  emeraldDim: 'rgba(5, 150, 105, 0.10)',
+  emeraldSurface: '#ECFDF5',
+  emeraldDim: 'rgba(5, 150, 105, 0.08)',
   success: '#059669',
   warning: '#D97706',
-  info: '#0891B2',
+  info: '#0284C7',
 
   // Slate typography colors (WCAG 2.2 AA contrast verified)
   text: '#0F172A',            // slate-900 (contrast > 13.5:1 on white)
   textSub: '#475569',         // slate-600 (contrast > 7.0:1 on white)
   textMuted: '#64748B',       // slate-500 (contrast >= 4.6:1 on white)
+  textDisabled: '#94A3B8',    // slate-400
   onPrimary: '#FFFFFF',
 };
 

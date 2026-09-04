@@ -180,26 +180,23 @@ export default function HomeScreen({ navigation }) {
             </LinearGradient>
           </Pressable>
         ) : (
-          <LinearGradient
-            colors={[colors.bgSurface, colors.card]}
-            style={s.emptyNextCard}
-          >
+          <View style={s.emptyNextCard}>
             <Row gap={space[3]}>
               <View style={s.sparkleBox}>
-                <Ionicons name="sparkles" size={20} color={colors.primary} />
+                <Ionicons name="sparkles" size={18} color={colors.primary} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={[font.h3, { color: colors.text }]}>Lịch trình hôm nay thảnh thơi</Text>
+                <Text style={[font.h3, { color: colors.text, fontWeight: '700' }]}>Lịch trình hôm nay thảnh thơi</Text>
                 <Text style={[font.small, { color: colors.textMuted, marginTop: 2 }]}>
                   Chưa có sự kiện nào sắp diễn ra.
                 </Text>
               </View>
             </Row>
-          </LinearGradient>
+          </View>
         )}
       </View>
 
-      {/* Lối tắt tạo nhanh (Quick Actions) */}
+      {/* Lối tắt tạo nhanh (Quick Actions — Thống nhất phong cách thanh công cụ) */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -209,29 +206,29 @@ export default function HomeScreen({ navigation }) {
           style={s.quickActionBtn}
           onPress={() => navigation.navigate('EventForm')}
         >
-          <Ionicons name="add-circle" size={15} color={colors.primary} />
-          <Text style={[font.tiny, { color: colors.text }]}>+ Lịch mới</Text>
+          <Ionicons name="add-circle" size={16} color={colors.primary} />
+          <Text style={[font.tiny, { color: colors.text, fontWeight: '600' }]}>+ Lịch mới</Text>
         </Pressable>
         <Pressable
           style={s.quickActionBtn}
           onPress={() => navigation.navigate('Cá nhân', { tab: 'tasks', create: true })}
         >
-          <Ionicons name="checkbox" size={15} color={colors.cyan} />
-          <Text style={[font.tiny, { color: colors.text }]}>+ Thêm việc</Text>
+          <Ionicons name="checkbox" size={16} color={colors.primary} />
+          <Text style={[font.tiny, { color: colors.text, fontWeight: '600' }]}>+ Thêm việc</Text>
         </Pressable>
         <Pressable
           style={s.quickActionBtn}
           onPress={() => navigation.navigate('Cá nhân', { tab: 'habits', create: true })}
         >
-          <Ionicons name="flame" size={15} color={colors.amber} />
-          <Text style={[font.tiny, { color: colors.text }]}>+ Thói quen</Text>
+          <Ionicons name="flame" size={16} color={colors.primary} />
+          <Text style={[font.tiny, { color: colors.text, fontWeight: '600' }]}>+ Thói quen</Text>
         </Pressable>
         <Pressable
           style={s.quickActionBtn}
           onPress={() => navigation.navigate('Cá nhân', { tab: 'finance', create: true })}
         >
-          <Ionicons name="wallet" size={15} color={colors.secondary} />
-          <Text style={[font.tiny, { color: colors.text }]}>+ Chi tiêu</Text>
+          <Ionicons name="wallet" size={16} color={colors.primary} />
+          <Text style={[font.tiny, { color: colors.text, fontWeight: '600' }]}>+ Chi tiêu</Text>
         </Pressable>
       </ScrollView>
 
@@ -469,21 +466,23 @@ const s = StyleSheet.create({
     borderRadius: radius.pill,
   },
   emptyNextCard: {
-    borderRadius: radius.lg,
+    borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
+    backgroundColor: colors.card,
     padding: space[4],
     marginBottom: space[3],
+    ...shadows.card,
   },
   sparkleBox: {
     width: 38,
     height: 38,
     borderRadius: radius.sm,
-    backgroundColor: colors.primaryDim,
+    backgroundColor: colors.primarySurface,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: tint(colors.primary, 0.3),
+    borderColor: colors.primaryBorder,
   },
   quickActions: {
     paddingHorizontal: space[4],
@@ -496,10 +495,11 @@ const s = StyleSheet.create({
     gap: 6,
     paddingHorizontal: space[3],
     paddingVertical: space[2],
-    backgroundColor: colors.bgSurface,
+    backgroundColor: colors.card,
     borderRadius: radius.pill,
     borderWidth: 1,
     borderColor: colors.border,
+    ...shadows.card,
   },
   statsGrid: {
     paddingHorizontal: space[4],

@@ -73,8 +73,8 @@ export function Card({ children, style, onPress, accent, glow }) {
     <View
       style={[
         s.card,
-        accent ? { borderColor: tint(accent, 0.4), backgroundColor: tint(accent, 0.08) } : null,
-        glow && accent ? shadows.glow(accent, 0.25, 16) : shadows.card,
+        accent ? { borderLeftWidth: 3, borderLeftColor: accent } : null,
+        glow && accent ? shadows.glow(accent, 0.15, 12) : shadows.card,
         style,
       ]}
     >
@@ -95,18 +95,33 @@ export function Card({ children, style, onPress, accent, glow }) {
   );
 }
 
-/* ── Thẻ thống kê (Stat Card) ──────────────────────────────────── */
+/* ── Thẻ thống kê (Stat Card — Đồng bộ chuẩn Neutral Card) ──────── */
 
 export function StatCard({ label, value, icon, color = colors.primary, sub, onPress }) {
+  const isPos = sub && (sub.startsWith('+') || sub.toLowerCase().includes('dương'));
+  const isNeg = sub && (sub.startsWith('-') || sub.toLowerCase().includes('âm'));
   const content = (
-    <View style={[s.statCard, { borderColor: tint(color, 0.28) }]}>
+    <View style={s.statCard}>
       <View style={s.statCardHead}>
-        <View style={[s.statCardIcon, { backgroundColor: tint(color, 0.15), borderColor: tint(color, 0.3) }]}>
+        <View style={s.statCardIcon}>
           <Ionicons name={icon} size={17} color={color} />
         </View>
         {sub ? (
-          <View style={[s.statSubBadge, { backgroundColor: tint(color, 0.12) }]}>
-            <Text style={[font.tiny, { color }]}>{sub}</Text>
+          <View
+            style={[
+              s.statSubBadge,
+              isPos && { backgroundColor: colors.primarySurface, borderColor: colors.primaryBorder },
+              isNeg && { backgroundColor: colors.dangerSurface, borderColor: colors.dangerBorder },
+            ]}
+          >
+            <Text
+              style={[
+                font.tiny,
+                { color: isPos ? colors.primary : isNeg ? colors.danger : colors.textSub, fontWeight: '600' },
+              ]}
+            >
+              {sub}
+            </Text>
           </View>
         ) : null}
       </View>
@@ -326,16 +341,35 @@ export function Chip({ label, active, onPress, color = colors.primary, icon, cou
       style={({ pressed }) => [
         s.chip,
         active
-          ? { backgroundColor: tint(color, 0.16), borderColor: tint(color, 0.55) }
-          : { borderColor: colors.border },
+          ? { backgroundColor: color, borderColor: color }
+          : { backgroundColor: colors.card, borderColor: colors.border },
         pressed && { opacity: 0.8 },
       ]}
     >
-      {icon ? <Ionicons name={icon} size={14} color={active ? color : colors.textMuted} /> : null}
-      <Text style={[font.small, { color: active ? color : colors.textSub, fontWeight: '600' }]}>{label}</Text>
+      {icon ? <Ionicons name={icon} size={14} color={active ? colors.onPrimary : colors.textMuted} /> : null}
+      <Text
+        style={[
+          font.small,
+          { color: active ? colors.onPrimary : colors.textSub, fontWeight: active ? '700' : '500' },
+        ]}
+      >
+        {label}
+      </Text>
       {count !== undefined ? (
-        <View style={[s.chipCount, { backgroundColor: active ? tint(color, 0.25) : 'rgba(255,255,255,0.06)' }]}>
-          <Text style={[font.tiny, { color: active ? color : colors.textMuted }]}>{count}</Text>
+        <View
+          style={[
+            s.chipCount,
+            { backgroundColor: active ? 'rgba(255,255,255,0.25)' : colors.bgSurface },
+          ]}
+        >
+          <Text
+            style={[
+              font.tiny,
+              { color: active ? colors.onPrimary : colors.textMuted, fontWeight: '700' },
+            ]}
+          >
+            {count}
+          </Text>
         </View>
       ) : null}
     </Pressable>
@@ -357,15 +391,16 @@ export function Segmented({ items, value, onChange }) {
             style={[
               s.segItem,
               active && {
-                backgroundColor: colors.cardElevated,
-                borderColor: colors.borderStrong,
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+                ...shadows.card,
               },
             ]}
           >
             <Text
               style={[
                 font.small,
-                { color: active ? colors.primary : colors.textSub, fontWeight: active ? '600' : '500' },
+                { color: active ? colors.primary : colors.textSub, fontWeight: active ? '700' : '500' },
               ]}
             >
               {it.label}
@@ -381,7 +416,7 @@ export function SwitchRow({ label, hint, value, onChange, icon, color = colors.p
   return (
     <Pressable onPress={() => onChange(!value)} style={s.switchRow}>
       {icon ? (
-        <View style={[s.switchIcon, { backgroundColor: tint(color, 0.12), borderColor: tint(color, 0.25) }]}>
+        <View style={[s.switchIcon, { backgroundColor: colors.bgSurface, borderColor: colors.border }]}>
           <Ionicons name={icon} size={17} color={color} />
         </View>
       ) : null}
@@ -401,10 +436,35 @@ export const Row = ({ children, style, gap = space[2] }) => (
 );
 
 export function Badge({ label, color = colors.primary, dot = false }) {
+  const isPrimary = color === colors.primary;
+  const isDanger = color === colors.danger || color === colors.destructive;
+  const isWarning = color === colors.warning;
+  const bg = isPrimary
+    ? colors.primarySurface
+    : isDanger
+    ? colors.dangerSurface
+    : isWarning
+    ? colors.amberSurface
+    : colors.bgSurface;
+  const bc = isPrimary
+    ? colors.primaryBorder
+    : isDanger
+    ? colors.dangerBorder
+    : isWarning
+    ? colors.amberSurface
+    : colors.border;
+  const fg = isPrimary
+    ? colors.primary
+    : isDanger
+    ? colors.danger
+    : isWarning
+    ? colors.warning
+    : colors.textSub;
+
   return (
-    <View style={[s.badge, { backgroundColor: tint(color, 0.14), borderColor: tint(color, 0.35) }]}>
-      {dot ? <View style={[s.badgeDot, { backgroundColor: color }]} /> : null}
-      <Text style={[font.tiny, { color, fontWeight: '600' }]}>{label}</Text>
+    <View style={[s.badge, { backgroundColor: bg, borderColor: bc }]}>
+      {dot ? <View style={[s.badgeDot, { backgroundColor: fg }]} /> : null}
+      <Text style={[font.tiny, { color: fg, fontWeight: '600' }]}>{label}</Text>
     </View>
   );
 }
@@ -512,10 +572,11 @@ const s = StyleSheet.create({
   },
   statCardIcon: {
     width: 32, height: 32, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1,
+    backgroundColor: colors.bgSurface, borderWidth: 1, borderColor: colors.border,
   },
   statSubBadge: {
-    paddingHorizontal: 6, paddingVertical: 2, borderRadius: radius.pill,
+    paddingHorizontal: 8, paddingVertical: 2, borderRadius: radius.pill,
+    backgroundColor: colors.bgSurface, borderWidth: 1, borderColor: colors.border,
   },
   btn: {
     minHeight: 44,

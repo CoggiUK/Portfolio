@@ -159,7 +159,7 @@ export default function ProjectFormScreen({ navigation, route }) {
                   key={idx}
                   label={`${t}  ✕`}
                   active
-                  color={colors.cyan}
+                  color={colors.primary}
                   onPress={() => removeTech(idx)}
                 />
               ))}

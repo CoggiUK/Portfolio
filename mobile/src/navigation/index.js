@@ -77,11 +77,11 @@ function Tabs() {
           borderRadius: 9,
           lineHeight: 18,
         },
-        tabBarIcon: ({ focused, color, size }) => {
+        tabBarIcon: ({ focused, color }) => {
           const [on, off] = ICONS[route.name] || ICONS['Trang chủ'];
           return (
-            <View style={[s.tabIconWrap, focused && s.tabIconActive]}>
-              <Ionicons name={focused ? on : off} size={21} color={color} />
+            <View style={s.tabIconWrap}>
+              <Ionicons name={focused ? on : off} size={22} color={color} />
             </View>
           );
         },
@@ -152,13 +152,9 @@ const s = StyleSheet.create({
   splash: { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
   logo: { width: 84, height: 84, marginBottom: space[5] },
   tabIconWrap: {
-    width: 38,
-    height: 30,
-    borderRadius: 15,
+    width: 32,
+    height: 28,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  tabIconActive: {
-    backgroundColor: colors.primaryDim,
   },
 });

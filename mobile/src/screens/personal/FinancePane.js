@@ -228,11 +228,7 @@ export default function FinancePane({ initialCreate }) {
             </Row>
 
             {/* Thẻ tổng kết số dư tháng */}
-            <Card
-              style={s.summaryCard}
-              glow
-              accent={balance >= 0 ? colors.primary : colors.danger}
-            >
+            <Card style={s.summaryCard}>
               <Text style={[font.tiny, { color: colors.textMuted, letterSpacing: 0.5 }]}>
                 TỔNG SỐ DƯ THÁNG NÀY
               </Text>
@@ -242,7 +238,8 @@ export default function FinancePane({ initialCreate }) {
                   {
                     color: balance >= 0 ? colors.primary : colors.danger,
                     marginTop: space[1],
-                    fontSize: 30,
+                    fontSize: 28,
+                    fontWeight: '800',
                   },
                 ]}
               >
@@ -250,9 +247,9 @@ export default function FinancePane({ initialCreate }) {
               </Text>
 
               <Row style={{ marginTop: space[4] }} gap={space[3]}>
-                <View style={[s.metricBox, { borderColor: tint(colors.primary, 0.25) }]}>
-                  <View style={[s.miniIcon, { backgroundColor: colors.primaryDim }]}>
-                    <Ionicons name="arrow-down" size={14} color={colors.primary} />
+                <View style={[s.metricBox, { borderColor: colors.border }]}>
+                  <View style={[s.miniIcon, { backgroundColor: colors.primarySurface }]}>
+                    <Ionicons name="arrow-down" size={15} color={colors.primary} />
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={[font.tiny, { color: colors.textMuted }]}>TỔNG THU</Text>
@@ -262,9 +259,9 @@ export default function FinancePane({ initialCreate }) {
                   </View>
                 </View>
 
-                <View style={[s.metricBox, { borderColor: tint(colors.danger, 0.25) }]}>
-                  <View style={[s.miniIcon, { backgroundColor: colors.dangerDim }]}>
-                    <Ionicons name="arrow-up" size={14} color={colors.danger} />
+                <View style={[s.metricBox, { borderColor: colors.border }]}>
+                  <View style={[s.miniIcon, { backgroundColor: colors.dangerSurface }]}>
+                    <Ionicons name="arrow-up" size={15} color={colors.danger} />
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={[font.tiny, { color: colors.textMuted }]}>TỔNG CHI</Text>
