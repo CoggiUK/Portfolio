@@ -12,6 +12,7 @@ import { colors } from './src/theme';
 LogBox.ignoreLogs([
   'expo-notifications: Custom sound',
   'Cannot connect to Expo CLI',
+  '@firebase/firestore',
 ]);
 
 export default function App() {
