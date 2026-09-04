@@ -10,18 +10,18 @@ import { toDate, fmtDate, money, startOfMonth, addMonths, MONTHS } from '../../u
 
 export const CATEGORIES = {
   expense: [
-    { key: 'food', label: 'Ăn uống', icon: 'restaurant-outline', color: '#FB7185' },
-    { key: 'transport', label: 'Di chuyển', icon: 'car-outline', color: '#60A5FA' },
-    { key: 'study', label: 'Học tập', icon: 'school-outline', color: '#8B5CF6' },
-    { key: 'bill', label: 'Hoá đơn', icon: 'receipt-outline', color: '#FBBF24' },
-    { key: 'fun', label: 'Giải trí', icon: 'game-controller-outline', color: '#00F0FF' },
-    { key: 'other', label: 'Khác', icon: 'ellipsis-horizontal', color: '#9CA3AF' },
+    { key: 'food', label: 'Ăn uống', icon: 'restaurant-outline', color: colors.danger },
+    { key: 'transport', label: 'Di chuyển', icon: 'car-outline', color: colors.cyan },
+    { key: 'study', label: 'Học tập', icon: 'school-outline', color: colors.secondary },
+    { key: 'bill', label: 'Hoá đơn', icon: 'receipt-outline', color: colors.amber },
+    { key: 'fun', label: 'Giải trí', icon: 'game-controller-outline', color: colors.info },
+    { key: 'other', label: 'Khác', icon: 'ellipsis-horizontal', color: colors.textSub },
   ],
   income: [
-    { key: 'salary', label: 'Lương', icon: 'briefcase-outline', color: '#00FF88' },
-    { key: 'freelance', label: 'Freelance', icon: 'color-palette-outline', color: '#00F0FF' },
-    { key: 'bonus', label: 'Thưởng', icon: 'gift-outline', color: '#FBBF24' },
-    { key: 'other', label: 'Khác', icon: 'ellipsis-horizontal', color: '#9CA3AF' },
+    { key: 'salary', label: 'Lương', icon: 'briefcase-outline', color: colors.primary },
+    { key: 'freelance', label: 'Freelance', icon: 'color-palette-outline', color: colors.info },
+    { key: 'bonus', label: 'Thưởng', icon: 'gift-outline', color: colors.amber },
+    { key: 'other', label: 'Khác', icon: 'ellipsis-horizontal', color: colors.textSub },
   ],
 };
 

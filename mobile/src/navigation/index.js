@@ -66,16 +66,16 @@ function Tabs() {
           shadowRadius: 16,
           shadowOffset: { width: 0, height: -4 },
         },
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '600', letterSpacing: 0.2, marginTop: 2 },
+        tabBarLabelStyle: { fontSize: 12, fontWeight: '600', letterSpacing: 0.1, marginTop: 2 },
         tabBarBadgeStyle: {
           backgroundColor: colors.primary,
           color: colors.onPrimary,
-          fontSize: 10,
-          fontWeight: '800',
-          minWidth: 16,
-          height: 16,
-          borderRadius: 8,
-          lineHeight: 16,
+          fontSize: 12,
+          fontWeight: '700',
+          minWidth: 18,
+          height: 18,
+          borderRadius: 9,
+          lineHeight: 18,
         },
         tabBarIcon: ({ focused, color, size }) => {
           const [on, off] = ICONS[route.name] || ICONS['Trang chủ'];

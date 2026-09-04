@@ -197,13 +197,22 @@ export default function EventFormScreen({ navigation, route }) {
           </Text>
         </Card>
 
-        <Btn
-          title={id ? 'Lưu thay đổi' : 'Tạo lịch'}
-          icon="checkmark"
-          onPress={submit}
-          loading={busy}
-          style={{ marginTop: space[4] }}
-        />
+        <View style={{ flexDirection: 'row', gap: space[3], marginTop: space[5] }}>
+          <Btn
+            title="Huỷ"
+            variant="secondary"
+            onPress={() => navigation.goBack()}
+            style={{ flex: 1 }}
+          />
+          <Btn
+            title={id ? 'Lưu thay đổi' : 'Tạo lịch'}
+            icon="checkmark"
+            onPress={submit}
+            loading={busy}
+            loadingTitle={id ? 'Đang lưu…' : 'Đang tạo…'}
+            style={{ flex: 2 }}
+          />
+        </View>
       </ScrollView>
 
       {picker ? (

@@ -288,15 +288,16 @@ export default function ProfilePane() {
         onPress={() => set('skillGroups', [...(draft.skillGroups || []), { label: 'Nhóm mới', items: [] }])}
       />
 
-      <Row style={{ marginTop: space[6] }} gap={space[2]}>
-        {dirty ? <Btn title="Bỏ" variant="ghost" onPress={reset} style={{ flex: 1 }} /> : null}
+      <Row style={{ marginTop: space[6] }} gap={space[3]}>
+        {dirty ? <Btn title="Bỏ thay đổi" variant="secondary" onPress={reset} style={{ flex: 1 }} /> : null}
         <Btn
           title="Lưu lên website"
           icon="cloud-upload-outline"
           onPress={save}
           loading={busy}
+          loadingTitle="Đang lưu…"
           disabled={!dirty}
-          style={{ flex: 2 }}
+          style={{ flex: dirty ? 2 : 1 }}
         />
       </Row>
     </ScrollView>

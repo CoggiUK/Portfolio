@@ -133,16 +133,33 @@ export function StatCard({ label, value, icon, color = colors.primary, sub, onPr
 
 /* ── Nút (Buttons) ─────────────────────────────────────────────── */
 
-export function Btn({ title, onPress, variant = 'primary', icon, loading, disabled, style, small }) {
+export function Btn({
+  title,
+  onPress,
+  variant = 'primary',
+  icon,
+  loading,
+  loadingTitle,
+  disabled,
+  style,
+  small,
+  ...props
+}) {
   const v = {
     primary: {
       bg: colors.primary,
       fg: colors.onPrimary,
       border: 'transparent',
-      glow: shadows.glow(colors.primary, 0.35, 12),
+      glow: shadows.glow(colors.primary, 0.2, 10),
     },
     secondary: {
-      bg: 'rgba(255,255,255,0.06)',
+      bg: colors.cardElevated,
+      fg: colors.text,
+      border: colors.borderStrong,
+      glow: null,
+    },
+    outline: {
+      bg: 'transparent',
       fg: colors.text,
       border: colors.borderStrong,
       glow: null,
@@ -163,13 +180,25 @@ export function Btn({ title, onPress, variant = 'primary', icon, loading, disabl
       bg: colors.cyan,
       fg: colors.onPrimary,
       border: 'transparent',
-      glow: shadows.glow(colors.cyan, 0.35, 12),
+      glow: shadows.glow(colors.cyan, 0.2, 10),
     },
-  }[variant] || {};
+  }[variant] || {
+    bg: colors.primary,
+    fg: colors.onPrimary,
+    border: 'transparent',
+    glow: null,
+  };
 
   const off = disabled || loading;
+  const displayTitle = loading
+    ? loadingTitle || (title?.startsWith('Lưu') ? 'Đang lưu…' : title?.startsWith('Tạo') ? 'Đang tạo…' : 'Đang xử lý…')
+    : title;
+
   return (
     <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ disabled: !!off, busy: !!loading }}
+      hitSlop={small ? 6 : 4}
       onPress={() => {
         if (off) return;
         Haptics.selectionAsync().catch(() => {});
@@ -177,36 +206,47 @@ export function Btn({ title, onPress, variant = 'primary', icon, loading, disabl
       }}
       style={({ pressed }) => [
         s.btn,
-        small && { paddingVertical: space[2], paddingHorizontal: space[3], borderRadius: radius.sm },
+        small && s.btnSmall,
         { backgroundColor: v.bg, borderColor: v.border },
         v.glow,
-        off && { opacity: 0.45 },
+        off && { opacity: 0.5 },
         pressed && !off && { opacity: 0.85, transform: [{ scale: 0.98 }] },
         style,
       ]}
+      {...props}
     >
       {loading ? (
-        <ActivityIndicator size="small" color={v.fg} />
-      ) : (
-        <>
-          {icon ? <Ionicons name={icon} size={small ? 14 : 17} color={v.fg} /> : null}
-          <Text style={[small ? font.small : font.body, { color: v.fg, fontWeight: '700' }]}>{title}</Text>
-        </>
-      )}
+        <ActivityIndicator size="small" color={v.fg} style={{ marginRight: space[1] }} />
+      ) : icon ? (
+        <Ionicons name={icon} size={small ? 14 : 17} color={v.fg} />
+      ) : null}
+      <Text style={[small ? font.small : font.body, { color: v.fg, fontWeight: '600' }]}>
+        {displayTitle}
+      </Text>
     </Pressable>
   );
 }
 
-export const IconBtn = ({ icon, onPress, color = colors.textSub, size = 20, style }) => (
+export const IconBtn = ({
+  icon,
+  onPress,
+  color = colors.textSub,
+  size = 20,
+  style,
+  hitSlop = 8,
+  label,
+}) => (
   <Pressable
-    hitSlop={10}
+    accessibilityRole="button"
+    accessibilityLabel={label || icon}
+    hitSlop={hitSlop}
     onPress={() => {
       Haptics.selectionAsync().catch(() => {});
       onPress?.();
     }}
     style={({ pressed }) => [
       s.iconBtn,
-      pressed && { opacity: 0.6, transform: [{ scale: 0.92 }] },
+      pressed && { opacity: 0.6, transform: [{ scale: 0.94 }] },
       style,
     ]}
   >
@@ -217,14 +257,15 @@ export const IconBtn = ({ icon, onPress, color = colors.textSub, size = 20, styl
 export function FAB({ onPress, icon = 'add' }) {
   return (
     <Pressable
+      accessibilityRole="button"
       onPress={() => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
         onPress?.();
       }}
       style={({ pressed }) => [
         s.fab,
-        shadows.glow(colors.primary, 0.45, 18),
-        pressed && { transform: [{ scale: 0.92 }] },
+        shadows.glow(colors.primary, 0.35, 14),
+        pressed && { transform: [{ scale: 0.94 }] },
       ]}
     >
       <Ionicons name={icon} size={26} color={colors.onPrimary} />
@@ -232,19 +273,45 @@ export function FAB({ onPress, icon = 'add' }) {
   );
 }
 
-/* ── Nhập liệu ──────────────────────────────────────────────────── */
+/* ── Nhập liệu (Field Anatomy: Label top, helper text, error state) ── */
 
-export function Field({ label, hint, style, multiline, ...props }) {
+export function Field({
+  label,
+  hint,
+  error,
+  required,
+  style,
+  multiline,
+  inputStyle,
+  ...props
+}) {
   return (
-    <View style={[{ marginBottom: space[3] }, style]}>
-      {label ? <Text style={[font.small, { color: colors.textSub, marginBottom: space[2] }]}>{label}</Text> : null}
+    <View style={[{ marginBottom: space[4] }, style]}>
+      {label ? (
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: space[1] + 2 }}>
+          <Text style={[font.small, { color: colors.textSub, fontWeight: '500' }]}>{label}</Text>
+          {required ? <Text style={{ color: colors.danger, marginLeft: 3 }}>*</Text> : null}
+        </View>
+      ) : null}
       <TextInput
         placeholderTextColor={colors.textMuted}
-        style={[s.input, multiline && { minHeight: 100, textAlignVertical: 'top', paddingTop: space[3] }]}
+        style={[
+          s.input,
+          error && { borderColor: colors.danger },
+          multiline && { minHeight: 100, textAlignVertical: 'top', paddingTop: space[3] },
+          inputStyle,
+        ]}
         multiline={multiline}
         {...props}
       />
-      {hint ? <Text style={[font.tiny, { color: colors.textMuted, marginTop: space[1] }]}>{hint}</Text> : null}
+      {error ? (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: space[1] }}>
+          <Ionicons name="alert-circle" size={14} color={colors.danger} />
+          <Text style={[font.tiny, { color: colors.danger }]}>{error}</Text>
+        </View>
+      ) : hint ? (
+        <Text style={[font.tiny, { color: colors.textMuted, marginTop: space[1] }]}>{hint}</Text>
+      ) : null}
     </View>
   );
 }
@@ -264,7 +331,7 @@ export function Chip({ label, active, onPress, color = colors.primary, icon, cou
         pressed && { opacity: 0.8 },
       ]}
     >
-      {icon ? <Ionicons name={icon} size={13} color={active ? color : colors.textMuted} /> : null}
+      {icon ? <Ionicons name={icon} size={14} color={active ? color : colors.textMuted} /> : null}
       <Text style={[font.small, { color: active ? color : colors.textSub, fontWeight: '600' }]}>{label}</Text>
       {count !== undefined ? (
         <View style={[s.chipCount, { backgroundColor: active ? tint(color, 0.25) : 'rgba(255,255,255,0.06)' }]}>
@@ -290,19 +357,15 @@ export function Segmented({ items, value, onChange }) {
             style={[
               s.segItem,
               active && {
-                backgroundColor: colors.primaryDim,
-                borderColor: tint(colors.primary, 0.4),
-                shadowColor: colors.primary,
-                shadowOpacity: 0.2,
-                shadowRadius: 8,
-                shadowOffset: { width: 0, height: 2 },
+                backgroundColor: colors.cardElevated,
+                borderColor: colors.borderStrong,
               },
             ]}
           >
             <Text
               style={[
                 font.small,
-                { color: active ? colors.primary : colors.textSub, fontWeight: active ? '700' : '500' },
+                { color: active ? colors.primary : colors.textSub, fontWeight: active ? '600' : '500' },
               ]}
             >
               {it.label}
@@ -341,12 +404,12 @@ export function Badge({ label, color = colors.primary, dot = false }) {
   return (
     <View style={[s.badge, { backgroundColor: tint(color, 0.14), borderColor: tint(color, 0.35) }]}>
       {dot ? <View style={[s.badgeDot, { backgroundColor: color }]} /> : null}
-      <Text style={[font.tiny, { color, fontWeight: '700' }]}>{label}</Text>
+      <Text style={[font.tiny, { color, fontWeight: '600' }]}>{label}</Text>
     </View>
   );
 }
 
-export function Empty({ icon = 'sparkles-outline', title, hint }) {
+export function Empty({ icon = 'sparkles-outline', title, hint, action }) {
   return (
     <View style={s.empty}>
       <View style={s.emptyIcon}>
@@ -358,6 +421,7 @@ export function Empty({ icon = 'sparkles-outline', title, hint }) {
           {hint}
         </Text>
       ) : null}
+      {action ? <View style={{ marginTop: space[4] }}>{action}</View> : null}
     </View>
   );
 }
@@ -368,6 +432,22 @@ export const Loading = ({ label = 'Đang tải…' }) => (
     <Text style={[font.small, { color: colors.textMuted, marginTop: space[3] }]}>{label}</Text>
   </View>
 );
+
+export function Skeleton({ width = '100%', height = 20, style, radiusVal = radius.sm }) {
+  return (
+    <View
+      style={[
+        {
+          width,
+          height,
+          backgroundColor: 'rgba(255, 255, 255, 0.06)',
+          borderRadius: radiusVal,
+        },
+        style,
+      ]}
+    />
+  );
+}
 
 export function Banner({ type = 'info', message, onClose }) {
   if (!message) return null;
@@ -380,12 +460,12 @@ export function Banner({ type = 'info', message, onClose }) {
         color={c}
       />
       <Text style={[font.small, { color: c, flex: 1, fontWeight: '500' }]}>{message}</Text>
-      {onClose ? <IconBtn icon="close" size={15} color={c} onPress={onClose} /> : null}
+      {onClose ? <IconBtn icon="close" size={16} color={c} onPress={onClose} label="Đóng" /> : null}
     </View>
   );
 }
 
-/** Bottom sheet mượt mà dùng cho form nhanh */
+/** Bottom sheet mượt mà dùng cho form nhanh (Chuẩn Apple HIG / Material 3) */
 export function Sheet({ visible, onClose, title, children }) {
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
@@ -394,7 +474,7 @@ export function Sheet({ visible, onClose, title, children }) {
         <View style={s.sheetGrip} />
         <View style={s.sheetHead}>
           <Text style={[font.h2, { color: colors.text, flex: 1 }]}>{title}</Text>
-          <IconBtn icon="close" onPress={onClose} size={22} />
+          <IconBtn icon="close" onPress={onClose} size={20} label="Đóng sheet" />
         </View>
         <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: space[6] }}>
           {children}
@@ -411,7 +491,7 @@ const s = StyleSheet.create({
     paddingHorizontal: space[4], paddingTop: space[3], paddingBottom: space[3],
   },
   backBtn: {
-    width: 36, height: 36, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center',
+    width: 44, height: 44, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center',
     backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1, borderColor: colors.border,
   },
   sectionTitle: {
@@ -437,12 +517,19 @@ const s = StyleSheet.create({
     paddingHorizontal: 6, paddingVertical: 2, borderRadius: radius.pill,
   },
   btn: {
+    minHeight: 44,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space[2],
-    paddingVertical: space[3], paddingHorizontal: space[4],
+    paddingVertical: space[2] + 2, paddingHorizontal: space[4],
     borderRadius: radius.md, borderWidth: 1,
   },
+  btnSmall: {
+    minHeight: 36,
+    paddingVertical: space[1] + 2,
+    paddingHorizontal: space[3],
+    borderRadius: radius.sm,
+  },
   iconBtn: {
-    width: 36, height: 36, borderRadius: radius.pill,
+    minWidth: 44, minHeight: 44, borderRadius: radius.pill,
     alignItems: 'center', justifyContent: 'center',
     backgroundColor: 'rgba(255,255,255,0.04)', borderWidth: 1, borderColor: colors.border,
   },
@@ -452,8 +539,9 @@ const s = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   input: {
+    minHeight: 44,
     backgroundColor: 'rgba(255,255,255,0.04)', borderWidth: 1, borderColor: colors.border,
-    borderRadius: radius.sm, paddingHorizontal: space[3], paddingVertical: space[3],
+    borderRadius: radius.sm, paddingHorizontal: space[3], paddingVertical: space[2] + 2,
     color: colors.text, fontSize: 15,
   },
   chip: {
@@ -485,11 +573,12 @@ const s = StyleSheet.create({
   badge: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
     paddingHorizontal: space[2], paddingVertical: 3, borderRadius: radius.pill, borderWidth: 1,
+    minHeight: 24,
   },
   badgeDot: { width: 6, height: 6, borderRadius: 3 },
   empty: { alignItems: 'center', justifyContent: 'center', paddingVertical: space[7], paddingHorizontal: space[5] },
   emptyIcon: {
-    width: 60, height: 60, borderRadius: radius.pill, marginBottom: space[4],
+    width: 56, height: 56, borderRadius: radius.pill, marginBottom: space[4],
     alignItems: 'center', justifyContent: 'center',
     backgroundColor: 'rgba(255,255,255,0.03)', borderWidth: 1, borderColor: colors.border,
   },
@@ -502,14 +591,13 @@ const s = StyleSheet.create({
     backgroundColor: colors.bgElevated, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl,
     borderWidth: 1, borderBottomWidth: 0, borderColor: colors.borderStrong,
     paddingHorizontal: space[4], paddingBottom: space[5], maxHeight: '88%',
-    shadowColor: '#000', shadowOpacity: 0.5, shadowRadius: 24, shadowOffset: { width: 0, height: -6 },
-    elevation: 20,
+    ...shadows.sheet,
   },
   sheetGrip: {
-    width: 44, height: 4, borderRadius: 2, backgroundColor: colors.borderStrong,
+    width: 36, height: 4, borderRadius: 2, backgroundColor: colors.borderStrong,
     alignSelf: 'center', marginTop: space[3],
   },
-  sheetHead: { flexDirection: 'row', alignItems: 'center', paddingVertical: space[4] },
+  sheetHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: space[4] },
 });
 
 export { s as uiStyles };

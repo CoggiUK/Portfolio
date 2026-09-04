@@ -94,6 +94,6 @@ export default function ProjectsPane({ navigation }) {
 const s = StyleSheet.create({
   tech: {
     paddingHorizontal: space[2], paddingVertical: 3, borderRadius: radius.pill,
-    backgroundColor: colors.cyanDim, borderWidth: 1, borderColor: 'rgba(0,240,255,0.22)',
+    backgroundColor: colors.cyanDim, borderWidth: 1, borderColor: colors.border,
   },
 });

@@ -293,13 +293,22 @@ export default function ProjectFormScreen({ navigation, route }) {
             placeholder="https://figma.com/…" autoCapitalize="none" />
         </Card>
 
-        <Btn
-          title={existing ? 'Lưu thay đổi' : 'Thêm vào website'}
-          icon="cloud-upload-outline"
-          onPress={save}
-          loading={busy}
-          style={{ marginTop: space[5] }}
-        />
+        <View style={{ flexDirection: 'row', gap: space[3], marginTop: space[5] }}>
+          <Btn
+            title="Huỷ"
+            variant="secondary"
+            onPress={() => navigation.goBack()}
+            style={{ flex: 1 }}
+          />
+          <Btn
+            title={existing ? 'Lưu thay đổi' : 'Thêm vào website'}
+            icon="cloud-upload-outline"
+            onPress={save}
+            loading={busy}
+            loadingTitle="Đang lưu…"
+            style={{ flex: 2 }}
+          />
+        </View>
       </ScrollView>
     </Screen>
   );
