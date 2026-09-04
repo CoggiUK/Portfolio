@@ -34,6 +34,45 @@ export default function ProfilePane() {
     setDirty(true);
   };
 
+  // Chuẩn hoá học vấn: Hỗ trợ cả mảng hoặc object đơn (dữ liệu cũ).
+  const eduList = Array.isArray(draft.education)
+    ? draft.education
+    : draft.education && (draft.education.school || draft.education.major)
+      ? [draft.education]
+      : [];
+
+  const updateEdu = (idx, field, val) => {
+    const next = [...eduList];
+    next[idx] = { ...(next[idx] || {}), [field]: val };
+    set('education', next);
+  };
+
+  const addEdu = () => {
+    set('education', [...eduList, { school: '', major: '', period: '', gpa: '' }]);
+  };
+
+  const removeEdu = (idx) => {
+    set('education', eduList.filter((_, i) => i !== idx));
+  };
+
+  // Chuẩn hoá kinh nghiệm
+  const expList = Array.isArray(draft.experience) ? draft.experience : [];
+
+  const updateExp = (idx, field, val) => {
+    const next = [...expList];
+    next[idx] = { ...(next[idx] || {}), [field]: val };
+    set('experience', next);
+  };
+
+  const addExp = () => {
+    set('experience', [...expList, { role: '', company: '', period: '', points: [] }]);
+  };
+
+  const removeExp = (idx) => {
+    set('experience', expList.filter((_, i) => i !== idx));
+  };
+
+  // Chuẩn hoá nhóm kỹ năng
   const setGroupItems = (idx, text) => {
     const groups = [...(draft.skillGroups || [])];
     groups[idx] = { ...groups[idx], items: text.split(',').map((s) => s.trim()).filter(Boolean) };
@@ -43,7 +82,12 @@ export default function ProfilePane() {
   const save = async () => {
     setBusy(true);
     try {
-      await db.saveSiteProfile(draft);
+      const cleanedEdu = eduList.filter((e) => (e.school || '').trim() || (e.major || '').trim());
+      const payload = {
+        ...draft,
+        education: cleanedEdu,
+      };
+      await db.saveSiteProfile(payload);
       setDirty(false);
       notify('Đã cập nhật hồ sơ trên website', 'success');
     } catch (err) {
@@ -92,19 +136,120 @@ export default function ProfilePane() {
         />
       </Card>
 
-      <SectionTitle>Học vấn</SectionTitle>
-      <Card>
-        {['school', 'major', 'period', 'gpa'].map((k) => (
-          <Field
-            key={k}
-            label={{ school: 'Trường', major: 'Chuyên ngành', period: 'Thời gian', gpa: 'GPA' }[k]}
-            value={draft.education?.[k] || ''}
-            onChangeText={(v) => set('education', { ...(draft.education || {}), [k]: v })}
-          />
-        ))}
-      </Card>
+      <SectionTitle right={
+        <Btn title="Thêm học vấn" icon="add" small variant="secondary" onPress={addEdu} />
+      }>
+        Học vấn ({eduList.length})
+      </SectionTitle>
 
-      <SectionTitle>Nhóm kỹ năng</SectionTitle>
+      {eduList.map((edu, idx) => (
+        <Card key={idx} style={{ marginBottom: space[3] }}>
+          <Row style={{ justifyContent: 'space-between', marginBottom: space[2] }}>
+            <Text style={[font.h3, { color: colors.primary, fontWeight: '700' }]}>
+              {edu.school || `Học vấn #${idx + 1}`}
+            </Text>
+            <IconBtn
+              icon="trash-outline"
+              color={colors.danger}
+              onPress={() => removeEdu(idx)}
+            />
+          </Row>
+          <Field
+            label="Trường"
+            value={edu.school || ''}
+            onChangeText={(v) => updateEdu(idx, 'school', v)}
+            placeholder="Đại học FPT"
+          />
+          <Field
+            label="Chuyên ngành"
+            value={edu.major || ''}
+            onChangeText={(v) => updateEdu(idx, 'major', v)}
+            placeholder="Kỹ thuật phần mềm / Thiết kế đồ hoạ"
+          />
+          <Row gap={space[2]}>
+            <View style={{ flex: 1.5 }}>
+              <Field
+                label="Thời gian"
+                value={edu.period || ''}
+                onChangeText={(v) => updateEdu(idx, 'period', v)}
+                placeholder="2021 - 2024"
+              />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Field
+                label="GPA"
+                value={edu.gpa || ''}
+                onChangeText={(v) => updateEdu(idx, 'gpa', v)}
+                placeholder="3.2 / 4.0"
+              />
+            </View>
+          </Row>
+        </Card>
+      ))}
+
+      <Btn
+        title="+ Thêm học vấn / Bằng cấp mới"
+        icon="add"
+        variant="secondary"
+        onPress={addEdu}
+        style={{ marginBottom: space[4] }}
+      />
+
+      <SectionTitle right={
+        <Btn title="Thêm kinh nghiệm" icon="add" small variant="secondary" onPress={addExp} />
+      }>
+        Kinh nghiệm làm việc ({expList.length})
+      </SectionTitle>
+
+      {expList.map((exp, idx) => (
+        <Card key={idx} style={{ marginBottom: space[3] }}>
+          <Row style={{ justifyContent: 'space-between', marginBottom: space[2] }}>
+            <Text style={[font.h3, { color: colors.secondary, fontWeight: '700' }]}>
+              {exp.role || `Kinh nghiệm #${idx + 1}`}
+            </Text>
+            <IconBtn
+              icon="trash-outline"
+              color={colors.danger}
+              onPress={() => removeExp(idx)}
+            />
+          </Row>
+          <Field
+            label="Vị trí / Vai trò"
+            value={exp.role || ''}
+            onChangeText={(v) => updateExp(idx, 'role', v)}
+            placeholder="UI/UX Designer"
+          />
+          <Field
+            label="Công ty / Tổ chức"
+            value={exp.company || ''}
+            onChangeText={(v) => updateExp(idx, 'company', v)}
+            placeholder="Học viện Minh Trí Thành"
+          />
+          <Field
+            label="Thời gian"
+            value={exp.period || ''}
+            onChangeText={(v) => updateExp(idx, 'period', v)}
+            placeholder="03/2024 - Hiện tại"
+          />
+          <Field
+            label="Chi tiết công việc (Mỗi dòng một ý)"
+            value={(exp.points || []).join('\n')}
+            onChangeText={(v) => updateExp(idx, 'points', v.split('\n'))}
+            multiline
+            placeholder="Phụ trách thiết kế giao diện..."
+          />
+        </Card>
+      ))}
+
+      <Btn
+        title="+ Thêm kinh nghiệm làm việc"
+        icon="add"
+        variant="secondary"
+        onPress={addExp}
+        style={{ marginBottom: space[4] }}
+      />
+
+      <SectionTitle>Nhóm kỹ năng ({ (draft.skillGroups || []).length })</SectionTitle>
       {(draft.skillGroups || []).map((g, i) => (
         <Card key={i} style={{ marginBottom: space[2] }}>
           <Row style={{ justifyContent: 'space-between', marginBottom: space[2] }}>
@@ -145,8 +290,14 @@ export default function ProfilePane() {
 
       <Row style={{ marginTop: space[6] }} gap={space[2]}>
         {dirty ? <Btn title="Bỏ" variant="ghost" onPress={reset} style={{ flex: 1 }} /> : null}
-        <Btn title="Lưu lên website" icon="cloud-upload-outline" onPress={save} loading={busy}
-          disabled={!dirty} style={{ flex: 2 }} />
+        <Btn
+          title="Lưu lên website"
+          icon="cloud-upload-outline"
+          onPress={save}
+          loading={busy}
+          disabled={!dirty}
+          style={{ flex: 2 }}
+        />
       </Row>
     </ScrollView>
   );

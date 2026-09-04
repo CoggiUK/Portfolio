@@ -63,9 +63,22 @@ const EventItem = memo(function EventItem({ event, onPress }) {
 });
 
 export default function CalendarScreen({ navigation }) {
-  const { events, googleConnected, syncing, syncGoogle } = useApp();
+  const { events, googleConnected, syncing, syncGoogle, notify } = useApp();
   const [anchor, setAnchor] = useState(startOfMonth(new Date()));
   const [selected, setSelected] = useState(new Date());
+  const [reloading, setReloading] = useState(false);
+
+  const handleReload = useCallback(async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+    if (googleConnected) {
+      await syncGoogle();
+    } else {
+      setReloading(true);
+      await new Promise((r) => setTimeout(r, 600));
+      setReloading(false);
+      notify('Đã làm mới lịch làm việc', 'success');
+    }
+  }, [googleConnected, syncGoogle, notify]);
 
   // Gom sự kiện theo ngày tối ưu qua useMemo
   const byDay = useMemo(() => {
@@ -117,9 +130,9 @@ export default function CalendarScreen({ navigation }) {
         right={
           <Row gap={space[2]}>
             <IconBtn
-              icon={syncing ? 'sync' : 'sync-outline'}
+              icon={syncing || reloading ? 'sync' : 'sync-outline'}
               color={googleConnected ? colors.primary : colors.textMuted}
-              onPress={() => (googleConnected ? syncGoogle() : navigation.navigate('Settings'))}
+              onPress={handleReload}
             />
             <IconBtn icon="today-outline" onPress={jumpToday} />
           </Row>

@@ -14,7 +14,7 @@ import {
 export default function HomeScreen({ navigation }) {
   const {
     uid, events, tasks, habits, transactions, leads, site, unreadLeads,
-    googleConnected, syncing, syncGoogle, toast,
+    googleConnected, syncing, syncGoogle, toast, notify,
   } = useApp();
   const [refreshing, setRefreshing] = useState(false);
 
@@ -69,11 +69,29 @@ export default function HomeScreen({ navigation }) {
     ? 'Lâm'
     : (cleanName.split(/\s+/).pop() || 'Lâm');
 
+  const handleReload = useCallback(async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+    if (googleConnected) {
+      await syncGoogle();
+    } else {
+      setRefreshing(true);
+      await new Promise((r) => setTimeout(r, 600));
+      setRefreshing(false);
+      notify('Đã làm mới dữ liệu đám mây', 'success');
+    }
+  }, [googleConnected, syncGoogle, notify]);
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    if (googleConnected) await syncGoogle();
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    if (googleConnected) {
+      await syncGoogle();
+    } else {
+      await new Promise((r) => setTimeout(r, 600));
+      notify('Đã làm mới dữ liệu đám mây', 'success');
+    }
     setRefreshing(false);
-  }, [googleConnected, syncGoogle]);
+  }, [googleConnected, syncGoogle, notify]);
 
   const toggleHabit = useCallback((h) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
@@ -104,9 +122,9 @@ export default function HomeScreen({ navigation }) {
           right={
             <Row gap={space[2]}>
               <IconBtn
-                icon={syncing ? 'sync' : 'sync-outline'}
+                icon={syncing || refreshing ? 'sync' : 'sync-outline'}
                 color={googleConnected ? colors.primary : colors.textMuted}
-                onPress={() => (googleConnected ? syncGoogle() : navigation.navigate('Settings'))}
+                onPress={handleReload}
               />
               <IconBtn icon="settings-outline" onPress={() => navigation.navigate('Settings')} />
             </Row>
