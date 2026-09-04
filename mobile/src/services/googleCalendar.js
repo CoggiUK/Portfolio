@@ -171,8 +171,11 @@ export function useGoogleAuth(onDone, clientIdOverride) {
       onDone?.(false, 'Chưa có Google OAuth Client ID — dán vào ô bên dưới trước đã.');
       return;
     }
+    console.log('[gcal] Request URL:', request?.url);
+    console.log('[gcal] RedirectURI:', request?.redirectUri);
+    console.log('[gcal] ClientID:', request?.clientId);
     await promptAsync();
-  }, [configured, promptAsync, onDone]);
+  }, [configured, promptAsync, onDone, request]);
 
   const disconnect = useCallback(async () => {
     const t = await readTokens();
