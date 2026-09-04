@@ -31,11 +31,13 @@ import {
   Store,
   Milestone,
   Mouse,
-  Image as ImageIcon
+  Menu,
+  X
 } from 'lucide-react';
 import MockUI from './MockUI';
 import { getShowcase } from '../data/showcases';
 import useReveal from '../hooks/useReveal';
+import useMediaQuery from '../hooks/useMediaQuery';
 
 // Custom brand icon — Lucide removed brand glyphs after v0.400+
 const Facebook = ({ size = 24, ...props }) => (
@@ -147,6 +149,125 @@ function IntroSplash({ profile, initials, onEnter }) {
   );
 }
 
+/* Colour cycle for the climb: the summit always reads emerald, the rest
+   alternate violet / cyan so adjacent stages stay visually distinct. */
+const climbTone = (i, last) =>
+  i === last
+    ? { line: 'var(--primary-color)', glow: 'rgba(0, 255, 136, .40)' }
+    : i % 2 === 0
+      ? { line: 'var(--secondary-color)', glow: 'rgba(139, 92, 246, .40)' }
+      : { line: 'var(--cyan-accent)', glow: 'rgba(0, 240, 255, .40)' };
+
+/* Card body shared by both timeline layouts. */
+function ClimbCardBody({ step }) {
+  return (
+    <>
+      <div className="climb-tags">
+        <span className="climb-camp">{step.camp}</span>
+        <span className="climb-alt">ALT {step.altitude}</span>
+      </div>
+      <h3 className="climb-title">{step.title}</h3>
+      <span className="climb-year">{step.year}</span>
+      <p className="climb-desc">{step.desc}</p>
+    </>
+  );
+}
+
+/* Desktop: a winding bezier "road" with stages alternating above and below.
+   Horizontally scrollable — the curve needs real width to read as a climb. */
+function ClimbTimelineWinding({ steps }) {
+  const total = steps.length;
+  const STEP = 300;      // horizontal distance between stages
+  const LEAD = 150;      // lead-in so the first card is never clipped at x=0
+  const MID = 250;       // vertical centre of the curve
+  const AMP = 80;        // how far the curve swings above/below centre
+  const width = LEAD * 2 + (total - 1) * STEP;
+  const height = 500;
+
+  const nodeX = (i) => LEAD + i * STEP;
+  const nodeY = (i) => MID + (i % 2 === 0 ? AMP : -AMP);
+
+  let path = `M ${nodeX(0)} ${nodeY(0)}`;
+  for (let i = 1; i < total; i++) {
+    path += ` C ${nodeX(i - 1) + STEP / 2} ${nodeY(i - 1)}, ${nodeX(i) - STEP / 2} ${nodeY(i)}, ${nodeX(i)} ${nodeY(i)}`;
+  }
+
+  return (
+    <div className="climb-scroll-outer" data-reveal>
+      <div className="climb-scroll-inner" style={{ width: `${width}px`, height: `${height}px` }}>
+        <svg className="climb-svg" viewBox={`0 0 ${width} ${height}`} aria-hidden="true">
+          <defs>
+            <linearGradient id="climb-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="var(--primary-color)" />
+              <stop offset="50%" stopColor="var(--secondary-color)" />
+              <stop offset="100%" stopColor="var(--cyan-accent)" />
+            </linearGradient>
+          </defs>
+          <path className="climb-path-glow" d={path} />
+          <path className="climb-path" d={path} />
+          {steps.map((_, i) => (
+            <line
+              key={i}
+              className="climb-connector"
+              x1={nodeX(i)} y1={nodeY(i)}
+              x2={nodeX(i)} y2={i % 2 === 0 ? MID - 15 : MID + 15}
+              stroke={climbTone(i, total - 1).line}
+            />
+          ))}
+        </svg>
+
+        {steps.map((step, i) => {
+          const tone = climbTone(i, total - 1);
+          const below = i % 2 === 0; // node sits below centre → card goes above
+          return (
+            <React.Fragment key={i}>
+              <span
+                className="climb-node"
+                style={{ left: `${nodeX(i)}px`, top: `${nodeY(i)}px`, color: tone.line, borderColor: tone.line, boxShadow: `0 0 14px ${tone.glow}` }}
+              >
+                {getClimbIcon(step.icon)}
+              </span>
+              <article
+                className="glass-card climb-card-horizontal"
+                style={{ left: `${nodeX(i)}px`, top: below ? '30px' : `${MID + 30}px`, '--tone': tone.line }}
+              >
+                <ClimbCardBody step={step} />
+              </article>
+            </React.Fragment>
+          );
+        })}
+      </div>
+      <p className="climb-swipe-hint" aria-hidden="true">Cuộn ngang để đi hết hành trình →</p>
+    </div>
+  );
+}
+
+/* Mobile / tablet: a single vertical rail. Every stage keeps the same left
+   edge, so nothing needs horizontal scrolling or off-screen positioning. */
+function ClimbTimelineVertical({ steps }) {
+  const total = steps.length;
+  return (
+    <ol className="climb-vertical">
+      {steps.map((step, i) => {
+        const tone = climbTone(i, total - 1);
+        return (
+          <li className="climb-v-item" key={i} data-reveal style={{ transitionDelay: `${Math.min(i, 5) * 60}ms` }}>
+            <span
+              className="climb-node climb-node--v"
+              style={{ color: tone.line, borderColor: tone.line, boxShadow: `0 0 14px ${tone.glow}` }}
+            >
+              {getClimbIcon(step.icon)}
+            </span>
+            <article className="glass-card climb-card-v" style={{ '--tone': tone.line }}>
+              <ClimbCardBody step={step} />
+            </article>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
 const getClimbIcon = (iconName) => {
   switch (iconName) {
     case 'GraduationCap': return <GraduationCap size={16} />;
@@ -204,6 +325,16 @@ function MouseGlow() {
   );
 }
 
+const NAV_ITEMS = [
+  { href: '#about', label: 'Giới thiệu' },
+  { href: '#climb', label: 'Leo núi' },
+  { href: '#skills', label: 'Kỹ năng' },
+  { href: '#projects', label: 'Dự án' },
+  { href: '#journey', label: 'Hành trình' },
+  { href: '#events', label: 'Dấu ấn' },
+  { href: '#contact', label: 'Liên hệ' },
+];
+
 export default function Portfolio({ profile, projects, onAdminClick, onOpenProject }) {
   const [hoveredSkill, setHoveredSkill] = useState(null);
   const [formSubmitted, setFormSubmitted] = useState(false);
@@ -211,7 +342,25 @@ export default function Portfolio({ profile, projects, onAdminClick, onOpenProje
   const [formError, setFormError] = useState('');
   const [contactForm, setContactForm] = useState({ name: '', email: '', phone: '', message: '' });
   const [entered, setEntered] = useState(introSeen);
+  const [menuOpen, setMenuOpen] = useState(false);
   const enterSite = () => { introSeen = true; setEntered(true); };
+
+  // Below this width the winding climb curve and the inline nav both stop
+  // working, so each swaps to a layout built for a narrow, touch-first screen.
+  const isCompact = useMediaQuery('(max-width: 900px)');
+
+  // Derived, not synced: growing back to the desktop nav closes the drawer
+  // without a state-sync effect that could leave a stale scroll lock behind.
+  const drawerOpen = menuOpen && isCompact;
+
+  // Escape closes it; the page behind stays put while it is open.
+  useEffect(() => {
+    if (!drawerOpen) return;
+    const onKey = (e) => { if (e.key === 'Escape') setMenuOpen(false); };
+    window.addEventListener('keydown', onKey);
+    document.body.style.overflow = 'hidden';
+    return () => { window.removeEventListener('keydown', onKey); document.body.style.overflow = ''; };
+  }, [drawerOpen]);
 
   // Premium motion: reveal-on-scroll across all sections.
   useReveal([projects.length]);
@@ -287,6 +436,82 @@ export default function Portfolio({ profile, projects, onAdminClick, onOpenProje
     }
   };
 
+  // Hero building blocks — shared by the desktop two-column layout and the
+  // stacked mobile layout, so the two never drift out of sync.
+  const heroAvatar = (
+    <div className="avatar-wrap">
+      <div className="avatar-glow" />
+      <div
+        onDoubleClick={onAdminClick}
+        title="Nháy đúp để mở Admin Console bí mật"
+        className={`avatar-container ${profile.avatar ? 'has-image' : ''}`}
+      >
+        {profile.avatar ? <img src={profile.avatar} alt={profile.name} /> : initials}
+      </div>
+    </div>
+  );
+
+  const heroEyebrow = (
+    <div className="hero-eyebrow">
+      <span className="status-dot" /> Sẵn sàng cộng tác · {profile.location || 'Hà Nội'}
+    </div>
+  );
+
+  const heroStats = (
+    <div className="hero-stats">
+      <div className="hero-stat">
+        <span className="hero-stat-num"><CountUp value={projects.length} suffix="+" /></span>
+        <span className="hero-stat-label">Dự án sản phẩm</span>
+      </div>
+      <div className="hero-stat">
+        <span className="hero-stat-num"><CountUp value={skillGroups.length} /></span>
+        <span className="hero-stat-label">Nhóm kỹ năng</span>
+      </div>
+      <div className="hero-stat">
+        <span className="hero-stat-num">AI</span>
+        <span className="hero-stat-label">Design-first</span>
+      </div>
+    </div>
+  );
+
+  const heroFacts = (
+    <ul className="hero-card-facts">
+      {profile.company && (
+        <li><Briefcase size={15} /> <span>{profile.company}</span></li>
+      )}
+      {profile.location && (
+        <li><MapPin size={15} /> <span>{profile.location}</span></li>
+      )}
+      {profile.education?.school && (
+        <li>
+          <GraduationCap size={15} />
+          <span>{profile.education.major} · {profile.education.school}</span>
+        </li>
+      )}
+    </ul>
+  );
+
+  const heroCta = (
+    <div className="hero-cta">
+      <a href="#projects" className="btn-neon">Xem các dự án <Sparkles size={16} /></a>
+      <a href="#contact" className="btn-secondary">Liên hệ với mình</a>
+    </div>
+  );
+
+  const heroSocial = (
+    <div className="social-row">
+      {profile.facebook && (
+        <a href={profile.facebook} target="_blank" rel="noreferrer" className="social-icon" title="Facebook"><Facebook size={20} /></a>
+      )}
+      {profile.email && (
+        <a href={`mailto:${profile.email}`} className="social-icon" title="Email"><Mail size={20} /></a>
+      )}
+      {profile.behance && (
+        <a href={profile.behance} target="_blank" rel="noreferrer" className="social-icon" title="Behance / Portfolio"><Compass size={20} /></a>
+      )}
+    </div>
+  );
+
   return (
     <div className="portfolio-root" style={{ position: 'relative', zIndex: 10 }}>
       <MouseGlow />
@@ -325,94 +550,84 @@ export default function Portfolio({ profile, projects, onAdminClick, onOpenProje
           <span>Tùng Lâm Nguyễn</span>
         </div>
         <nav className="nav-links">
-          <a href="#about" className="nav-link">Giới thiệu</a>
-          <a href="#climb" className="nav-link">Leo núi</a>
-          <a href="#skills" className="nav-link">Kỹ năng</a>
-          <a href="#projects" className="nav-link">Dự án</a>
-          <a href="#journey" className="nav-link">Hành trình</a>
-          <a href="#events" className="nav-link">Dấu ấn</a>
-          <a href="#contact" className="nav-link">Liên hệ</a>
-          <button onClick={onAdminClick} className="btn-secondary btn-sm">
+          {NAV_ITEMS.map((item) => (
+            <a key={item.href} href={item.href} className="nav-link">{item.label}</a>
+          ))}
+          <button onClick={onAdminClick} className="btn-secondary btn-sm nav-console">
             <Lock size={14} />
             <span>Console</span>
+          </button>
+          <button
+            className="nav-burger"
+            onClick={() => setMenuOpen((v) => !v)}
+            aria-expanded={drawerOpen}
+            aria-controls="mobile-menu"
+            aria-label={drawerOpen ? 'Đóng menu' : 'Mở menu'}
+          >
+            {drawerOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
         </nav>
       </header>
 
-      {/* ABOUT — original two-column hero (job title removed) */}
-      <section id="about" className="container hero">
-        <div className="hero-left">
-          <div className="hero-eyebrow">
-            <span className="status-dot" /> Sẵn sàng cộng tác · {profile.location || 'Hà Nội'}
+      {/* MOBILE DRAWER — the same links, reachable on a phone */}
+      <div
+        className={`nav-scrim ${drawerOpen ? 'is-open' : ''}`}
+        onClick={() => setMenuOpen(false)}
+        aria-hidden="true"
+      />
+      <nav id="mobile-menu" className={`mobile-menu ${drawerOpen ? 'is-open' : ''}`} aria-hidden={!drawerOpen}>
+        <ul>
+          {NAV_ITEMS.map((item, i) => (
+            <li key={item.href} style={{ transitionDelay: drawerOpen ? `${60 + i * 35}ms` : '0ms' }}>
+              <a href={item.href} onClick={() => setMenuOpen(false)}>
+                <span>{item.label}</span>
+                <ArrowRight size={16} />
+              </a>
+            </li>
+          ))}
+        </ul>
+        <button
+          className="btn-secondary mobile-menu-console"
+          onClick={() => { setMenuOpen(false); onAdminClick(); }}
+        >
+          <Lock size={15} /> <span>Admin Console</span>
+        </button>
+      </nav>
+
+      {/* ABOUT — desktop: two columns · mobile: a single, stacked column ordered
+          avatar → name → bio → profile card → CTA (see the isCompact branch) */}
+      <section id="about" className={`container hero ${isCompact ? 'is-compact' : ''}`}>
+        {isCompact ? (
+          <div className="hero-compact">
+            <div className="hero-c-item">{heroAvatar}</div>
+            <div className="hero-c-item">{heroEyebrow}</div>
+            <h1 className="glow-text hero-title hero-c-item">{profile.name}</h1>
+            <p className="hero-bio hero-c-item">{profile.bio}</p>
+            <aside className="hero-card glass-card hero-card--compact hero-c-item">
+              {heroStats}
+              {heroFacts}
+            </aside>
+            <div className="hero-c-item">{heroCta}</div>
+            <div className="hero-c-item">{heroSocial}</div>
           </div>
-
-          <h1 className="glow-text hero-title">{profile.name}</h1>
-
-          <p className="hero-bio">{profile.bio}</p>
-
-          <div className="hero-cta">
-            <a href="#projects" className="btn-neon">Xem các dự án <Sparkles size={16} /></a>
-            <a href="#contact" className="btn-secondary">Liên hệ với mình</a>
-          </div>
-
-          <div className="social-row">
-            {profile.facebook && (
-              <a href={profile.facebook} target="_blank" rel="noreferrer" className="social-icon" title="Facebook"><Facebook size={20} /></a>
-            )}
-            {profile.email && (
-              <a href={`mailto:${profile.email}`} className="social-icon" title="Email"><Mail size={20} /></a>
-            )}
-            {profile.behance && (
-              <a href={profile.behance} target="_blank" rel="noreferrer" className="social-icon" title="Behance / Portfolio"><Compass size={20} /></a>
-            )}
-          </div>
-        </div>
-
-        {/* Profile quick-card */}
-        <aside className="hero-card glass-card">
-          <div className="avatar-wrap">
-            <div className="avatar-glow" />
-            <div
-              onDoubleClick={onAdminClick}
-              title="Nháy đúp để mở Admin Console bí mật"
-              className={`avatar-container ${profile.avatar ? 'has-image' : ''}`}
-            >
-              {profile.avatar
-                ? <img src={profile.avatar} alt={profile.name} />
-                : initials}
+        ) : (
+          <>
+            <div className="hero-left">
+              {heroEyebrow}
+              <h1 className="glow-text hero-title">{profile.name}</h1>
+              <p className="hero-bio">{profile.bio}</p>
+              {heroCta}
+              {heroSocial}
             </div>
-          </div>
 
-          <div className="hero-stats">
-            <div className="hero-stat">
-              <span className="hero-stat-num"><CountUp value={projects.length} suffix="+" /></span>
-              <span className="hero-stat-label">Dự án sản phẩm</span>
-            </div>
-            <div className="hero-stat">
-              <span className="hero-stat-num"><CountUp value={skillGroups.length} /></span>
-              <span className="hero-stat-label">Nhóm kỹ năng</span>
-            </div>
-            <div className="hero-stat">
-              <span className="hero-stat-num">AI</span>
-              <span className="hero-stat-label">Design-first</span>
-            </div>
-          </div>
-
-          <ul className="hero-card-facts">
-            {profile.company && (
-              <li><Briefcase size={15} /> <span>{profile.company}</span></li>
-            )}
-            {profile.location && (
-              <li><MapPin size={15} /> <span>{profile.location}</span></li>
-            )}
-            {educations.map((edu, i) => (
-              <li key={i}>
-                <GraduationCap size={15} />
-                <span>{edu.major} · {edu.school}{edu.gpa ? ` (GPA ${edu.gpa})` : ''}</span>
-              </li>
-            ))}
-          </ul>
-        </aside>
+            {/* Profile quick-card */}
+            <aside className="hero-card glass-card">
+              {heroAvatar}
+              {heroStats}
+              {heroFacts}
+            </aside>
+          </>
+        )}
       </section>
 
       {/* TECH MARQUEE — infinite ticker of tools & stacks */}
@@ -427,189 +642,21 @@ export default function Portfolio({ profile, projects, onAdminClick, onOpenProje
       )}
 
       {/* CLIMBING JOURNEY SECTION */}
-      {Array.isArray(profile.climbingSteps) && profile.climbingSteps.length > 0 && (() => {
-        const totalSteps = profile.climbingSteps.length;
-        const stepWidth = 300;
-        const totalWidth = 200 + (totalSteps - 1) * stepWidth;
-        
-        // Generate winding bezier path
-        let windingPath = '';
-        if (totalSteps > 0) {
-          windingPath = `M 100 ${240 + (0 % 2 === 0 ? 80 : -80)}`;
-          for (let i = 1; i < totalSteps; i++) {
-            const x0 = 100 + (i - 1) * stepWidth;
-            const y0 = 240 + ((i - 1) % 2 === 0 ? 80 : -80);
-            const x1 = 100 + i * stepWidth;
-            const y1 = 240 + (i % 2 === 0 ? 80 : -80);
-            
-            const cp1x = x0 + stepWidth / 2;
-            const cp1y = y0;
-            const cp2x = x1 - stepWidth / 2;
-            const cp2y = y1;
-            
-            windingPath += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${x1} ${y1}`;
-          }
-        }
+      {Array.isArray(profile.climbingSteps) && profile.climbingSteps.length > 0 && (
+        <section id="climb" className="container section">
+          <div className="section-head" data-reveal>
+            <span className="eyebrow" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+              <MountainIcon size={14} /> Chinh phục
+            </span>
+            <h2 className="glow-text">Hành trình Leo núi Cuộc đời</h2>
+            <p>Từng chặng đường, từng độ cao — nơi mình học, làm và lớn lên.</p>
+          </div>
 
-        return (
-          <section id="climb" className="container section">
-            <div className="section-head" data-reveal>
-              <span className="eyebrow" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                <MountainIcon size={14} /> Chinh phục
-              </span>
-              <h2 className="glow-text">Hành trình Leo núi Cuộc đời</h2>
-            </div>
-
-            <div className="climb-scroll-outer" style={{ 
-              overflowX: 'auto', 
-              overflowY: 'hidden', 
-              position: 'relative', 
-              padding: '20px 0 40px',
-              margin: '0 -24px',
-              paddingLeft: '24px',
-              paddingRight: '24px',
-              WebkitOverflowScrolling: 'touch'
-            }}>
-              <div className="climb-scroll-inner" style={{ 
-                width: `${totalWidth}px`, 
-                height: '480px', 
-                position: 'relative' 
-              }}>
-                {/* Winding SVGs */}
-                <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 1 }} viewBox={`0 0 ${totalWidth} 480`}>
-                  <defs>
-                    <linearGradient id="climb-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                      <stop offset="0%" stopColor="var(--primary-color)" />
-                      <stop offset="50%" stopColor="var(--secondary-color)" />
-                      <stop offset="100%" stopColor="var(--cyan-accent)" />
-                    </linearGradient>
-                  </defs>
-                  
-                  {/* Glowing background path */}
-                  <path 
-                    d={windingPath} 
-                    fill="none" 
-                    stroke="var(--cyan-accent)" 
-                    strokeWidth="12" 
-                    strokeLinecap="round"
-                    style={{ opacity: 0.08, filter: 'blur(6px)' }}
-                  />
-
-                  {/* Main colorful winding road */}
-                  <path 
-                    d={windingPath} 
-                    fill="none" 
-                    stroke="url(#climb-gradient)" 
-                    strokeWidth="4" 
-                    strokeLinecap="round"
-                    style={{ opacity: 0.8 }}
-                  />
-
-                  {/* Dashed vertical connectors */}
-                  {profile.climbingSteps.map((step, i) => {
-                    const isEven = i % 2 === 0;
-                    const x = 100 + i * stepWidth;
-                    const yNode = 240 + (isEven ? 80 : -80);
-                    const yCardBound = isEven ? 215 : 245;
-                    return (
-                      <line 
-                        key={i}
-                        x1={x}
-                        y1={yNode}
-                        x2={x}
-                        y2={yCardBound}
-                        stroke={isEven ? 'var(--secondary-color)' : 'var(--primary-color)'}
-                        strokeWidth="1.5"
-                        strokeDasharray="4 4"
-                        style={{ opacity: 0.4 }}
-                      />
-                    );
-                  })}
-                </svg>
-
-                {/* Nodes and Cards overlay */}
-                {profile.climbingSteps.map((step, i) => {
-                  const isEven = i % 2 === 0;
-                  const x = 100 + i * stepWidth;
-                  const yNode = 240 + (isEven ? 80 : -80);
-                  const cardTop = isEven ? '25px' : '250px';
-
-                  return (
-                    <React.Fragment key={i}>
-                      {/* Node positioned exactly on the curve */}
-                      <div style={{
-                        position: 'absolute',
-                        left: `${x}px`,
-                        top: `${yNode}px`,
-                        transform: 'translate(-50%, -50%)',
-                        width: '34px',
-                        height: '34px',
-                        borderRadius: '50%',
-                        background: 'var(--bg-card)',
-                        border: '2px solid ' + (i === totalSteps - 1 ? 'var(--primary-color)' : (isEven ? 'var(--secondary-color)' : 'var(--cyan-accent)')),
-                        boxShadow: '0 0 12px ' + (i === totalSteps - 1 ? 'rgba(0, 255, 136, 0.4)' : (isEven ? 'rgba(139, 92, 246, 0.4)' : 'rgba(0, 240, 255, 0.4)')),
-                        zIndex: 3,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: i === totalSteps - 1 ? 'var(--primary-color)' : (isEven ? 'var(--secondary-color)' : 'var(--cyan-accent)'),
-                        backdropFilter: 'blur(5px)'
-                      }}>
-                        {getClimbIcon(step.icon)}
-                      </div>
-
-                      {/* Card positioned above or below the node */}
-                      <div 
-                        className="glass-card climb-card-horizontal"
-                        style={{
-                          position: 'absolute',
-                          left: `${x}px`,
-                          top: cardTop,
-                          transform: 'translateX(-50%)',
-                          width: '260px',
-                          padding: '14px 18px',
-                          border: '1px solid rgba(255, 255, 255, 0.05)',
-                          background: 'rgba(255, 255, 255, 0.02)',
-                          textAlign: 'left',
-                          zIndex: 2,
-                          transition: 'all 0.3s ease',
-                          cursor: 'default'
-                        }}
-                      >
-                        {/* Altitude / Camp badge */}
-                        <div style={{ 
-                          display: 'flex', 
-                          justifyContent: 'flex-start', 
-                          alignItems: 'center', 
-                          gap: '6px',
-                          marginBottom: '6px'
-                        }}>
-                          <span className="badge" style={{ fontSize: '0.7rem', padding: '1px 6px', borderColor: 'transparent', background: 'rgba(139, 92, 246, 0.15)', color: 'var(--secondary-color)' }}>
-                            {step.camp}
-                          </span>
-                          <span className="badge primary" style={{ fontSize: '0.7rem', padding: '1px 6px' }}>
-                            ALT {step.altitude}
-                          </span>
-                        </div>
-
-                        <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#ffffff', marginBottom: '2px' }}>
-                          {step.title}
-                        </h3>
-                        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>
-                          {step.year}
-                        </span>
-                        <p style={{ fontSize: '0.82rem', color: 'var(--text-sub)', lineHeight: 1.5, margin: 0 }}>
-                          {step.desc}
-                        </p>
-                      </div>
-                    </React.Fragment>
-                  );
-                })}
-              </div>
-            </div>
-          </section>
-        );
-      })()}
+          {isCompact
+            ? <ClimbTimelineVertical steps={profile.climbingSteps} />
+            : <ClimbTimelineWinding steps={profile.climbingSteps} />}
+        </section>
+      )}
 
       {/* SKILLS SECTION */}
       <section id="skills" className="container section">
@@ -664,6 +711,7 @@ export default function Portfolio({ profile, projects, onAdminClick, onOpenProje
                     index={i}
                     layout="row"
                     reverse={i % 2 === 1}
+                    isCompact={isCompact}
                   />
                 ))}
               </div>
@@ -686,6 +734,7 @@ export default function Portfolio({ profile, projects, onAdminClick, onOpenProje
                       onOpen={onOpenProject}
                       index={i}
                       layout="tile"
+                      isCompact={isCompact}
                     />
                   ))}
                 </div>
@@ -744,8 +793,7 @@ export default function Portfolio({ profile, projects, onAdminClick, onOpenProje
                 <h3>{edu.major}</h3>
                 <p className="timeline-org">{edu.school}</p>
                 <div className="edu-meta">
-                  {edu.period && <span className="badge">{edu.period}</span>}
-                  {edu.gpa && <span className="badge primary">GPA {edu.gpa}</span>}
+                  <span className="badge">{profile.education.period}</span>
                 </div>
               </div>
             ))}
@@ -772,61 +820,23 @@ export default function Portfolio({ profile, projects, onAdminClick, onOpenProje
             <span className="eyebrow">Dấu ấn</span>
             <h2 className="glow-text">Sự kiện &amp; Hoạt động Nổi bật</h2>
           </div>
-          <div className="grid-3 event-grid" style={{ gap: '20px' }}>
+          <div className="event-grid">
             {profile.events.map((evt, i) => {
-              let badgeColor = 'rgba(0, 255, 136, 0.1)';
-              let badgeText = 'var(--primary-color)';
-              let iconColor = 'var(--primary-color)';
-              
-              if (evt.type.includes('cố vấn')) {
-                badgeColor = 'rgba(139, 92, 246, 0.15)';
-                badgeText = 'var(--secondary-color)';
-                iconColor = 'var(--secondary-color)';
-              } else if (evt.type.includes('Nội bộ')) {
-                badgeColor = 'rgba(0, 240, 255, 0.15)';
-                badgeText = 'var(--cyan-accent)';
-                iconColor = 'var(--cyan-accent)';
-              }
-              
+              // Colour-code by involvement so the three kinds read apart at a glance.
+              const tone = evt.type.includes('cố vấn') ? 'purple'
+                : evt.type.includes('Nội bộ') ? 'cyan'
+                  : 'green';
               return (
-                <div 
-                  key={i} 
-                  className="glass-card event-card" 
-                  data-reveal 
-                  style={{ 
-                    transitionDelay: `${(i % 3) * 100}ms`,
-                    padding: '24px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                    minHeight: '140px',
-                    border: '1px solid rgba(255, 255, 255, 0.05)',
-                    background: 'rgba(255, 255, 255, 0.02)',
-                    backdropFilter: 'blur(10px)'
-                  }}
+                <article
+                  key={i}
+                  className={`glass-card event-card event-card--${tone}`}
+                  data-reveal
+                  style={{ transitionDelay: `${(i % 3) * 90}ms` }}
                 >
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                      <span 
-                        className="badge" 
-                        style={{ 
-                          backgroundColor: badgeColor, 
-                          color: badgeText,
-                          borderColor: 'transparent',
-                          fontSize: '0.75rem',
-                          padding: '4px 10px'
-                        }}
-                      >
-                        {evt.type}
-                      </span>
-                    </div>
-                    <h3 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#ffffff', lineHeight: 1.4 }}>{evt.name}</h3>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', marginTop: '16px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                    <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: iconColor, marginRight: '8px' }} />
-                    {evt.org || 'FPTU AI Club'}
-                  </div>
-                </div>
+                  <span className="event-type">{evt.type}</span>
+                  <h3 className="event-name">{evt.name}</h3>
+                  <span className="event-org"><i aria-hidden="true" />{evt.org || 'FPTU AI Club'}</span>
+                </article>
               );
             })}
           </div>
@@ -904,7 +914,7 @@ export default function Portfolio({ profile, projects, onAdminClick, onOpenProje
 
 /* ---- Rich, interactive project card with web+mobile preview ---- */
 
-function ProjectCard({ project, showcase, hoveredSkill, onOpen, index = 0, layout = 'tile', reverse = false }) {
+function ProjectCard({ project, showcase, hoveredSkill, onOpen, index = 0, layout = 'tile', reverse = false, isCompact = false }) {
   const [active, setActive] = useState(null);
   const previewRef = useRef(null);
 
@@ -966,7 +976,23 @@ function ProjectCard({ project, showcase, hoveredSkill, onOpen, index = 0, layou
     );
   }
 
-  const preview = (
+  /* A desktop dashboard scaled to fit a 350px card renders its labels at ~6px —
+     unreadable. On compact screens we show the design that actually belongs to
+     that screen: the mobile mock, at full size, in a phone frame. */
+  const preview = isCompact ? (
+    <div className="pc-preview pc-preview--compact" onClick={() => onOpen?.(project)}>
+      <div className="pc-phone-solo">
+        <span className="pc-phone-solo-notch" aria-hidden="true" />
+        <div className="pc-phone-solo-vp">
+          <MockUI kind={showcase.mobile.kind} variant="mobile" accent={accent} theme={showcase.theme} brand={showcase.landing?.brand} />
+        </div>
+      </div>
+      <span className="pc-type" style={{ borderColor: accent, color: accent }}>
+        {isLanding ? <Rocket size={12} /> : <LayoutDashboard size={12} />} {showcase.label}
+      </span>
+      <span className="pc-devices"><Monitor size={13} /><Smartphone size={13} /></span>
+    </div>
+  ) : (
     <div className="pc-preview" ref={previewRef} onClick={() => onOpen?.(project)} onMouseMove={handleTilt} onMouseLeave={resetTilt}>
       <div className="pc-browser">
         <div className="pc-browser-bar"><span className="pc-dots"><i /><i /><i /></span></div>
@@ -989,6 +1015,8 @@ function ProjectCard({ project, showcase, hoveredSkill, onOpen, index = 0, layou
     </div>
   );
 
+  /* Hover can't be expressed on a touch screen, so on compact viewports the
+     same chips become tap-to-reveal (and the hint copy says so). */
   const featureBlock = features.length > 0 ? (
     <>
       <div className="pc-features">
@@ -997,9 +1025,14 @@ function ProjectCard({ project, showcase, hoveredSkill, onOpen, index = 0, layou
             key={f.zone}
             className={`pc-feat ${active === f.zone ? 'is-on' : ''}`}
             style={active === f.zone ? { borderColor: accent, color: accent } : {}}
-            onMouseEnter={() => setActive(f.zone)}
-            onMouseLeave={() => setActive(null)}
-            onClick={(e) => { e.stopPropagation(); onOpen?.(project); }}
+            onMouseEnter={isCompact ? undefined : () => setActive(f.zone)}
+            onMouseLeave={isCompact ? undefined : () => setActive(null)}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (isCompact) setActive((cur) => (cur === f.zone ? null : f.zone));
+              else onOpen?.(project);
+            }}
+            aria-pressed={isCompact ? active === f.zone : undefined}
           >
             <f.icon size={13} /> {f.title}
           </button>
@@ -1007,7 +1040,9 @@ function ProjectCard({ project, showcase, hoveredSkill, onOpen, index = 0, layou
       </div>
       <div className={`pc-caption ${activeFeature ? 'is-visible' : ''}`}>
         {activeFeature ? <span><MousePointerClick size={12} style={{ color: accent }} /> {activeFeature.desc}</span>
-          : <span className="pc-caption-idle">Di chuột vào một chức năng để xem nó dùng để làm gì →</span>}
+          : <span className="pc-caption-idle">
+              {isCompact ? 'Chạm vào một chức năng để xem nó dùng để làm gì →' : 'Di chuột vào một chức năng để xem nó dùng để làm gì →'}
+            </span>}
       </div>
     </>
   ) : (

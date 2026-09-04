@@ -1,15 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import BackgroundEffect from './components/BackgroundEffect';
 import Portfolio from './components/Portfolio';
-import Login from './components/Login';
-import Admin from './components/Admin';
-import ProjectDetail from './components/ProjectDetail';
-import LandingPage from './components/LandingPage';
 import { getShowcase } from './data/showcases';
+
+// Split off everything that isn't the first paint: the admin console, the login
+// screen, and the project/landing detail views only load when actually opened,
+// so a visitor to the intro page never downloads their code.
+const Login = lazy(() => import('./components/Login'));
+const Admin = lazy(() => import('./components/Admin'));
+const ProjectDetail = lazy(() => import('./components/ProjectDetail'));
+const LandingPage = lazy(() => import('./components/LandingPage'));
 import { api } from './api';
-import { db, auth } from './firebase';
-import { doc, getDoc } from 'firebase/firestore';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
 
 
 // Default static fallback data — mirrors server/db.json (Nguyễn Tùng Lâm's real CV)
@@ -29,8 +30,7 @@ const fallbackData = {
     education: {
       school: "Đại học FPT",
       major: "Kỹ thuật phần mềm",
-      period: "2021 - 2024",
-      gpa: "2.75"
+      period: "2021 - 2024"
     },
     experience: [
       {
@@ -322,6 +322,12 @@ export default function App() {
   // Read data from settings on mount or refresh from Firestore
   const loadPortfolioData = async () => {
     try {
+      // Firebase is imported lazily so its ~170KB never blocks first paint —
+      // the page is already on screen from fallbackData; this just refreshes it.
+      const [{ db }, { doc, getDoc }] = await Promise.all([
+        import('./firebase'),
+        import('firebase/firestore'),
+      ]);
       const docRef = doc(db, 'settings', 'main');
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
@@ -339,36 +345,42 @@ export default function App() {
   useEffect(() => {
     loadPortfolioData();
 
-    // Listen to Firebase Auth changes
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setToken('firebase-auth-active');
-        setExpiresAt(Date.now() + 30 * 24 * 3600 * 1000);
-      } else {
-        setToken('');
-        setExpiresAt(0);
-      }
-    });
-
-    // Routing path detection for secret setting page `/portal-admin`
+    // Deep-link to a project/landing via ?p=<id> — no auth needed, run now.
     const path = window.location.pathname;
-    if (path === '/portal-admin') {
-      if (auth.currentUser) {
-        setView('admin');
-      } else {
-        setView('login');
-      }
-    } else {
-      // Deep-link to a project/landing via ?p=<id> (shareable URL)
+    if (path !== '/portal-admin') {
       const pid = new URLSearchParams(window.location.search).get('p');
       if (pid) setPendingProjectId(pid);
     }
+
+    // Auth (and the /portal-admin gate) is only relevant to the admin, so load
+    // it lazily after first paint instead of shipping it to every visitor.
+    let unsubscribe = () => {};
+    let cancelled = false;
+    (async () => {
+      const [{ auth }, { onAuthStateChanged }] = await Promise.all([
+        import('./firebase'),
+        import('firebase/auth'),
+      ]);
+      if (cancelled) return;
+      unsubscribe = onAuthStateChanged(auth, (user) => {
+        if (user) {
+          setToken('firebase-auth-active');
+          setExpiresAt(Date.now() + 30 * 24 * 3600 * 1000);
+        } else {
+          setToken('');
+          setExpiresAt(0);
+        }
+      });
+      if (window.location.pathname === '/portal-admin') {
+        setView(auth.currentUser ? 'admin' : 'login');
+      }
+    })();
 
     // Handle back/forward buttons
     const handlePopState = () => {
       const p = window.location.pathname;
       if (p === '/portal-admin') {
-        setView(auth.currentUser ? 'admin' : 'login');
+        import('./firebase').then(({ auth }) => setView(auth.currentUser ? 'admin' : 'login'));
         return;
       }
       const pid = new URLSearchParams(window.location.search).get('p');
@@ -378,6 +390,7 @@ export default function App() {
     };
     window.addEventListener('popstate', handlePopState);
     return () => {
+      cancelled = true;
       window.removeEventListener('popstate', handlePopState);
       unsubscribe();
     };
@@ -405,6 +418,10 @@ export default function App() {
 
   const handleLogout = async () => {
     try {
+      const [{ auth }, { signOut }] = await Promise.all([
+        import('./firebase'),
+        import('firebase/auth'),
+      ]);
       await signOut(auth);
       setToken('');
       setExpiresAt(0);
@@ -453,28 +470,31 @@ export default function App() {
         />
       )}
 
-      {view === 'project' && activeProject && (() => {
-        const showcase = getShowcase(activeProject.id);
-        return showcase?.type === 'landing'
-          ? <LandingPage project={activeProject} showcase={showcase} onBack={closeProject} />
-          : <ProjectDetail project={activeProject} showcase={showcase} onBack={closeProject} />;
-      })()}
+      <Suspense fallback={<div className="route-loading" aria-live="polite">Đang tải…</div>}>
+        {view === 'project' && activeProject && (() => {
+          const showcase = getShowcase(activeProject.id);
+          if (!showcase) { closeProject(); return null; }
+          return showcase.type === 'landing'
+            ? <LandingPage project={activeProject} showcase={showcase} onBack={closeProject} />
+            : <ProjectDetail project={activeProject} showcase={showcase} onBack={closeProject} />;
+        })()}
 
-      {view === 'login' && (
-        <Login 
-          onLoginSuccess={handleLoginSuccess} 
-          onBackToPortfolio={navigateToPortfolio} 
-        />
-      )}
+        {view === 'login' && (
+          <Login
+            onLoginSuccess={handleLoginSuccess}
+            onBackToPortfolio={navigateToPortfolio}
+          />
+        )}
 
-      {view === 'admin' && (
-        <Admin 
-          token={token} 
-          expiresAt={expiresAt} 
-          onLogout={handleLogout}
-          onUpdateData={loadPortfolioData}
-        />
-      )}
+        {view === 'admin' && (
+          <Admin
+            token={token}
+            expiresAt={expiresAt}
+            onLogout={handleLogout}
+            onUpdateData={loadPortfolioData}
+          />
+        )}
+      </Suspense>
     </>
   );
 }
