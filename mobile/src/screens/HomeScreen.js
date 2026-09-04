@@ -26,10 +26,18 @@ export default function HomeScreen({ navigation }) {
     [events]
   );
 
-  const upcoming = useMemo(
-    () => events.filter((e) => (toDate(e.start)?.getTime() || 0) > Date.now()).slice(0, 5),
-    [events]
-  );
+  const upcoming = useMemo(() => {
+    const t = Date.now();
+    return events
+      .filter((e) => {
+        const s = toDate(e.start)?.getTime();
+        if (!s) return false;
+        const end = toDate(e.end)?.getTime() || (s + 3600000);
+        return end > t;
+      })
+      .sort((a, b) => (toDate(a.start)?.getTime() || 0) - (toDate(b.start)?.getTime() || 0))
+      .slice(0, 5);
+  }, [events]);
 
   const openTasks = useMemo(() => tasks.filter((t) => !t.done), [tasks]);
   const dueToday = useMemo(
@@ -78,6 +86,7 @@ export default function HomeScreen({ navigation }) {
   }, [uid]);
 
   const nextEvent = upcoming[0];
+  const isOngoing = nextEvent && (toDate(nextEvent.start)?.getTime() || 0) <= Date.now();
   const nextColor = nextEvent ? hexOf(nextEvent.color) : colors.primary;
 
   return (
@@ -123,9 +132,9 @@ export default function HomeScreen({ navigation }) {
               style={[s.nextCard, { borderColor: tint(nextColor, 0.45) }, shadows.glow(nextColor, 0.25, 20)]}
             >
               <Row style={{ justifyContent: 'space-between' }}>
-                <Badge label="SỰ KIỆN KẾ TIẾP" color={nextColor} dot />
+                <Badge label={isOngoing ? 'ĐANG DIỄN RA' : 'SỰ KIỆN KẾ TIẾP'} color={nextColor} dot />
                 <View style={[s.countdownPill, { backgroundColor: tint(nextColor, 0.16) }]}>
-                  <Ionicons name="time" size={12} color={nextColor} />
+                  <Ionicons name={isOngoing ? 'radio-button-on' : 'time'} size={12} color={nextColor} />
                   <Text style={[font.tiny, { color: nextColor, fontWeight: '700' }]}>
                     {fmtCountdown(toDate(nextEvent.start))}
                   </Text>
