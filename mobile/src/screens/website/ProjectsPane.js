@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, FlatList, Alert, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Card, FAB, Empty, Row, Badge, IconBtn } from '../../components/ui';
-import { colors, space, radius, font } from '../../theme';
+import { colors, space, radius, font, fontFamily, listBottomPad } from '../../theme';
 import { useApp } from '../../contexts/AppContext';
 import * as db from '../../services/db';
 
@@ -36,7 +36,7 @@ export default function ProjectsPane({ navigation }) {
       <FlatList
         data={projects}
         keyExtractor={(p, i) => p.id || String(i)}
-        contentContainerStyle={{ paddingHorizontal: space[4], paddingBottom: 110 }}
+        contentContainerStyle={{ paddingHorizontal: space[4], paddingBottom: listBottomPad() }}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <Empty icon="albums-outline" title="Chưa có dự án nào"
@@ -61,7 +61,7 @@ export default function ProjectsPane({ navigation }) {
 
             <Row style={{ marginTop: space[3], flexWrap: 'wrap' }} gap={space[1]}>
               {(p.tech || []).slice(0, 5).map((t) => (
-                <View key={t} style={s.tech}><Text style={[font.tiny, { color: colors.textSub, fontWeight: '600' }]}>{t}</Text></View>
+                <View key={t} style={s.tech}><Text style={[font.tiny, { color: colors.textSub, fontFamily: fontFamily.semibold }]}>{t}</Text></View>
               ))}
               {(p.tech || []).length > 5 ? (
                 <Text style={[font.tiny, { color: colors.textMuted }]}>+{p.tech.length - 5}</Text>

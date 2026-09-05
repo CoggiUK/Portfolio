@@ -11,7 +11,8 @@ import {
 } from '../services/notifications';
 import { toDate } from '../utils/date';
 
-const AppCtx = createContext(null);
+// Export để dựng bản xem trước / test với dữ liệu giả, không cần Firebase.
+export const AppCtx = createContext(null);
 const LAST_LEAD_KEY = 'last-seen-lead-at';
 
 /**

@@ -4,7 +4,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { Card, FAB, Empty, Row, Field, Btn, Sheet, Chip, SectionTitle, Segmented } from '../../components/ui';
-import { colors, space, radius, font, tint, shadows } from '../../theme';
+import { colors, space, radius, font, fontFamily, tint, shadows, listBottomPad } from '../../theme';
 import { useApp } from '../../contexts/AppContext';
 import { toDate, fmtDate, money, startOfMonth, addMonths, MONTHS } from '../../utils/date';
 
@@ -42,7 +42,7 @@ const TransactionItem = memo(function TransactionItem({ item, onEdit, onDelete }
         <Ionicons name={c.icon} size={17} color={c.color} />
       </View>
       <View style={{ flex: 1 }}>
-        <Text style={[font.body, { color: colors.text, fontWeight: '600' }]} numberOfLines={1}>
+        <Text style={[font.body, { color: colors.text, fontFamily: fontFamily.semibold }]} numberOfLines={1}>
           {item.note || c.label}
         </Text>
         <Text style={[font.tiny, { color: colors.textMuted, marginTop: 2 }]}>
@@ -55,7 +55,7 @@ const TransactionItem = memo(function TransactionItem({ item, onEdit, onDelete }
             font.body,
             {
               color: isIncome ? colors.primary : colors.text,
-              fontWeight: '800',
+              fontFamily: fontFamily.bold,
             },
           ]}
         >
@@ -189,7 +189,7 @@ export default function FinancePane({ initialCreate }) {
         data={monthTx}
         keyExtractor={keyExtractor}
         renderItem={renderItem}
-        contentContainerStyle={{ paddingHorizontal: space[4], paddingBottom: 110 }}
+        contentContainerStyle={{ paddingHorizontal: space[4], paddingBottom: listBottomPad() }}
         showsVerticalScrollIndicator={false}
         initialNumToRender={8}
         maxToRenderPerBatch={10}
@@ -211,7 +211,7 @@ export default function FinancePane({ initialCreate }) {
               </Pressable>
               <View style={s.monthTitlePill}>
                 <Ionicons name="calendar-outline" size={14} color={colors.primary} />
-                <Text style={[font.h3, { color: colors.text, fontWeight: '800' }]}>
+                <Text style={[font.h3, { color: colors.text, fontFamily: fontFamily.bold }]}>
                   {MONTHS[month.getMonth()]} {month.getFullYear()}
                 </Text>
               </View>
@@ -239,7 +239,7 @@ export default function FinancePane({ initialCreate }) {
                     color: balance >= 0 ? colors.primary : colors.danger,
                     marginTop: space[1],
                     fontSize: 28,
-                    fontWeight: '800',
+                    fontFamily: fontFamily.bold,
                   },
                 ]}
               >
@@ -253,7 +253,7 @@ export default function FinancePane({ initialCreate }) {
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={[font.tiny, { color: colors.textMuted }]}>TỔNG THU</Text>
-                    <Text style={[font.body, { color: colors.text, fontWeight: '700' }]} numberOfLines={1}>
+                    <Text style={[font.body, { color: colors.text, fontFamily: fontFamily.bold }]} numberOfLines={1}>
                       {money(income)}
                     </Text>
                   </View>
@@ -265,7 +265,7 @@ export default function FinancePane({ initialCreate }) {
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={[font.tiny, { color: colors.textMuted }]}>TỔNG CHI</Text>
-                    <Text style={[font.body, { color: colors.text, fontWeight: '700' }]} numberOfLines={1}>
+                    <Text style={[font.body, { color: colors.text, fontFamily: fontFamily.bold }]} numberOfLines={1}>
                       {money(expense)}
                     </Text>
                   </View>
@@ -285,12 +285,12 @@ export default function FinancePane({ initialCreate }) {
                         <Row style={{ justifyContent: 'space-between', marginBottom: 4 }}>
                           <Row gap={space[2]}>
                             <Ionicons name={c.meta.icon} size={14} color={c.meta.color} />
-                            <Text style={[font.small, { color: colors.textSub, fontWeight: '600' }]}>
+                            <Text style={[font.small, { color: colors.textSub, fontFamily: fontFamily.semibold }]}>
                               {c.meta.label}
                             </Text>
                           </Row>
                           <Row gap={space[2]}>
-                            <Text style={[font.small, { color: colors.text, fontWeight: '700' }]}>
+                            <Text style={[font.small, { color: colors.text, fontFamily: fontFamily.bold }]}>
                               {money(c.total)}
                             </Text>
                             <Text style={[font.tiny, { color: colors.textMuted }]}>({pct}%)</Text>

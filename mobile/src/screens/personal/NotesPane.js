@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Pressable, FlatList, Alert, TextInput, Platform
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { Card, FAB, Empty, Row, Field, Btn, Sheet, Chip, Badge } from '../../components/ui';
-import { colors, space, radius, font, tint, shadows } from '../../theme';
+import { colors, space, radius, font, fontFamily, tint, shadows, listBottomPad } from '../../theme';
 import { useApp } from '../../contexts/AppContext';
 import { toDate, fmtRelative } from '../../utils/date';
 
@@ -26,7 +26,7 @@ const NoteItem = memo(function NoteItem({ item, onEdit, onTogglePin, onDelete })
         <Text
           style={[
             font.body,
-            { color: colors.text, flex: 1, fontWeight: '700', lineHeight: 20 },
+            { color: colors.text, flex: 1, fontFamily: fontFamily.bold, lineHeight: 20 },
           ]}
           numberOfLines={2}
         >
@@ -58,7 +58,7 @@ const NoteItem = memo(function NoteItem({ item, onEdit, onTogglePin, onDelete })
         <Row style={{ flexWrap: 'wrap', marginTop: space[2] }} gap={4}>
           {item.tags.slice(0, 2).map((t) => (
             <View key={t} style={s.tagPill}>
-              <Text style={[font.tiny, { color: colors.secondary, fontWeight: '600' }]} numberOfLines={1}>
+              <Text style={[font.tiny, { color: colors.secondary, fontFamily: fontFamily.semibold }]} numberOfLines={1}>
                 #{t}
               </Text>
             </View>
@@ -208,7 +208,7 @@ export default function NotesPane() {
         renderItem={renderItem}
         numColumns={2}
         columnWrapperStyle={{ gap: space[3] }}
-        contentContainerStyle={{ paddingHorizontal: space[4], paddingBottom: 110, gap: space[3] }}
+        contentContainerStyle={{ paddingHorizontal: space[4], paddingBottom: listBottomPad(), gap: space[3] }}
         showsVerticalScrollIndicator={false}
         initialNumToRender={6}
         maxToRenderPerBatch={8}

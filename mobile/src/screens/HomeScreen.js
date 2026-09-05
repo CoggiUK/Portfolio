@@ -3,12 +3,12 @@ import { View, Text, StyleSheet, Pressable, RefreshControl, ScrollView } from 'r
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
-import { Screen, Header, Card, SectionTitle, Empty, IconBtn, Badge, Row, Banner, StatCard } from '../components/ui';
-import { colors, space, radius, font, hexOf, tint, shadows } from '../theme';
+import { Screen, BrandHeader, Card, SectionTitle, Empty, Badge, Row, Banner, StatCard } from '../components/ui';
+import { colors, space, radius, font, fontFamily, listBottomPad, hexOf, tint, shadows } from '../theme';
 import { useApp } from '../contexts/AppContext';
 import * as db from '../services/db';
 import {
-  toDate, dayKey, isSameDay, fmtTime, fmtCountdown, fmtDayLabel, money, startOfMonth,
+  toDate, dayKey, isSameDay, fmtTime, fmtCountdown, fmtDayLabel, fmtDayFull, money, moneyShort, startOfMonth,
 } from '../utils/date';
 
 export default function HomeScreen({ navigation }) {
@@ -64,10 +64,7 @@ export default function HomeScreen({ navigation }) {
 
   const greeting = now.getHours() < 12 ? 'Chào buổi sáng' : now.getHours() < 18 ? 'Chào buổi chiều' : 'Chào buổi tối';
   const rawName = site.profile?.name || '';
-  const cleanName = rawName.replace(/\(.*?\)/g, '').trim();
-  const firstName = cleanName.includes('Tùng Lâm')
-    ? 'Lâm'
-    : (cleanName.split(/\s+/).pop() || 'Lâm');
+  const fullName = rawName.replace(/\(.*?\)/g, '').trim() || 'Tùng Lâm';
 
   const handleReload = useCallback(async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
@@ -111,30 +108,39 @@ export default function HomeScreen({ navigation }) {
     <Screen
       scroll
       refreshControl={<RefreshControl refreshing={refreshing || syncing} onRefresh={onRefresh} tintColor={colors.primary} />}
-      style={{ padding: 0, paddingBottom: space[8] }}
+      edges={[]}
+      style={{ padding: 0, paddingBottom: listBottomPad() }}
     >
-      {/* Top Header */}
-      <View style={{ paddingHorizontal: space[4] }}>
-        <Header
-          title={`${greeting}, ${firstName}`}
-          subtitle={`${fmtDayLabel(now)} · Workspace`}
-          badge={googleConnected ? 'GOOGLE' : undefined}
-          right={
-            <Row gap={space[2]}>
-              <IconBtn
-                icon={syncing || refreshing ? 'sync' : 'sync-outline'}
-                color={googleConnected ? colors.primary : colors.textMuted}
-                onPress={handleReload}
-              />
-              <IconBtn icon="settings-outline" onPress={() => navigation.navigate('Settings')} />
-            </Row>
-          }
-        />
-        {toast ? <Banner type={toast.type} message={toast.message} /> : null}
-      </View>
+      {/* Brand header — nhận diện thương hiệu, avatar trái · hành động phải */}
+      <BrandHeader
+        greeting={`${greeting},`}
+        name={fullName}
+        meta={fmtDayFull(now)}
+        avatarUri={site.profile?.avatar}
+        actions={[
+          {
+            icon: 'notifications-outline',
+            label: 'Hộp thư liên hệ',
+            count: unreadLeads,
+            dot: unreadLeads > 0,
+            onPress: () => navigation.navigate('Liên hệ'),
+          },
+          {
+            icon: 'chevron-down',
+            label: 'Mở cài đặt',
+            onPress: () => navigation.navigate('Settings'),
+          },
+        ]}
+      />
+
+      {toast ? (
+        <View style={{ paddingHorizontal: space[4], marginTop: space[3] }}>
+          <Banner type={toast.type} message={toast.message} />
+        </View>
+      ) : null}
 
       {/* Hero Banner: Sự kiện kế tiếp */}
-      <View style={{ paddingHorizontal: space[4], marginTop: space[2] }}>
+      <View style={[s.heroWrap, toast && { marginTop: space[3] }]}>
         {nextEvent ? (
           <Pressable
             onPress={() => {
@@ -153,7 +159,7 @@ export default function HomeScreen({ navigation }) {
                 <Badge label={isOngoing ? 'ĐANG DIỄN RA' : 'SỰ KIỆN KẾ TIẾP'} color={nextColor} dot />
                 <View style={[s.countdownPill, { backgroundColor: tint(nextColor, 0.16) }]}>
                   <Ionicons name={isOngoing ? 'radio-button-on' : 'time'} size={12} color={nextColor} />
-                  <Text style={[font.tiny, { color: nextColor, fontWeight: '700' }]}>
+                  <Text style={[font.tiny, { color: nextColor, fontFamily: fontFamily.bold }]}>
                     {fmtCountdown(toDate(nextEvent.start))}
                   </Text>
                 </View>
@@ -186,7 +192,7 @@ export default function HomeScreen({ navigation }) {
                 <Ionicons name="sparkles" size={18} color={colors.primary} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={[font.h3, { color: colors.text, fontWeight: '700' }]}>Lịch trình hôm nay thảnh thơi</Text>
+                <Text style={[font.h3, { color: colors.text, fontFamily: fontFamily.bold }]}>Lịch trình hôm nay thảnh thơi</Text>
                 <Text style={[font.small, { color: colors.textMuted, marginTop: 2 }]}>
                   Chưa có sự kiện nào sắp diễn ra.
                 </Text>
@@ -202,33 +208,51 @@ export default function HomeScreen({ navigation }) {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={s.quickActions}
       >
+        {googleConnected ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityState={{ busy: !!(syncing || refreshing) }}
+            style={s.quickActionBtn}
+            onPress={handleReload}
+          >
+            <Ionicons
+              name={syncing || refreshing ? 'sync' : 'sync-outline'}
+              size={16}
+              color={colors.primary}
+            />
+            <Text style={[font.tiny, { color: colors.text, fontFamily: fontFamily.semibold }]}>
+              {syncing || refreshing ? 'Đang đồng bộ…' : 'Đồng bộ Google'}
+            </Text>
+          </Pressable>
+        ) : null}
         <Pressable
+          accessibilityRole="button"
           style={s.quickActionBtn}
           onPress={() => navigation.navigate('EventForm')}
         >
           <Ionicons name="add-circle" size={16} color={colors.primary} />
-          <Text style={[font.tiny, { color: colors.text, fontWeight: '600' }]}>+ Lịch mới</Text>
+          <Text style={[font.tiny, { color: colors.text, fontFamily: fontFamily.semibold }]}>+ Lịch mới</Text>
         </Pressable>
         <Pressable
           style={s.quickActionBtn}
           onPress={() => navigation.navigate('Cá nhân', { tab: 'tasks', create: true })}
         >
           <Ionicons name="checkbox" size={16} color={colors.primary} />
-          <Text style={[font.tiny, { color: colors.text, fontWeight: '600' }]}>+ Thêm việc</Text>
+          <Text style={[font.tiny, { color: colors.text, fontFamily: fontFamily.semibold }]}>+ Thêm việc</Text>
         </Pressable>
         <Pressable
           style={s.quickActionBtn}
           onPress={() => navigation.navigate('Cá nhân', { tab: 'habits', create: true })}
         >
           <Ionicons name="flame" size={16} color={colors.primary} />
-          <Text style={[font.tiny, { color: colors.text, fontWeight: '600' }]}>+ Thói quen</Text>
+          <Text style={[font.tiny, { color: colors.text, fontFamily: fontFamily.semibold }]}>+ Thói quen</Text>
         </Pressable>
         <Pressable
           style={s.quickActionBtn}
           onPress={() => navigation.navigate('Cá nhân', { tab: 'finance', create: true })}
         >
           <Ionicons name="wallet" size={16} color={colors.primary} />
-          <Text style={[font.tiny, { color: colors.text, fontWeight: '600' }]}>+ Chi tiêu</Text>
+          <Text style={[font.tiny, { color: colors.text, fontFamily: fontFamily.semibold }]}>+ Chi tiêu</Text>
         </Pressable>
       </ScrollView>
 
@@ -255,7 +279,7 @@ export default function HomeScreen({ navigation }) {
         <Row gap={space[3]} style={{ marginTop: space[3] }}>
           <StatCard
             icon="chatbubbles"
-            color={colors.secondary}
+            color={colors.amber}
             value={unreadLeads}
             label="Liên hệ công việc"
             sub={unreadLeads > 0 ? 'Có tin mới' : 'Đã xem hết'}
@@ -264,9 +288,8 @@ export default function HomeScreen({ navigation }) {
           <StatCard
             icon="wallet"
             color={monthBalance >= 0 ? colors.emerald : colors.danger}
-            value={money(monthBalance)}
+            value={moneyShort(monthBalance)}
             label="Số dư tháng này"
-            sub={monthBalance >= 0 ? '+Dương' : '-Âm'}
             onPress={() => navigation.navigate('Cá nhân', { tab: 'finance' })}
           />
         </Row>
@@ -279,7 +302,7 @@ export default function HomeScreen({ navigation }) {
           right={
             <Pressable onPress={() => navigation.navigate('Lịch')} hitSlop={8}>
               <Row gap={2}>
-                <Text style={[font.tiny, { color: colors.primary, fontWeight: '700' }]}>XEM TẤT CẢ</Text>
+                <Text style={[font.tiny, { color: colors.primary, fontFamily: fontFamily.bold }]}>XEM TẤT CẢ</Text>
                 <Ionicons name="chevron-forward" size={12} color={colors.primary} />
               </Row>
             </Pressable>
@@ -297,7 +320,7 @@ export default function HomeScreen({ navigation }) {
                 onPress={() => navigation.navigate('EventForm', { id: e.id })}
               >
                 <View style={{ flex: 1 }}>
-                  <Text style={[font.body, { color: colors.text, fontWeight: '600' }]} numberOfLines={1}>
+                  <Text style={[font.body, { color: colors.text, fontFamily: fontFamily.semibold }]} numberOfLines={1}>
                     {e.title}
                   </Text>
                   <Text style={[font.tiny, { color: colors.textMuted, marginTop: 2 }]}>
@@ -324,7 +347,7 @@ export default function HomeScreen({ navigation }) {
               right={
                 <Pressable onPress={() => navigation.navigate('Cá nhân', { tab: 'tasks' })} hitSlop={8}>
                   <Row gap={2}>
-                    <Text style={[font.tiny, { color: colors.cyan, fontWeight: '700' }]}>XEM TOÀN BỘ ({openTasks.length})</Text>
+                    <Text style={[font.tiny, { color: colors.cyan, fontFamily: fontFamily.bold }]}>XEM TOÀN BỘ ({openTasks.length})</Text>
                     <Ionicons name="chevron-forward" size={12} color={colors.cyan} />
                   </Row>
                 </Pressable>
@@ -362,7 +385,7 @@ export default function HomeScreen({ navigation }) {
           <>
             <SectionTitle
               right={
-                <Text style={[font.tiny, { color: colors.amber, fontWeight: '700' }]}>
+                <Text style={[font.tiny, { color: colors.amber, fontFamily: fontFamily.bold }]}>
                   {habitsDone}/{habits.length} HOÀN THÀNH
                 </Text>
               }
@@ -393,7 +416,7 @@ export default function HomeScreen({ navigation }) {
                     <Text
                       style={[
                         font.small,
-                        { color: on ? hex : colors.textSub, fontWeight: on ? '700' : '500' },
+                        { color: on ? hex : colors.textSub, fontFamily: on ? fontFamily.bold : fontFamily.medium },
                       ]}
                       numberOfLines={1}
                     >
@@ -413,7 +436,7 @@ export default function HomeScreen({ navigation }) {
               right={
                 <Pressable onPress={() => navigation.navigate('Liên hệ')} hitSlop={8}>
                   <Row gap={2}>
-                    <Text style={[font.tiny, { color: colors.secondary, fontWeight: '700' }]}>HỘP THƯ</Text>
+                    <Text style={[font.tiny, { color: colors.secondary, fontFamily: fontFamily.bold }]}>HỘP THƯ</Text>
                     <Ionicons name="chevron-forward" size={12} color={colors.secondary} />
                   </Row>
                 </Pressable>
@@ -424,12 +447,12 @@ export default function HomeScreen({ navigation }) {
             {leads.slice(0, 3).map((l) => (
               <Card key={l.id} style={s.rowCard} onPress={() => navigation.navigate('Liên hệ')}>
                 <View style={[s.avatar, !l.read && s.avatarUnread]}>
-                  <Text style={[font.small, { color: !l.read ? colors.primary : colors.textSub, fontWeight: '700' }]}>
+                  <Text style={[font.small, { color: !l.read ? colors.primary : colors.textSub, fontFamily: fontFamily.bold }]}>
                     {(l.name || '?').trim().charAt(0).toUpperCase()}
                   </Text>
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={[font.body, { color: colors.text, fontWeight: '600' }]} numberOfLines={1}>
+                  <Text style={[font.body, { color: colors.text, fontFamily: fontFamily.semibold }]} numberOfLines={1}>
                     {l.name || 'Khách truy cập website'}
                   </Text>
                   <Text style={[font.tiny, { color: colors.textMuted, marginTop: 2 }]} numberOfLines={1}>
@@ -451,6 +474,10 @@ export default function HomeScreen({ navigation }) {
 }
 
 const s = StyleSheet.create({
+  heroWrap: {
+    paddingHorizontal: space[4],
+    marginTop: space[4],
+  },
   nextCard: {
     borderRadius: radius.xl,
     borderWidth: 1,

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, Linking } from 'react-native';
-import { Screen, Header, Segmented, IconBtn, Row } from '../components/ui';
+import { Screen, BrandHeader, Segmented } from '../components/ui';
 import { colors, space, font } from '../theme';
 import { useApp } from '../contexts/AppContext';
 import ProfilePane from './website/ProfilePane';
@@ -13,18 +13,17 @@ export default function WebsiteScreen({ navigation }) {
   const [tab, setTab] = useState('profile');
 
   return (
-    <Screen>
-      <Header
+    <Screen edges={[]}>
+      <BrandHeader
+        icon="globe"
         title="Quản trị website"
         subtitle={`${(site.projects || []).length} dự án đang hiển thị`}
-        right={
-          <Row>
-            <IconBtn icon="open-outline" onPress={() => Linking.openURL(SITE_URL)} />
-            <IconBtn icon="settings-outline" onPress={() => navigation.navigate('Settings')} />
-          </Row>
-        }
+        actions={[
+          { icon: 'open-outline', label: 'Mở website', onPress: () => Linking.openURL(SITE_URL) },
+          { icon: 'settings-outline', label: 'Cài đặt', onPress: () => navigation.navigate('Settings') },
+        ]}
       />
-      <View style={{ paddingHorizontal: space[4], paddingBottom: space[3] }}>
+      <View style={{ paddingHorizontal: space[4], paddingTop: space[4], paddingBottom: space[3] }}>
         <Segmented
           value={tab}
           onChange={setTab}

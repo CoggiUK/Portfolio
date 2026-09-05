@@ -3,7 +3,7 @@ import { View, Text, Image, StyleSheet, KeyboardAvoidingView, Platform, Pressabl
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { Screen, Field, Btn, Banner, Row } from '../components/ui';
+import { Screen, Field, Btn, Banner } from '../components/ui';
 import { colors, space, radius, font, tint, shadows } from '../theme';
 import { useAuth, authMessage } from '../contexts/AuthContext';
 
@@ -27,25 +27,6 @@ export default function LoginScreen() {
       setBusy(false);
     }
   };
-
-  const quickLogin = async () => {
-    Haptics.selectionAsync().catch(() => {});
-    const adminEmail = 'ntlam2211@gmail.com';
-    const adminPassword = 'adminTungLam02';
-    setEmail(adminEmail);
-    setPassword(adminPassword);
-    setError('');
-    setBusy(true);
-    try {
-      await signIn(adminEmail, adminPassword);
-    } catch (err) {
-      setError(authMessage(err));
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const fillDemo = quickLogin;
 
   const forgot = async () => {
     if (!email) return setError('Nhập email trước rồi bấm quên mật khẩu.');
@@ -105,28 +86,12 @@ export default function LoginScreen() {
             </Pressable>
           </View>
 
-          <Btn title="Đăng nhập Workspace" onPress={submit} loading={busy} icon="log-in-outline" />
-
-          {/* Quick Admin Login Button */}
-          <Pressable
-            onPress={quickLogin}
-            disabled={busy}
-            style={({ pressed }) => [s.demoBtn, pressed && { opacity: 0.7 }]}
-          >
-            <Ionicons name="flash-outline" size={14} color={colors.primary} />
-            <Text style={[font.tiny, { color: colors.primary, fontWeight: '700' }]}>
-              Đăng nhập nhanh với tài khoản Admin
-            </Text>
-          </Pressable>
+          <Btn title="Đăng nhập" onPress={submit} loading={busy} icon="log-in-outline" />
 
           <Pressable onPress={forgot} style={{ marginTop: space[3], alignSelf: 'center' }}>
             <Text style={[font.small, { color: colors.textMuted }]}>Quên mật khẩu?</Text>
           </Pressable>
         </View>
-
-        <Text style={[font.tiny, s.footer]}>
-          Đồng bộ và bảo mật qua Firebase Authentication
-        </Text>
       </KeyboardAvoidingView>
     </Screen>
   );
@@ -156,17 +121,4 @@ const s = StyleSheet.create({
   },
   logo: { width: 44, height: 44 },
   eye: { position: 'absolute', right: space[3], top: 38 },
-  demoBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    marginTop: space[3],
-    paddingVertical: space[2],
-    backgroundColor: tint(colors.primary, 0.1),
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: tint(colors.primary, 0.25),
-  },
-  footer: { color: colors.textMuted, textAlign: 'center', marginTop: space[4] },
 });

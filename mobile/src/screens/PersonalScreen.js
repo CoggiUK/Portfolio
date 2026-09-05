@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View } from 'react-native';
-import { Screen, Header, Segmented, IconBtn } from '../components/ui';
+import { Screen, BrandHeader, Segmented } from '../components/ui';
 import { space } from '../theme';
 import TasksPane from './personal/TasksPane';
 import NotesPane from './personal/NotesPane';
@@ -8,10 +8,10 @@ import HabitsPane from './personal/HabitsPane';
 import FinancePane from './personal/FinancePane';
 
 const TABS = [
-  { value: 'tasks', label: 'Việc', title: 'Công việc' },
-  { value: 'notes', label: 'Ghi chú', title: 'Ghi chú' },
-  { value: 'habits', label: 'Thói quen', title: 'Thói quen' },
-  { value: 'finance', label: 'Chi tiêu', title: 'Chi tiêu' },
+  { value: 'tasks', label: 'Việc', title: 'Công việc', icon: 'checkbox' },
+  { value: 'notes', label: 'Ghi chú', title: 'Ghi chú', icon: 'reader' },
+  { value: 'habits', label: 'Thói quen', title: 'Thói quen', icon: 'leaf' },
+  { value: 'finance', label: 'Chi tiêu', title: 'Chi tiêu', icon: 'wallet' },
 ];
 
 export default function PersonalScreen({ navigation, route }) {
@@ -37,13 +37,14 @@ export default function PersonalScreen({ navigation, route }) {
   const meta = TABS.find((t) => t.value === tab);
 
   return (
-    <Screen>
-      <Header
+    <Screen edges={[]}>
+      <BrandHeader
+        icon={meta.icon}
         title={meta.title}
         subtitle="Không gian cá nhân"
-        right={<IconBtn icon="settings-outline" onPress={() => navigation.navigate('Settings')} />}
+        actions={[{ icon: 'settings-outline', label: 'Cài đặt', onPress: () => navigation.navigate('Settings') }]}
       />
-      <View style={{ paddingHorizontal: space[4], paddingBottom: space[3] }}>
+      <View style={{ paddingHorizontal: space[4], paddingTop: space[4], paddingBottom: space[3] }}>
         <Segmented items={TABS} value={tab} onChange={handleTabChange} />
       </View>
       {tab === 'tasks' && <TasksPane initialCreate={createTarget?.tab === 'tasks' ? createTarget.id : 0} />}

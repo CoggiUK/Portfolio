@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Pressable, ScrollView, Alert } from 'react-nati
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { Card, FAB, Empty, Row, Field, Btn, Sheet, SectionTitle, Badge } from '../../components/ui';
-import { colors, space, radius, font, palette, hexOf, tint, shadows } from '../../theme';
+import { colors, space, radius, font, fontFamily, palette, hexOf, tint, shadows, listBottomPad } from '../../theme';
 import { useApp } from '../../contexts/AppContext';
 import * as db from '../../services/db';
 import { dayKey, addDays, startOfWeek } from '../../utils/date';
@@ -40,7 +40,7 @@ const HabitCard = memo(function HabitCard({ habit, week, last30, onToggleDay, on
         <Pressable onPress={() => onEdit(habit)} style={{ flex: 1 }}>
           <Row gap={space[2]}>
             <View style={[s.dot, { backgroundColor: hex }]} />
-            <Text style={[font.h3, { color: colors.text, flex: 1, fontWeight: '700' }]} numberOfLines={1}>
+            <Text style={[font.h3, { color: colors.text, flex: 1, fontFamily: fontFamily.bold }]} numberOfLines={1}>
               {habit.name}
             </Text>
           </Row>
@@ -49,7 +49,7 @@ const HabitCard = memo(function HabitCard({ habit, week, last30, onToggleDay, on
             {streak > 0 ? (
               <View style={[s.streakBadge, shadows.glow(colors.amber, 0.25, 8)]}>
                 <Ionicons name="flame" size={13} color={colors.amber} />
-                <Text style={[font.tiny, { color: colors.amber, fontWeight: '700' }]}>
+                <Text style={[font.tiny, { color: colors.amber, fontFamily: fontFamily.bold }]}>
                   {streak} NGÀY LIÊN TIẾP
                 </Text>
               </View>
@@ -93,10 +93,10 @@ const HabitCard = memo(function HabitCard({ habit, week, last30, onToggleDay, on
                 pressed && !future && { transform: [{ scale: 0.92 }] },
               ]}
             >
-              <Text style={[font.tiny, { color: on ? hex : colors.textMuted, fontWeight: '600' }]}>
+              <Text style={[font.tiny, { color: on ? hex : colors.textMuted, fontFamily: fontFamily.semibold }]}>
                 {WEEK_LABELS[i]}
               </Text>
-              <Text style={[font.small, { color: on ? hex : colors.textSub, fontWeight: '800' }]}>
+              <Text style={[font.small, { color: on ? hex : colors.textSub, fontFamily: fontFamily.bold }]}>
                 {d.getDate()}
               </Text>
               {on ? (
@@ -186,7 +186,7 @@ export default function HabitsPane({ initialCreate }) {
   return (
     <View style={{ flex: 1 }}>
       <ScrollView
-        contentContainerStyle={{ paddingHorizontal: space[4], paddingBottom: 110 }}
+        contentContainerStyle={{ paddingHorizontal: space[4], paddingBottom: listBottomPad() }}
         showsVerticalScrollIndicator={false}
       >
         {habits.length ? (
@@ -200,12 +200,12 @@ export default function HabitsPane({ initialCreate }) {
                 {pct === 100 ? (
                   <Row gap={4} style={{ marginTop: 4 }}>
                     <Ionicons name="sparkles" size={13} color={colors.primary} />
-                    <Text style={[font.tiny, { color: colors.primary, fontWeight: '700' }]}>Xuất sắc! Đã hoàn thành 100%</Text>
+                    <Text style={[font.tiny, { color: colors.primary, fontFamily: fontFamily.bold }]}>Xuất sắc! Đã hoàn thành 100%</Text>
                   </Row>
                 ) : null}
               </View>
               <View style={[s.ring, { borderColor: pct === 100 ? colors.primary : tint(colors.primary, 0.3) }]}>
-                <Text style={[font.h2, { color: colors.primary, fontWeight: '800' }]}>
+                <Text style={[font.h2, { color: colors.primary, fontFamily: fontFamily.bold }]}>
                   {pct}%
                 </Text>
               </View>

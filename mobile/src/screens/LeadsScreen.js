@@ -3,9 +3,9 @@ import { View, Text, StyleSheet, FlatList, Pressable, Alert, Linking, TextInput,
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import {
-  Screen, Header, Card, Empty, Row, Chip, Badge, Btn, Sheet, IconBtn, SectionTitle,
+  Screen, BrandHeader, Card, Empty, Row, Chip, Badge, Btn, Sheet, SectionTitle,
 } from '../components/ui';
-import { colors, space, radius, font, tint, shadows } from '../theme';
+import { colors, space, radius, font, fontFamily, listBottomPad, tint, shadows } from '../theme';
 import { useApp } from '../contexts/AppContext';
 import * as db from '../services/db';
 import { toDate, fmtRelative, fmtDateTime } from '../utils/date';
@@ -42,7 +42,7 @@ const LeadItem = memo(function LeadItem({ item, onOpen, onQuickCall, onQuickMail
       onPress={() => onOpen(item)}
     >
       <View style={[s.avatar, !item.read && s.avatarUnread]}>
-        <Text style={[font.h3, { color: !item.read ? colors.primary : colors.textSub, fontWeight: '800' }]}>
+        <Text style={[font.h3, { color: !item.read ? colors.primary : colors.textSub, fontFamily: fontFamily.bold }]}>
           {initials}
         </Text>
       </View>
@@ -52,7 +52,7 @@ const LeadItem = memo(function LeadItem({ item, onOpen, onQuickCall, onQuickMail
           <Text
             style={[
               font.body,
-              { color: colors.text, flex: 1, fontWeight: !item.read ? '800' : '600' },
+              { color: colors.text, flex: 1, fontFamily: !item.read ? fontFamily.bold : fontFamily.semibold },
             ]}
             numberOfLines={1}
           >
@@ -191,26 +191,27 @@ export default function LeadsScreen({ navigation }) {
   );
 
   return (
-    <Screen>
-      <Header
+    <Screen edges={[]}>
+      <BrandHeader
+        icon="chatbubbles"
         title="Hộp thư liên hệ"
         subtitle={unreadLeads ? `${unreadLeads} tin nhắn mới chưa đọc` : 'Toàn bộ liên hệ đã xem'}
         badge={unreadLeads ? `${unreadLeads} MỚI` : undefined}
-        right={
-          unreadLeads ? (
-            <IconBtn
-              icon="checkmark-done-outline"
-              color={colors.primary}
-              onPress={() => {
-                Haptics.selectionAsync().catch(() => {});
-                db.markLeadsRead(leads);
-              }}
-            />
-          ) : null
+        actions={
+          unreadLeads
+            ? [{
+                icon: 'checkmark-done-outline',
+                label: 'Đánh dấu đã đọc tất cả',
+                onPress: () => {
+                  Haptics.selectionAsync().catch(() => {});
+                  db.markLeadsRead(leads);
+                },
+              }]
+            : []
         }
       />
 
-      <View style={{ paddingHorizontal: space[4] }}>
+      <View style={{ paddingHorizontal: space[4], paddingTop: space[4] }}>
         {/* Tìm kiếm */}
         <View style={s.search}>
           <Ionicons name="search" size={16} color={colors.textMuted} />
@@ -246,7 +247,7 @@ export default function LeadsScreen({ navigation }) {
         data={list}
         keyExtractor={keyExtractor}
         renderItem={renderItem}
-        contentContainerStyle={{ paddingHorizontal: space[4], paddingBottom: space[8] }}
+        contentContainerStyle={{ paddingHorizontal: space[4], paddingBottom: listBottomPad() }}
         showsVerticalScrollIndicator={false}
         initialNumToRender={8}
         maxToRenderPerBatch={10}
@@ -353,7 +354,7 @@ function InfoLine({ icon, label, value, onPress }) {
         </View>
         <View style={{ flex: 1 }}>
           <Text style={[font.tiny, { color: colors.textMuted }]}>{label.toUpperCase()}</Text>
-          <Text style={[font.body, { color: onPress ? colors.primary : colors.text, fontWeight: '600' }]} numberOfLines={1}>
+          <Text style={[font.body, { color: onPress ? colors.primary : colors.text, fontFamily: fontFamily.semibold }]} numberOfLines={1}>
             {value || '—'}
           </Text>
         </View>

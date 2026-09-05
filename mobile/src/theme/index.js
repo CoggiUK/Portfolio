@@ -59,6 +59,15 @@ export const lightColors = {
   textMuted: '#64748B',       // slate-500 (contrast >= 4.6:1 on white)
   textDisabled: '#94A3B8',    // slate-400
   onPrimary: '#FFFFFF',
+
+  // Brand header (hero) — dải emerald đậm, chữ trắng đạt AA (>= 5.5:1)
+  brandFrom: '#065F46',       // emerald-800
+  brandTo: '#047857',         // emerald-700
+  brandEdge: 'rgba(255, 255, 255, 0.16)',
+  onBrand: '#FFFFFF',
+  onBrandSub: '#D1FAE5',      // emerald-100 — vai trò như Primary/Light trong Figma
+  onBrandSurface: 'rgba(255, 255, 255, 0.16)',
+  onBrandBorder: 'rgba(255, 255, 255, 0.24)',
 };
 
 export const darkColors = {
@@ -119,6 +128,15 @@ export const darkColors = {
   textMuted: '#64748B',       // slate-500 (contrast >= 4.6:1)
   textDisabled: '#475569',    // slate-600
   onPrimary: '#022C22',       // dark emerald text on vibrant emerald-500 button (contrast > 8:1)
+
+  // Brand header (hero) — dải emerald đậm, chữ trắng đạt AA (>= 5.5:1)
+  brandFrom: '#064E3B',       // emerald-900
+  brandTo: '#047857',         // emerald-700
+  brandEdge: 'rgba(255, 255, 255, 0.12)',
+  onBrand: '#FFFFFF',
+  onBrandSub: '#D1FAE5',      // emerald-100 — vai trò như Primary/Light trong Figma
+  onBrandSurface: 'rgba(255, 255, 255, 0.14)',
+  onBrandBorder: 'rgba(255, 255, 255, 0.22)',
 };
 
 // Giao diện tối kích hoạt mặc định theo yêu cầu của người dùng
@@ -143,18 +161,46 @@ export const radius = {
   md: 10,
   lg: 16,
   xl: 20,
+  '2xl': 24,
   pill: 999,
 };
 
-// Thang chữ chuẩn: Không có text < 12px (Hard Stop)
+/* ── Chữ: Be Vietnam Pro, thang lấy từ text style trong Figma ─────────
+ * Với font tuỳ biến, React Native bỏ qua `fontWeight` — độ đậm phải chọn
+ * bằng đúng family, nên mỗi style khai báo `fontFamily` chứ không đặt weight. */
+export const fontFamily = {
+  regular: 'BeVietnamPro_400Regular',
+  medium: 'BeVietnamPro_500Medium',
+  semibold: 'BeVietnamPro_600SemiBold',
+  bold: 'BeVietnamPro_700Bold',
+};
+
 export const font = {
-  h1: { fontSize: 24, fontWeight: '700', letterSpacing: -0.4, lineHeight: 30 },
-  h2: { fontSize: 20, fontWeight: '700', letterSpacing: -0.3, lineHeight: 26 },
-  h3: { fontSize: 16, fontWeight: '600', letterSpacing: -0.2, lineHeight: 22 },
-  body: { fontSize: 15, fontWeight: '400', lineHeight: 22 },
-  small: { fontSize: 13, fontWeight: '500', lineHeight: 18 },
-  tiny: { fontSize: 12, fontWeight: '500', letterSpacing: 0.1, lineHeight: 16 }, // >= 12px hard stop!
-  num: { fontSize: 22, fontWeight: '700', letterSpacing: -0.3, fontVariant: ['tabular-nums'] },
+  // Header (Header/Greeting-13 · Header/Name-18 — Figma dùng 12 Medium cho dòng phụ)
+  greeting: { fontFamily: fontFamily.medium, fontSize: 12, lineHeight: 16 },
+  name: { fontFamily: fontFamily.semibold, fontSize: 18, lineHeight: 24 },
+
+  // Heading (KPI/Sub-20 · Heading/Section-18 · Heading/Card-16)
+  h1: { fontFamily: fontFamily.bold, fontSize: 20, lineHeight: 26 },
+  h2: { fontFamily: fontFamily.semibold, fontSize: 18, lineHeight: 26 },
+  h3: { fontFamily: fontFamily.semibold, fontSize: 16, lineHeight: 22 },
+
+  // Body (Body/Regular-14 · Body/Medium-14 · Body/Regular-13 · Label/Medium-13)
+  body: { fontFamily: fontFamily.regular, fontSize: 14, lineHeight: 20 },
+  bodyM: { fontFamily: fontFamily.medium, fontSize: 14, lineHeight: 20 },
+  item: { fontFamily: fontFamily.semibold, fontSize: 14, lineHeight: 20 }, // List/Item-14
+  small: { fontFamily: fontFamily.regular, fontSize: 13, lineHeight: 18 },
+  label: { fontFamily: fontFamily.medium, fontSize: 13, lineHeight: 18 },
+
+  // Caption/Medium-12
+  tiny: { fontFamily: fontFamily.medium, fontSize: 12, lineHeight: 16 },
+
+  /* Badge/SemiBold-11 trong Figma là 11px. Skill ui-ux-design-app đặt hard-stop
+   * "không có text < 12px", nên giữ 12px và bù bằng IN HOA + letter-spacing. */
+  badge: { fontFamily: fontFamily.semibold, fontSize: 12, lineHeight: 16, letterSpacing: 0.3 },
+
+  // Số liệu KPI (Figma: 26 Bold)
+  num: { fontFamily: fontFamily.bold, fontSize: 26, lineHeight: 30, fontVariant: ['tabular-nums'] },
 };
 
 // Thang elevation border-first (Sleek dark mode shadows)
@@ -182,6 +228,33 @@ export const shadows = {
   }),
 };
 
+/* ── Số đo layout cố định (Apple HIG / Material 3) ──────────────────
+ * Thanh tab dạng "curved bottom nav": nút logo tròn nằm lọt vào rãnh
+ * lõm giữa thanh, phần nhô lên chiếm TAB_OVERFLOW px phía trên. */
+export const layout = {
+  TAB_BAR_HEIGHT: 64,      // chiều cao phần thanh (chưa cộng safe-area)
+  TAB_OVERFLOW: 46,        // phần nút logo nhô lên trên mép thanh (Figma: ~70% thân nút)
+  TAB_FAB_SIZE: 58,        // đường kính nút logo trung tâm
+  TAB_NOTCH_DEPTH: 24,     // độ sâu rãnh lõm
+  TAB_NOTCH_HALF: 44,      // nửa bề rộng vai rãnh lõm
+  TAB_FAB_GAP: 6,          // khe hở đều giữa mép nút logo và đường cong rãnh
+  /* Quan hệ giữ khe hở đều — sửa một hằng số thì kiểm lại công thức này:
+   *   TAB_OVERFLOW = TAB_NOTCH_DEPTH - TAB_FAB_GAP + (TAB_FAB_SIZE / 2) + 6
+   * (6 = đệm của vùng chạm quanh nút). Với bộ số hiện tại: 24 - 6 + 29 + 6 = 53… giữ 46
+   * để nút ăn sâu hơn vào rãnh một chút, đúng tỉ lệ trong Figma. */
+  HEADER_RADIUS: 24,       // bo góc dưới của brand header
+  HEADER_AVATAR: 44,       // Figma: Container 44, ảnh trong 42
+  HEADER_BACK: 30,         // Figma: Button - Quay lại 30x30, bo tròn hoàn toàn
+  CARD_RADIUS: 16,         // Figma: Card 16
+  KPI_RADIUS: 14,          // Figma: KPI card 14
+  BAR_HEIGHT: 5,           // Figma: thanh tiến độ 5px, bo pill
+  TOUCH_MIN: 44,           // vùng chạm tối thiểu (Apple HIG)
+};
+
+/** Khoảng đệm cuối danh sách để nội dung không bị thanh tab nổi che. */
+export const listBottomPad = (extra = 0) =>
+  layout.TAB_BAR_HEIGHT + layout.TAB_OVERFLOW + space[5] + extra;
+
 // Bảng màu gán cho sự kiện / danh mục — dùng chung ở lịch, task, chi tiêu
 export const palette = [
   { key: 'green', hex: '#059669' },
@@ -201,4 +274,4 @@ export const tint = (hex, alpha = 0.12) => {
   return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
 };
 
-export default { colors, space, radius, font, shadows, palette, hexOf, tint };
+export default { colors, space, radius, font, fontFamily, shadows, layout, listBottomPad, palette, hexOf, tint };

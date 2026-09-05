@@ -1,12 +1,13 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, Image, ActivityIndicator, StyleSheet, Platform } from 'react-native';
+import { View, Text, Image, ActivityIndicator, StyleSheet } from 'react-native';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as Notifications from 'expo-notifications';
 
-import { colors, space, font } from '../theme';
+import { colors, space, radius, font } from '../theme';
+import TabBar, { CENTER_ROUTE } from '../components/TabBar';
 import { useAuth } from '../contexts/AuthContext';
 import { useApp } from '../contexts/AppContext';
 
@@ -37,59 +38,21 @@ const navTheme = {
   },
 };
 
-const ICONS = {
-  'Trang chủ': ['home', 'home-outline'],
-  'Lịch': ['calendar', 'calendar-outline'],
-  'Cá nhân': ['grid', 'grid-outline'],
-  'Liên hệ': ['chatbubbles', 'chatbubbles-outline'],
-  'Web': ['globe', 'globe-outline'],
-};
-
+/**
+ * 4 tab hai bên + nút logo thương hiệu nổi ở giữa dẫn về Trang chủ.
+ * Thứ tự route quyết định vị trí hiển thị: 2 tab trái · logo · 2 tab phải.
+ */
 function Tabs() {
   const { unreadLeads } = useApp();
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({
-        headerShown: false,
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textMuted,
-        tabBarStyle: {
-          backgroundColor: colors.card,
-          borderTopColor: colors.border,
-          borderTopWidth: 1,
-          height: Platform.OS === 'ios' ? 84 : 66,
-          paddingTop: 8,
-          paddingBottom: Platform.OS === 'ios' ? 24 : 10,
-          elevation: 4,
-          shadowColor: '#0F172A',
-          shadowOpacity: 0.05,
-          shadowRadius: 10,
-          shadowOffset: { width: 0, height: -2 },
-        },
-        tabBarLabelStyle: { fontSize: 12, fontWeight: '600', letterSpacing: 0.1, marginTop: 2 },
-        tabBarBadgeStyle: {
-          backgroundColor: colors.primary,
-          color: colors.onPrimary,
-          fontSize: 12,
-          fontWeight: '700',
-          minWidth: 18,
-          height: 18,
-          borderRadius: 9,
-          lineHeight: 18,
-        },
-        tabBarIcon: ({ focused, color }) => {
-          const [on, off] = ICONS[route.name] || ICONS['Trang chủ'];
-          return (
-            <View style={s.tabIconWrap}>
-              <Ionicons name={focused ? on : off} size={22} color={color} />
-            </View>
-          );
-        },
-      })}
+      initialRouteName={CENTER_ROUTE}
+      tabBar={(props) => <TabBar {...props} />}
+      screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: colors.bg } }}
     >
-      <Tab.Screen name="Trang chủ" component={HomeScreen} />
       <Tab.Screen name="Lịch" component={CalendarScreen} />
       <Tab.Screen name="Cá nhân" component={PersonalScreen} />
+      <Tab.Screen name={CENTER_ROUTE} component={HomeScreen} />
       <Tab.Screen
         name="Liên hệ"
         component={LeadsScreen}
@@ -103,7 +66,15 @@ function Tabs() {
 function Splash() {
   return (
     <View style={s.splash}>
-      <Image source={require('../../assets/logo-mark.png')} style={s.logo} resizeMode="contain" />
+      <LinearGradient
+        colors={[colors.brandFrom, 'transparent']}
+        style={StyleSheet.absoluteFill}
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0.5, y: 0.7 }}
+      />
+      <View style={s.splashLogo}>
+        <Image source={require('../../assets/logo-mark.png')} style={s.logo} resizeMode="contain" />
+      </View>
       <ActivityIndicator color={colors.primary} />
       <Text style={[font.small, { color: colors.textMuted, marginTop: space[3] }]}>Đang mở workspace…</Text>
     </View>
@@ -150,11 +121,10 @@ export default function RootNavigator() {
 
 const s = StyleSheet.create({
   splash: { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
-  logo: { width: 84, height: 84, marginBottom: space[5] },
-  tabIconWrap: {
-    width: 32,
-    height: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
+  splashLogo: {
+    width: 96, height: 96, borderRadius: radius['2xl'],
+    alignItems: 'center', justifyContent: 'center', marginBottom: space[5],
+    backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border,
   },
+  logo: { width: 60, height: 60 },
 });

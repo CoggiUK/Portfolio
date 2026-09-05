@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Pressable, Alert, ScrollView, Platform } from '
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import {
-  Screen, Header, Card, Field, Btn, Chip, Row, SwitchRow, SectionTitle, IconBtn, Banner,
+  Screen, DetailHeader, Card, Field, Btn, Chip, Row, SwitchRow, SectionTitle, BrandIconBtn, Banner,
 } from '../components/ui';
 import { colors, space, radius, font, palette, tint } from '../theme';
 import { useApp } from '../contexts/AppContext';
@@ -112,14 +112,15 @@ export default function EventFormScreen({ navigation, route }) {
     ]);
 
   return (
-    <Screen edges={['top', 'bottom']}>
-      <Header
+    <Screen edges={['bottom']}>
+      <DetailHeader
         title={id ? 'Sửa lịch' : 'Lịch mới'}
+        subtitle={id ? 'Thay đổi sẽ đồng bộ lên Google Calendar' : 'Tạo sự kiện mới cho lịch làm việc'}
         onBack={() => navigation.goBack()}
-        right={id ? <IconBtn icon="trash-outline" color={colors.danger} onPress={confirmDelete} /> : null}
+        right={id ? <BrandIconBtn icon="trash-outline" label="Xoá lịch" onPress={confirmDelete} /> : null}
       />
       <ScrollView
-        contentContainerStyle={{ padding: space[4], paddingBottom: space[8] + 24 }}
+        contentContainerStyle={{ padding: space[4], paddingTop: space[5], paddingBottom: space[8] + 24 }}
         keyboardShouldPersistTaps="handled"
       >
         <Banner type="error" message={error} onClose={() => setError('')} />
@@ -197,20 +198,13 @@ export default function EventFormScreen({ navigation, route }) {
           </Text>
         </Card>
 
-        <View style={{ flexDirection: 'row', gap: space[3], marginTop: space[5] }}>
-          <Btn
-            title="Huỷ"
-            variant="secondary"
-            onPress={() => navigation.goBack()}
-            style={{ flex: 1 }}
-          />
+        <View style={{ marginTop: space[5] }}>
           <Btn
             title={id ? 'Lưu thay đổi' : 'Tạo lịch'}
             icon="checkmark"
             onPress={submit}
             loading={busy}
             loadingTitle={id ? 'Đang lưu…' : 'Đang tạo…'}
-            style={{ flex: 2 }}
           />
         </View>
       </ScrollView>

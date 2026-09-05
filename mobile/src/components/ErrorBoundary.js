@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, Pressable, ScrollView } from 'react-native';
-import { colors, space, radius, font } from '../theme';
+import { colors, space, radius, font, fontFamily } from '../theme';
 
 /**
  * Trong bản release, một lỗi render chưa bắt sẽ đóng thẳng app. Boundary này
@@ -40,7 +40,7 @@ export default class ErrorBoundary extends React.Component {
         </ScrollView>
 
         <Pressable onPress={this.retry} style={({ pressed }) => [s.btn, pressed && { opacity: 0.85 }]}>
-          <Text style={[font.body, { color: colors.onPrimary, fontWeight: '700' }]}>Thử lại</Text>
+          <Text style={[font.body, { color: colors.onPrimary, fontFamily: fontFamily.bold }]}>Thử lại</Text>
         </Pressable>
       </View>
     );

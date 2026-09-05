@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, Alert } from 'react-native';
 import { Card, Field, Btn, SectionTitle, Row, Chip, Banner, IconBtn } from '../../components/ui';
-import { colors, space, font } from '../../theme';
+import { colors, space, font, fontFamily, listBottomPad } from '../../theme';
 import { useApp } from '../../contexts/AppContext';
 import * as db from '../../services/db';
 
@@ -105,7 +105,7 @@ export default function ProfilePane() {
 
   return (
     <ScrollView
-      contentContainerStyle={{ padding: space[4], paddingBottom: space[8] }}
+      contentContainerStyle={{ padding: space[4], paddingBottom: listBottomPad() }}
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
     >
@@ -145,7 +145,7 @@ export default function ProfilePane() {
       {eduList.map((edu, idx) => (
         <Card key={idx} style={{ marginBottom: space[3] }}>
           <Row style={{ justifyContent: 'space-between', marginBottom: space[2] }}>
-            <Text style={[font.h3, { color: colors.primary, fontWeight: '700' }]}>
+            <Text style={[font.h3, { color: colors.primary, fontFamily: fontFamily.bold }]}>
               {edu.school || `Học vấn #${idx + 1}`}
             </Text>
             <IconBtn
@@ -204,7 +204,7 @@ export default function ProfilePane() {
       {expList.map((exp, idx) => (
         <Card key={idx} style={{ marginBottom: space[3] }}>
           <Row style={{ justifyContent: 'space-between', marginBottom: space[2] }}>
-            <Text style={[font.h3, { color: colors.secondary, fontWeight: '700' }]}>
+            <Text style={[font.h3, { color: colors.secondary, fontFamily: fontFamily.bold }]}>
               {exp.role || `Kinh nghiệm #${idx + 1}`}
             </Text>
             <IconBtn

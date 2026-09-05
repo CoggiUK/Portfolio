@@ -1,11 +1,14 @@
 import React from 'react';
 import {
-  View, Text, TextInput, Pressable, StyleSheet, ActivityIndicator, ScrollView, Modal, Platform,
+  View, Text, TextInput, Pressable, StyleSheet, ActivityIndicator, ScrollView, Modal, Image,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import Svg, { Path } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
-import { colors, space, radius, font, shadows, tint } from '../theme';
+import { colors, space, radius, font, fontFamily, shadows, layout, tint } from '../theme';
+
+const LOGO_MARK = require('../../assets/logo-mark.png');
 
 /* ── Khung màn hình ─────────────────────────────────────────────── */
 
@@ -57,9 +60,177 @@ export function Header({ title, subtitle, right, onBack, badge }) {
   );
 }
 
+/* ── Brand header (hero) ────────────────────────────────────────────
+ * Dải màu thương hiệu bo góc dưới, dùng chung cho 5 màn tab.
+ *  · Chế độ hồ sơ  : truyền `greeting` + `name` (màn Trang chủ)
+ *  · Chế độ tiêu đề: truyền `title` + `subtitle` (các tab còn lại)
+ * Toàn bộ chữ/nút trên nền brand dùng token `onBrand*` để giữ contrast AA. */
+
+export function BrandIconBtn({ icon, onPress, label, dot, count, tone = 'onBrand' }) {
+  const fg = tone === 'onBrand' ? colors.onBrand : colors.text;
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={count ? `${label || icon} (${count} mới)` : label || icon}
+      hitSlop={8}
+      onPress={() => {
+        Haptics.selectionAsync().catch(() => {});
+        onPress?.();
+      }}
+      style={({ pressed }) => [s.brandIconBtn, pressed && { opacity: 0.6 }]}
+    >
+      <Ionicons name={icon} size={20} color={fg} />
+      {dot || count ? <View style={s.brandDot} /> : null}
+    </Pressable>
+  );
+}
+
+export function BrandHeader({
+  greeting,
+  name,
+  meta,
+  title,
+  subtitle,
+  avatarUri,
+  icon,
+  badge,
+  actions = [],
+  onAvatarPress,
+  children,
+  style,
+}) {
+  const insets = useSafeAreaInsets();
+  const profileMode = !!greeting || !!name;
+
+  const avatar = (
+    <View style={s.brandAvatar}>
+      {avatarUri ? (
+        <Image source={{ uri: avatarUri }} style={s.brandAvatarImg} resizeMode="cover" />
+      ) : (
+        <Image source={LOGO_MARK} style={s.brandAvatarLogo} resizeMode="contain" />
+      )}
+    </View>
+  );
+
+  return (
+    <View style={[s.brandHeader, { paddingTop: insets.top + space[1] }, style]}>
+      <View style={s.brandRow}>
+        {profileMode || icon ? (
+          onAvatarPress ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Mở hồ sơ và cài đặt"
+              onPress={() => {
+                Haptics.selectionAsync().catch(() => {});
+                onAvatarPress();
+              }}
+              style={({ pressed }) => [pressed && { opacity: 0.8, transform: [{ scale: 0.96 }] }]}
+            >
+              {avatar}
+            </Pressable>
+          ) : profileMode ? (
+            avatar
+          ) : (
+            <View style={s.brandLeadIcon}>
+              <Ionicons name={icon} size={20} color={colors.onBrand} />
+            </View>
+          )
+        ) : null}
+
+        <View style={{ flex: 1, minWidth: 0 }}>
+          {profileMode ? (
+            <>
+              <Text style={[font.greeting, { color: colors.onBrandSub }]} numberOfLines={1}>
+                {greeting}
+              </Text>
+              <Text style={[font.name, { color: colors.onBrand, marginTop: 2 }]} numberOfLines={1}>
+                {name}
+              </Text>
+              {meta ? (
+                <Text style={[font.greeting, { color: colors.onBrandSub, marginTop: 2 }]} numberOfLines={1}>
+                  {meta}
+                </Text>
+              ) : null}
+            </>
+          ) : (
+            <>
+              <Text style={[font.name, { color: colors.onBrand }]} numberOfLines={1}>
+                {title}
+              </Text>
+              {badge || subtitle ? (
+                <View style={s.brandSubRow}>
+                  {badge ? (
+                    <View style={s.brandBadge}>
+                      <Text style={[font.badge, { color: colors.onBrand }]}>{badge}</Text>
+                    </View>
+                  ) : null}
+                  {subtitle ? (
+                    <Text
+                      style={[font.greeting, { color: colors.onBrandSub, flexShrink: 1 }]}
+                      numberOfLines={1}
+                    >
+                      {subtitle}
+                    </Text>
+                  ) : null}
+                </View>
+              ) : null}
+            </>
+          )}
+        </View>
+
+        {actions.length ? (
+          <View style={s.brandActions}>
+            {actions.map((a) => (
+              <BrandIconBtn key={a.label || a.icon} {...a} />
+            ))}
+          </View>
+        ) : null}
+      </View>
+
+      {children ? <View style={{ marginTop: space[3] }}>{children}</View> : null}
+    </View>
+  );
+}
+
+/** Header màn chi tiết: nút quay lại tròn 30px (Figma) + tiêu đề 2 cấp. */
+export function DetailHeader({ title, subtitle, onBack, right, style }) {
+  const insets = useSafeAreaInsets();
+  return (
+    <View style={[s.brandHeader, { paddingTop: insets.top + space[3], paddingBottom: space[3] }, style]}>
+      <View style={s.brandRow}>
+        {onBack ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Quay lại"
+            hitSlop={14}
+            onPress={() => {
+              Haptics.selectionAsync().catch(() => {});
+              onBack();
+            }}
+            style={({ pressed }) => [s.brandBackBtn, pressed && { opacity: 0.7, transform: [{ scale: 0.94 }] }]}
+          >
+            <Ionicons name="chevron-back" size={18} color={colors.text} />
+          </Pressable>
+        ) : null}
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <Text style={[font.name, { color: colors.onBrand }]} numberOfLines={1}>
+            {title}
+          </Text>
+          {subtitle ? (
+            <Text style={[font.small, { color: colors.onBrandSub, marginTop: 2 }]} numberOfLines={1}>
+              {subtitle}
+            </Text>
+          ) : null}
+        </View>
+        {right}
+      </View>
+    </View>
+  );
+}
+
 export const SectionTitle = ({ children, right, style }) => (
   <View style={[s.sectionTitle, style]}>
-    <Text style={[font.tiny, { color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.8 }]}>
+    <Text style={[font.badge, { color: colors.textMuted, textTransform: 'uppercase' }]}>
       {children}
     </Text>
     {right}
@@ -69,72 +240,72 @@ export const SectionTitle = ({ children, right, style }) => (
 /* ── Thẻ kính mờ (Glass Card) ───────────────────────────────────── */
 
 export function Card({ children, style, onPress, accent, glow }) {
-  const body = (
-    <View
-      style={[
-        s.card,
-        accent ? { borderLeftWidth: 3, borderLeftColor: accent } : null,
-        glow && accent ? shadows.glow(accent, 0.15, 12) : shadows.card,
-        style,
-      ]}
-    >
-      {children}
-    </View>
-  );
-  if (!onPress) return body;
+  // Style phải nằm trên chính phần tử nhận sự kiện chạm, nếu không `flex`/
+  // `minWidth` truyền vào sẽ bị Pressable bọc ngoài nuốt mất và thẻ tràn khung.
+  const box = [
+    s.card,
+    accent ? { borderLeftWidth: 3, borderLeftColor: accent } : null,
+    glow && accent ? shadows.glow(accent, 0.15, 12) : shadows.card,
+    style,
+  ];
+
+  if (!onPress) return <View style={box}>{children}</View>;
+
   return (
     <Pressable
+      accessibilityRole="button"
       onPress={() => {
         Haptics.selectionAsync().catch(() => {});
         onPress();
       }}
-      style={({ pressed }) => [pressed && { opacity: 0.85, transform: [{ scale: 0.99 }] }]}
+      style={({ pressed }) => [box, pressed && { opacity: 0.85, transform: [{ scale: 0.99 }] }]}
     >
-      {body}
+      {children}
     </Pressable>
   );
 }
 
 /* ── Thẻ thống kê (Stat Card — Đồng bộ chuẩn Neutral Card) ──────── */
 
-export function StatCard({ label, value, icon, color = colors.primary, sub, onPress }) {
+export function StatCard({ label, value, icon, color = colors.primary, sub, progress, onPress }) {
   const isPos = sub && (sub.startsWith('+') || sub.toLowerCase().includes('dương'));
   const isNeg = sub && (sub.startsWith('-') || sub.toLowerCase().includes('âm'));
+  const subColor = isPos ? colors.primary : isNeg ? colors.danger : colors.textMuted;
+
   const content = (
     <View style={s.statCard}>
       <View style={s.statCardHead}>
-        <View style={s.statCardIcon}>
-          <Ionicons name={icon} size={17} color={color} />
-        </View>
+        <Text style={[font.item, { color: colors.text, flex: 1, minWidth: 0 }]} numberOfLines={1}>
+          {label}
+        </Text>
+        {icon ? <Ionicons name={icon} size={16} color={color} /> : null}
+      </View>
+
+      <View style={s.statCardValueRow}>
+        <Text
+          style={[font.num, { color, flexShrink: 1 }]}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.5}
+        >
+          {value}
+        </Text>
         {sub ? (
-          <View
-            style={[
-              s.statSubBadge,
-              isPos && { backgroundColor: colors.primarySurface, borderColor: colors.primaryBorder },
-              isNeg && { backgroundColor: colors.dangerSurface, borderColor: colors.dangerBorder },
-            ]}
-          >
-            <Text
-              style={[
-                font.tiny,
-                { color: isPos ? colors.primary : isNeg ? colors.danger : colors.textSub, fontWeight: '600' },
-              ]}
-            >
-              {sub}
-            </Text>
-          </View>
+          <Text style={[font.label, { color: subColor, flexShrink: 1 }]} numberOfLines={1}>
+            {sub}
+          </Text>
         ) : null}
       </View>
-      <Text style={[font.num, { color: colors.text, marginTop: space[2] }]}>{value}</Text>
-      <Text style={[font.tiny, { color: colors.textSub, marginTop: 2 }]} numberOfLines={1}>
-        {label}
-      </Text>
+
+      {typeof progress === 'number' ? <Progress value={progress} color={color} /> : null}
     </View>
   );
 
   if (!onPress) return <View style={{ flex: 1 }}>{content}</View>;
   return (
     <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`${label}: ${value}`}
       onPress={() => {
         Haptics.selectionAsync().catch(() => {});
         onPress();
@@ -142,6 +313,47 @@ export function StatCard({ label, value, icon, color = colors.primary, sub, onPr
       style={({ pressed }) => [{ flex: 1 }, pressed && { opacity: 0.85, transform: [{ scale: 0.97 }] }]}
     >
       {content}
+    </Pressable>
+  );
+}
+
+/** Thanh tiến độ 5px bo pill — Figma dùng chung ở KPI và card thông tin. */
+export function Progress({ value = 0, color = colors.primary, style }) {
+  const pct = Math.max(0, Math.min(1, value));
+  return (
+    <View
+      accessibilityRole="progressbar"
+      accessibilityValue={{ min: 0, max: 100, now: Math.round(pct * 100) }}
+      style={[s.progressTrack, style]}
+    >
+      <View style={[s.progressFill, { width: `${pct * 100}%`, backgroundColor: color }]} />
+    </View>
+  );
+}
+
+/** Hàng nhãn-trái / giá-trị-phải. Thiếu dữ liệu hiện "—" thay vì để trống. */
+export function InfoRow({ label, value, color = colors.text, onPress, icon }) {
+  const empty = value === undefined || value === null || value === '';
+  const body = (
+    <View style={s.infoRow}>
+      <Text style={[font.body, { color: colors.textMuted, flexShrink: 1 }]} numberOfLines={1}>
+        {label}
+      </Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[1], flexShrink: 1 }}>
+        <Text
+          style={[font.bodyM, { color: empty ? colors.textDisabled : color, textAlign: 'right' }]}
+          numberOfLines={1}
+        >
+          {empty ? '—' : value}
+        </Text>
+        {icon && !empty ? <Ionicons name={icon} size={15} color={color} /> : null}
+      </View>
+    </View>
+  );
+  if (!onPress || empty) return body;
+  return (
+    <Pressable onPress={onPress} style={({ pressed }) => [pressed && { opacity: 0.6 }]}>
+      {body}
     </Pressable>
   );
 }
@@ -235,9 +447,7 @@ export function Btn({
       ) : icon ? (
         <Ionicons name={icon} size={small ? 14 : 17} color={v.fg} />
       ) : null}
-      <Text style={[small ? font.small : font.body, { color: v.fg, fontWeight: '600' }]}>
-        {displayTitle}
-      </Text>
+      <Text style={[small ? font.label : font.item, { color: v.fg }]}>{displayTitle}</Text>
     </Pressable>
   );
 }
@@ -304,7 +514,7 @@ export function Field({
     <View style={[{ marginBottom: space[4] }, style]}>
       {label ? (
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: space[1] + 2 }}>
-          <Text style={[font.small, { color: colors.textSub, fontWeight: '500' }]}>{label}</Text>
+          <Text style={[font.small, { color: colors.textSub, fontFamily: fontFamily.medium }]}>{label}</Text>
           {required ? <Text style={{ color: colors.danger, marginLeft: 3 }}>*</Text> : null}
         </View>
       ) : null}
@@ -348,10 +558,7 @@ export function Chip({ label, active, onPress, color = colors.primary, icon, cou
     >
       {icon ? <Ionicons name={icon} size={14} color={active ? colors.onPrimary : colors.textMuted} /> : null}
       <Text
-        style={[
-          font.small,
-          { color: active ? colors.onPrimary : colors.textSub, fontWeight: active ? '700' : '500' },
-        ]}
+        style={[active ? font.item : font.label, { color: active ? colors.onPrimary : colors.textSub }]}
       >
         {label}
       </Text>
@@ -365,7 +572,7 @@ export function Chip({ label, active, onPress, color = colors.primary, icon, cou
           <Text
             style={[
               font.tiny,
-              { color: active ? colors.onPrimary : colors.textMuted, fontWeight: '700' },
+              { color: active ? colors.onPrimary : colors.textMuted, fontFamily: fontFamily.bold },
             ]}
           >
             {count}
@@ -376,32 +583,79 @@ export function Chip({ label, active, onPress, color = colors.primary, icon, cou
   );
 }
 
+/**
+ * Segmented dạng "tab khoét vai" — hình đặc trưng trong design system:
+ * track màu thương hiệu, mục đang chọn là mảng nền card cắt vào track bằng
+ * đường cong chữ S ở hai bên (rộng dần xuống đáy) thay vì cạnh dọc thẳng.
+ */
+/**
+ * Segmented dạng "tab khoét vai" — hình đặc trưng trong design system:
+ * track màu thương hiệu, mục đang chọn là mảng nền card cắt vào track bằng
+ * đường cong chữ S, rộng dần lên phía trên (giống tab hồ sơ giấy).
+ *
+ * Hình vẽ trong hệ toạ độ chuẩn hoá (UNIT đơn vị cho mỗi mục) rồi để
+ * `preserveAspectRatio="none"` kéo giãn — nhờ vậy vai khoét luôn khớp đúng
+ * ranh giới các ô `flex: 1` mà không phụ thuộc phép đo bề rộng.
+ */
+const SEG_UNIT = 100;
+const SEG_H = 40;
+const SEG_SLANT = 14;
+
+function segPath(index, count) {
+  const first = index === 0;
+  const last = index === count - 1;
+  const x0 = index * SEG_UNIT;
+  const x1 = x0 + SEG_UNIT;
+  const h = SEG_H;
+  const k = SEG_SLANT / 2;
+
+  // Mục đang chọn rộng hơn ở mép trên, thu lại ở mép dưới.
+  const topLeft = first ? 0 : x0 - k;
+  const botLeft = first ? 0 : x0 + k;
+  const topRight = last ? count * SEG_UNIT : x1 + k;
+  const botRight = last ? count * SEG_UNIT : x1 - k;
+
+  return (
+    `M${topLeft},0 H${topRight} ` +
+    (last ? `V${h} ` : `C${topRight - k},0 ${botRight + k},${h} ${botRight},${h} `) +
+    `H${botLeft} ` +
+    (first ? 'V0 ' : `C${botLeft - k},${h} ${topLeft + k},0 ${topLeft},0 `) +
+    'Z'
+  );
+}
+
 export function Segmented({ items, value, onChange }) {
+  const n = items.length;
+  const idx = Math.max(0, items.findIndex((it) => it.value === value));
+
   return (
     <View style={s.segmented}>
+      <Svg
+        width="100%"
+        height={SEG_H}
+        viewBox={`0 0 ${n * SEG_UNIT} ${SEG_H}`}
+        preserveAspectRatio="none"
+        style={StyleSheet.absoluteFill}
+      >
+        <Path d={segPath(idx, n)} fill={colors.card} />
+      </Svg>
       {items.map((it) => {
         const active = it.value === value;
         return (
           <Pressable
             key={it.value}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: active }}
+            accessibilityLabel={it.label}
             onPress={() => {
               Haptics.selectionAsync().catch(() => {});
               onChange(it.value);
             }}
-            style={[
-              s.segItem,
-              active && {
-                backgroundColor: colors.card,
-                borderColor: colors.border,
-                ...shadows.card,
-              },
-            ]}
+            style={s.segItem}
           >
             <Text
-              style={[
-                font.small,
-                { color: active ? colors.primary : colors.textSub, fontWeight: active ? '700' : '500' },
-              ]}
+              numberOfLines={1}
+              style={[active ? font.item : font.label, { color: active ? colors.primary : colors.onBrand }]}
             >
               {it.label}
             </Text>
@@ -464,7 +718,7 @@ export function Badge({ label, color = colors.primary, dot = false }) {
   return (
     <View style={[s.badge, { backgroundColor: bg, borderColor: bc }]}>
       {dot ? <View style={[s.badgeDot, { backgroundColor: fg }]} /> : null}
-      <Text style={[font.tiny, { color: fg, fontWeight: '600' }]}>{label}</Text>
+      <Text style={[font.badge, { color: fg }]}>{label}</Text>
     </View>
   );
 }
@@ -519,7 +773,7 @@ export function Banner({ type = 'info', message, onClose }) {
         size={18}
         color={c}
       />
-      <Text style={[font.small, { color: c, flex: 1, fontWeight: '500' }]}>{message}</Text>
+      <Text style={[font.small, { color: c, flex: 1, fontFamily: fontFamily.medium }]}>{message}</Text>
       {onClose ? <IconBtn icon="close" size={16} color={c} onPress={onClose} label="Đóng" /> : null}
     </View>
   );
@@ -546,6 +800,46 @@ export function Sheet({ visible, onClose, title, children }) {
 
 const s = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
+  brandHeader: {
+    backgroundColor: colors.brandTo,
+    paddingHorizontal: space[4],
+    paddingBottom: space[5],
+    borderBottomLeftRadius: layout.HEADER_RADIUS,
+    borderBottomRightRadius: layout.HEADER_RADIUS,
+  },
+  brandRow: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
+  brandAvatar: {
+    width: layout.HEADER_AVATAR, height: layout.HEADER_AVATAR,
+    borderRadius: radius.pill, overflow: 'hidden',
+    alignItems: 'center', justifyContent: 'center',
+    backgroundColor: colors.bgSurface, borderWidth: 1, borderColor: colors.onBrandBorder,
+  },
+  brandAvatarImg: { width: '100%', height: '100%' },
+  brandAvatarLogo: { width: 30, height: 30 },
+  brandLeadIcon: {
+    width: layout.HEADER_AVATAR, height: layout.HEADER_AVATAR, borderRadius: radius.lg,
+    alignItems: 'center', justifyContent: 'center',
+    backgroundColor: colors.onBrandSurface, borderWidth: 1, borderColor: colors.onBrandBorder,
+  },
+  brandActions: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+  brandSubRow: { flexDirection: 'row', alignItems: 'center', gap: space[2], marginTop: 3 },
+  brandIconBtn: {
+    width: layout.TOUCH_MIN, height: layout.TOUCH_MIN,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  brandDot: {
+    position: 'absolute', top: 10, right: 10,
+    width: 8, height: 8, borderRadius: 4, backgroundColor: colors.danger,
+  },
+  brandBackBtn: {
+    width: layout.HEADER_BACK, height: layout.HEADER_BACK, borderRadius: radius.pill,
+    alignItems: 'center', justifyContent: 'center',
+    backgroundColor: colors.bgElevated,
+  },
+  brandBadge: {
+    paddingHorizontal: 10, paddingVertical: 4, borderRadius: radius.pill,
+    backgroundColor: colors.onBrandSurface,
+  },
   header: {
     flexDirection: 'row', alignItems: 'center', gap: space[3],
     paddingHorizontal: space[4], paddingTop: space[3], paddingBottom: space[3],
@@ -559,24 +853,23 @@ const s = StyleSheet.create({
     marginTop: space[5], marginBottom: space[3],
   },
   card: {
-    backgroundColor: colors.card, borderRadius: radius.md, borderWidth: 1,
-    borderColor: colors.border, padding: space[4],
+    backgroundColor: colors.card, borderRadius: layout.CARD_RADIUS, borderWidth: 1,
+    borderColor: colors.border, paddingVertical: space[3], paddingHorizontal: space[4],
   },
   statCard: {
-    backgroundColor: colors.card, borderRadius: radius.md, borderWidth: 1,
-    borderColor: colors.border,
-    padding: space[3] + 2, minHeight: 92, justifyContent: 'space-between',
+    backgroundColor: colors.card, borderRadius: layout.KPI_RADIUS, borderWidth: 1,
+    borderColor: colors.border, padding: space[3], minHeight: 84, gap: space[1] + 2,
   },
-  statCardHead: {
+  statCardHead: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+  statCardValueRow: { flexDirection: 'row', alignItems: 'flex-end', gap: space[1] + 2 },
+  progressTrack: {
+    height: layout.BAR_HEIGHT, borderRadius: radius.pill,
+    backgroundColor: colors.bgSurface, overflow: 'hidden',
+  },
+  progressFill: { height: '100%', borderRadius: radius.pill },
+  infoRow: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-  },
-  statCardIcon: {
-    width: 32, height: 32, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center',
-    backgroundColor: colors.bgSurface, borderWidth: 1, borderColor: colors.border,
-  },
-  statSubBadge: {
-    paddingHorizontal: 8, paddingVertical: 2, borderRadius: radius.pill,
-    backgroundColor: colors.bgSurface, borderWidth: 1, borderColor: colors.border,
+    gap: space[3], minHeight: 32,
   },
   btn: {
     minHeight: 44,
@@ -604,24 +897,23 @@ const s = StyleSheet.create({
     minHeight: 44,
     backgroundColor: colors.bgSurface, borderWidth: 1, borderColor: colors.border,
     borderRadius: radius.sm, paddingHorizontal: space[3], paddingVertical: space[2] + 2,
-    color: colors.text, fontSize: 15,
+    color: colors.text, fontFamily: fontFamily.regular, fontSize: 14,
   },
   chip: {
     flexDirection: 'row', alignItems: 'center', gap: space[1] + 2,
-    paddingHorizontal: space[3], paddingVertical: space[2],
+    minHeight: 34, paddingHorizontal: 10, paddingVertical: space[1] + 2,
     borderRadius: radius.pill, borderWidth: 1,
   },
   chipCount: {
     paddingHorizontal: 5, paddingVertical: 1, borderRadius: radius.pill, marginLeft: 2,
   },
   segmented: {
-    flexDirection: 'row', gap: space[1], padding: 3,
-    backgroundColor: colors.bgSurface, borderRadius: radius.sm + 2,
-    borderWidth: 1, borderColor: colors.border,
+    flexDirection: 'row', height: 40, borderRadius: radius.md,
+    backgroundColor: colors.brandTo, overflow: 'hidden',
   },
   segItem: {
-    flex: 1, alignItems: 'center', paddingVertical: space[2],
-    borderRadius: radius.sm, borderWidth: 1, borderColor: 'transparent',
+    flex: 1, alignItems: 'center', justifyContent: 'center',
+    paddingHorizontal: space[1],
   },
   switchRow: {
     flexDirection: 'row', alignItems: 'center', gap: space[3], paddingVertical: space[3],
@@ -633,8 +925,8 @@ const s = StyleSheet.create({
   },
   knob: { width: 20, height: 20, borderRadius: radius.pill, backgroundColor: colors.card },
   badge: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    paddingHorizontal: space[2], paddingVertical: 3, borderRadius: radius.pill, borderWidth: 1,
+    flexDirection: 'row', alignItems: 'center', gap: 4, flexShrink: 0,
+    paddingHorizontal: 10, paddingVertical: 4, borderRadius: radius.pill, borderWidth: 1,
     minHeight: 24,
   },
   badgeDot: { width: 6, height: 6, borderRadius: 3 },
@@ -648,15 +940,15 @@ const s = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: space[2],
     padding: space[3], borderRadius: radius.sm, borderWidth: 1, marginBottom: space[3],
   },
-  sheetBackdrop: { flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.45)' },
+  sheetBackdrop: { flex: 1, backgroundColor: 'rgba(2, 6, 12, 0.62)' },
   sheet: {
-    backgroundColor: colors.card, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl,
+    backgroundColor: colors.card, borderTopLeftRadius: radius['2xl'], borderTopRightRadius: radius['2xl'],
     borderWidth: 1, borderBottomWidth: 0, borderColor: colors.borderStrong,
     paddingHorizontal: space[4], paddingBottom: space[5], maxHeight: '88%',
     ...shadows.sheet,
   },
   sheetGrip: {
-    width: 36, height: 4, borderRadius: 2, backgroundColor: colors.borderStrong,
+    width: 44, height: 5, borderRadius: radius.pill, backgroundColor: colors.borderStrong,
     alignSelf: 'center', marginTop: space[3],
   },
   sheetHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: space[4] },

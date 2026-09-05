@@ -4,7 +4,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { Card, FAB, Empty, Chip, Row, Field, Btn, Sheet, Badge } from '../../components/ui';
-import { colors, space, radius, font, tint } from '../../theme';
+import { colors, space, radius, font, fontFamily, tint, listBottomPad } from '../../theme';
 import { useApp } from '../../contexts/AppContext';
 import * as db from '../../services/db';
 import { toDate, fmtDate, startOfDay } from '../../utils/date';
@@ -51,7 +51,7 @@ const TaskItem = memo(function TaskItem({ item, onToggle, onEdit, onDelete }) {
         <Text
           style={[
             font.body,
-            { color: item.done ? colors.textMuted : colors.text, fontWeight: item.done ? '400' : '600' },
+            { color: item.done ? colors.textMuted : colors.text, fontFamily: item.done ? fontFamily.regular : fontFamily.semibold },
             item.done && { textDecorationLine: 'line-through' },
           ]}
           numberOfLines={2}
@@ -71,7 +71,7 @@ const TaskItem = memo(function TaskItem({ item, onToggle, onEdit, onDelete }) {
                 size={12}
                 color={overdue ? colors.danger : colors.textMuted}
               />
-              <Text style={[font.tiny, { color: overdue ? colors.danger : colors.textMuted, fontWeight: '600' }]}>
+              <Text style={[font.tiny, { color: overdue ? colors.danger : colors.textMuted, fontFamily: fontFamily.semibold }]}>
                 {overdue ? 'Quá hạn · ' : ''}{fmtDate(due)}
               </Text>
             </Row>
@@ -224,7 +224,7 @@ export default function TasksPane({ initialCreate }) {
         data={list}
         keyExtractor={keyExtractor}
         renderItem={renderItem}
-        contentContainerStyle={{ paddingHorizontal: space[4], paddingBottom: 110 }}
+        contentContainerStyle={{ paddingHorizontal: space[4], paddingBottom: listBottomPad() }}
         showsVerticalScrollIndicator={false}
         initialNumToRender={8}
         maxToRenderPerBatch={10}
@@ -232,7 +232,7 @@ export default function TasksPane({ initialCreate }) {
         removeClippedSubviews={Platform.OS !== 'web'}
         ListHeaderComponent={
           counts.open ? (
-            <Text style={[font.tiny, { color: colors.textMuted, marginBottom: space[3], fontWeight: '700' }]}>
+            <Text style={[font.tiny, { color: colors.textMuted, marginBottom: space[3], fontFamily: fontFamily.bold }]}>
               {counts.open} CÔNG VIỆC CẦN GIẢI QUYẾT
             </Text>
           ) : null

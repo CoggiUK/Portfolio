@@ -40,6 +40,13 @@ export const monthGrid = (anchor) => {
 export const fmtTime = (d) => `${p2(d.getHours())}:${p2(d.getMinutes())}`;
 export const fmtDate = (d) => `${p2(d.getDate())}/${p2(d.getMonth() + 1)}/${d.getFullYear()}`;
 export const fmtDateTime = (d) => `${fmtDate(d)} · ${fmtTime(d)}`;
+export const WEEKDAYS_FULL = [
+  'Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy',
+];
+
+/** "Thứ Sáu, 22/08/2026" — dùng cho dòng ngày trên brand header. */
+export const fmtDayFull = (d) => `${WEEKDAYS_FULL[d.getDay()]}, ${fmtDate(d)}`;
+
 export const fmtDayLabel = (d) => `${WEEKDAYS[d.getDay()]}, ${p2(d.getDate())}/${p2(d.getMonth() + 1)}`;
 
 /** Nhãn tương đối kiểu "3 phút trước" / "Hôm qua". */
@@ -94,3 +101,15 @@ export const toDate = (v) => {
 
 export const money = (n) =>
   `${Number(n || 0).toLocaleString('vi-VN', { maximumFractionDigits: 0 })} ₫`;
+
+/** Số tiền rút gọn cho thẻ chỉ số: 1.250.000 → "1,3tr". Tránh cắt chữ trong ô hẹp. */
+export const moneyShort = (n) => {
+  const v = Number(n || 0);
+  const abs = Math.abs(v);
+  const sign = v < 0 ? '-' : '';
+  const fmt = (x) => String(Number(x.toFixed(1))).replace('.', ',');
+  if (abs >= 1e9) return `${sign}${fmt(abs / 1e9)} tỷ`;
+  if (abs >= 1e6) return `${sign}${fmt(abs / 1e6)} tr`;
+  if (abs >= 1e3) return `${sign}${Math.round(abs / 1e3)}K`;
+  return `${sign}${abs}`;
+};

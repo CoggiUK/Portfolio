@@ -4,9 +4,9 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Notifications from 'expo-notifications';
 import * as Application from 'expo-application';
 import {
-  Screen, Header, Card, Btn, SwitchRow, SectionTitle, Row, Field, Chip, Banner, IconBtn, Badge,
+  Screen, DetailHeader, Card, Btn, SwitchRow, SectionTitle, Row, Field, Chip, Banner, IconBtn, Badge,
 } from '../components/ui';
-import { colors, space, radius, font, tint } from '../theme';
+import { colors, space, radius, font, fontFamily, tint } from '../theme';
 import { useApp } from '../contexts/AppContext';
 import { useAuth, authMessage } from '../contexts/AuthContext';
 import {
@@ -102,10 +102,10 @@ export default function SettingsScreen({ navigation }) {
     ]);
 
   return (
-    <Screen edges={['top', 'bottom']}>
-      <Header title="Cài đặt" subtitle={user?.email} onBack={() => navigation.goBack()} />
+    <Screen edges={['bottom']}>
+      <DetailHeader title="Cài đặt" subtitle={user?.email} onBack={() => navigation.goBack()} />
       <ScrollView
-        contentContainerStyle={{ padding: space[4], paddingBottom: space[8] + 24 }}
+        contentContainerStyle={{ padding: space[4], paddingTop: space[5], paddingBottom: space[8] + 24 }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
@@ -289,7 +289,7 @@ export default function SettingsScreen({ navigation }) {
                 <Ionicons name="moon-outline" size={18} color={colors.primary} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={[font.body, { color: colors.text, fontWeight: '600' }]}>Giao diện tối (Dark Mode)</Text>
+                <Text style={[font.body, { color: colors.text, fontFamily: fontFamily.semibold }]}>Giao diện tối (Dark Mode)</Text>
                 <Text style={[font.tiny, { color: colors.textMuted, marginTop: 2 }]}>
                   Chuẩn Deep Slate, phong cách Linear/Stripe, tối ưu cho màn hình OLED
                 </Text>

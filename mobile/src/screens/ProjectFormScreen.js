@@ -1,9 +1,9 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, ScrollView, Alert } from 'react-native';
 import {
-  Screen, Header, Card, Field, Btn, SectionTitle, Row, IconBtn, Banner, Chip,
+  Screen, DetailHeader, Card, Field, Btn, SectionTitle, Row, BrandIconBtn, Banner, Chip,
 } from '../components/ui';
-import { colors, space, font } from '../theme';
+import { colors, space, font, fontFamily } from '../theme';
 import { useApp } from '../contexts/AppContext';
 import * as db from '../services/db';
 
@@ -103,15 +103,15 @@ export default function ProjectFormScreen({ navigation, route }) {
     ]);
 
   return (
-    <Screen edges={['top', 'bottom']}>
-      <Header
+    <Screen edges={['bottom']}>
+      <DetailHeader
         title={existing ? 'Sửa dự án' : 'Dự án mới'}
         subtitle="Hiển thị trên portfolio"
         onBack={() => navigation.goBack()}
-        right={existing ? <IconBtn icon="trash-outline" color={colors.danger} onPress={confirmDelete} /> : null}
+        right={existing ? <BrandIconBtn icon="trash-outline" label="Xoá dự án" onPress={confirmDelete} /> : null}
       />
       <ScrollView
-        contentContainerStyle={{ padding: space[4], paddingBottom: space[8] + 24 }}
+        contentContainerStyle={{ padding: space[4], paddingTop: space[5], paddingBottom: space[8] + 24 }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
@@ -131,7 +131,7 @@ export default function ProjectFormScreen({ navigation, route }) {
 
         {/* ── Kỹ năng & Công nghệ ── */}
         <SectionTitle right={
-          <Text style={[font.tiny, { color: colors.cyan, fontWeight: '700' }]}>
+          <Text style={[font.tiny, { color: colors.cyan, fontFamily: fontFamily.bold }]}>
             {(form.tech || []).length} KỸ NĂNG
           </Text>
         }>
@@ -293,20 +293,13 @@ export default function ProjectFormScreen({ navigation, route }) {
             placeholder="https://figma.com/…" autoCapitalize="none" />
         </Card>
 
-        <View style={{ flexDirection: 'row', gap: space[3], marginTop: space[5] }}>
-          <Btn
-            title="Huỷ"
-            variant="secondary"
-            onPress={() => navigation.goBack()}
-            style={{ flex: 1 }}
-          />
+        <View style={{ marginTop: space[5] }}>
           <Btn
             title={existing ? 'Lưu thay đổi' : 'Thêm vào website'}
             icon="cloud-upload-outline"
             onPress={save}
             loading={busy}
             loadingTitle="Đang lưu…"
-            style={{ flex: 2 }}
           />
         </View>
       </ScrollView>
