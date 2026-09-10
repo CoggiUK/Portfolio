@@ -267,11 +267,40 @@ export function AppProvider({ children }) {
 
   const unreadLeads = useMemo(() => leads.filter((l) => !l.read).length, [leads]);
 
+  /**
+   * Xóa sạch toàn bộ dữ liệu cá nhân của người dùng trên Cloud Firestore và Local Cache,
+   * đồng thời reset state về [] ngay lập tức để không còn hiển thị dữ liệu cũ trên màn hình.
+   */
+  const clearUserData = useCallback(async () => {
+    if (!uid) return;
+    try {
+      // 1. Reset state ngay tức thì để UI cập nhật 0 ngay
+      setEvents([]);
+      setTasks([]);
+      setNotes([]);
+      setHabits([]);
+      setTransactions([]);
+
+      // 2. Xóa sạch trên Cloud Firestore
+      await api.clearAllUserData(uid);
+
+      // 3. Xóa cache AsyncStorage cục bộ
+      await AsyncStorage.multiRemove([LAST_LEAD_KEY, 'workspace_cache']);
+
+      notify('Đã xóa toàn bộ dữ liệu cá nhân thành công', 'success');
+      return true;
+    } catch (err) {
+      console.warn('[AppContext] clearUserData failed:', err.message);
+      notify(`Lỗi khi xóa dữ liệu: ${err.message}`, 'error');
+      throw err;
+    }
+  }, [uid, notify]);
+
   const value = useMemo(
     () => ({
       uid, ready, events, tasks, notes, habits, transactions, leads, site, prefs,
       unreadLeads, pushToken, googleConnected, syncing, toast, notify,
-      refreshGoogleStatus, syncGoogle, saveEvent, deleteEvent, syncEventToGoogle,
+      refreshGoogleStatus, syncGoogle, saveEvent, deleteEvent, syncEventToGoogle, clearUserData,
       savePrefs: (d) => api.savePrefs(uid, d),
       create: (name, data) => api.createItem(uid, name, data),
       update: (name, id, data) => api.updateItem(uid, name, id, data),
@@ -281,7 +310,7 @@ export function AppProvider({ children }) {
     [
       uid, ready, events, tasks, notes, habits, transactions, leads, site, prefs,
       unreadLeads, pushToken, googleConnected, syncing, toast, notify,
-      refreshGoogleStatus, syncGoogle, saveEvent, deleteEvent, syncEventToGoogle,
+      refreshGoogleStatus, syncGoogle, saveEvent, deleteEvent, syncEventToGoogle, clearUserData,
     ]
   );
 

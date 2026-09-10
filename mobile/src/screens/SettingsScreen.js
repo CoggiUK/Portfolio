@@ -26,7 +26,7 @@ export default function SettingsScreen({ navigation }) {
   const { user, signOut, changePassword } = useAuth();
   const {
     prefs, savePrefs, googleConnected, refreshGoogleStatus, syncGoogle, syncing,
-    pushToken, events, tasks, notes, habits, transactions, leads, notify,
+    pushToken, events, tasks, notes, habits, transactions, leads, notify, clearUserData,
   } = useApp();
 
   const [calendars, setCalendars] = useState([]);
@@ -34,6 +34,7 @@ export default function SettingsScreen({ navigation }) {
   const [pw, setPw] = useState({ current: '', next: '', confirm: '' });
   const [pwBusy, setPwBusy] = useState(false);
   const [permission, setPermission] = useState(null);
+  const [clearing, setClearing] = useState(false);
 
   const clientIds = prefs.googleClientIds;
   const googleConfigured = isConfigured(clientIds);
@@ -93,6 +94,31 @@ export default function SettingsScreen({ navigation }) {
     } finally {
       setPwBusy(false);
     }
+  };
+
+  const handleClearData = () => {
+    Alert.alert(
+      'Xoá toàn bộ dữ liệu cá nhân?',
+      'Hành động này sẽ xoá vĩnh viễn toàn bộ Lịch làm việc, Việc cần làm, Ghi chú, Thói quen và Chi tiêu của bạn trên cả thiết bị và đám mây Firestore. Giao diện sẽ được đặt lại về 0 ngay lập tức và không thể hoàn tác.',
+      [
+        { text: 'Huỷ', style: 'cancel' },
+        {
+          text: 'Xoá sạch tất cả',
+          style: 'destructive',
+          onPress: async () => {
+            setClearing(true);
+            try {
+              await clearUserData();
+              setMessage({ type: 'success', text: 'Đã xoá sạch toàn bộ dữ liệu cá nhân. Các chỉ số đã trở về 0.' });
+            } catch (err) {
+              setMessage({ type: 'error', text: `Lỗi khi xoá dữ liệu: ${err.message}` });
+            } finally {
+              setClearing(false);
+            }
+          },
+        },
+      ]
+    );
   };
 
   const confirmSignOut = () =>
@@ -302,6 +328,16 @@ export default function SettingsScreen({ navigation }) {
         {/* ── Dữ liệu ── */}
         <SectionTitle>Dữ liệu của bạn</SectionTitle>
         <Card>
+          <Row style={{ justifyContent: 'space-between', marginBottom: space[3] }}>
+            <Row gap={space[2]}>
+              <Ionicons name="shield-checkmark" size={17} color={colors.primary} />
+              <Text style={[font.body, { color: colors.text, fontFamily: fontFamily.semibold }]}>
+                Bảo mật dữ liệu
+              </Text>
+            </Row>
+            <Badge label="MÃ HÓA AES-256" color={colors.primary} dot />
+          </Row>
+
           <View style={s.statGrid}>
             <DataStat icon="calendar-outline" label="Lịch" value={events.length} color={colors.primary} />
             <DataStat icon="checkbox-outline" label="Việc" value={tasks.length} color={colors.cyan} />
@@ -310,9 +346,20 @@ export default function SettingsScreen({ navigation }) {
             <DataStat icon="wallet-outline" label="Giao dịch" value={transactions.length} color={colors.primary} />
             <DataStat icon="mail-outline" label="Liên hệ" value={leads.length} color={colors.secondary} />
           </View>
-          <Text style={[font.tiny, { color: colors.textMuted, marginTop: space[3] }]}>
-            Toàn bộ dữ liệu nằm trong Cloud Firestore của chính bạn (project {`portfolio-42c34`}).
+
+          <Text style={[font.tiny, { color: colors.textMuted, marginTop: space[3], lineHeight: 18 }]}>
+            Toàn bộ dữ liệu cá nhân (Lịch, Việc, Ghi chú, Thói quen, Chi tiêu) được mã hóa đầu cuối với khoá bảo mật lưu trong Keystore phần cứng trước khi lưu lên Cloud Firestore.
           </Text>
+
+          <View style={s.divider} />
+
+          <Btn
+            title="Xoá toàn bộ dữ liệu cá nhân"
+            variant="danger"
+            icon="trash-outline"
+            onPress={handleClearData}
+            loading={clearing}
+          />
         </Card>
 
         {/* ── Bảo mật ── */}

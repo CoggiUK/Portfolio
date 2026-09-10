@@ -142,6 +142,14 @@ export default function CalendarScreen({ navigation, route }) {
   const monthDays = useMemo(() => monthGrid(startOfMonth(selected)), [selected]);
   const days = expanded ? monthDays : weekDays;
 
+  const weeks = useMemo(() => {
+    const result = [];
+    for (let i = 0; i < days.length; i += 7) {
+      result.push(days.slice(i, i + 7));
+    }
+    return result;
+  }, [days]);
+
   const dayEvents = byDay[dayKey(selected)] || [];
 
   // Phân loại theo mốc hiện tại để hiện dòng tổng kết như bản thiết kế.
@@ -274,21 +282,25 @@ export default function CalendarScreen({ navigation, route }) {
               ) : null}
 
               <View style={s.grid}>
-                {days.map((d) => {
-                  const list = byDay[dayKey(d)];
-                  return (
-                    <DayCell
-                      key={dayKey(d)}
-                      date={d}
-                      week={!expanded}
-                      selected={isSameDay(d, selected)}
-                      today={isSameDay(d, today)}
-                      outside={expanded && d.getMonth() !== selected.getMonth()}
-                      dotColor={list?.length ? hexOf(list[0].color) : null}
-                      onPress={() => selectDate(d)}
-                    />
-                  );
-                })}
+                {weeks.map((weekList, wIdx) => (
+                  <View key={wIdx} style={s.weekRow}>
+                    {weekList.map((d) => {
+                      const list = byDay[dayKey(d)];
+                      return (
+                        <DayCell
+                          key={dayKey(d)}
+                          date={d}
+                          week={!expanded}
+                          selected={isSameDay(d, selected)}
+                          today={isSameDay(d, today)}
+                          outside={expanded && d.getMonth() !== selected.getMonth()}
+                          dotColor={list?.length ? hexOf(list[0].color) : null}
+                          onPress={() => selectDate(d)}
+                        />
+                      );
+                    })}
+                  </View>
+                ))}
               </View>
 
               <Pressable
@@ -366,10 +378,11 @@ const s = StyleSheet.create({
     paddingTop: space[3],
     paddingHorizontal: space[1],
   },
-  weekHead: { flexDirection: 'row', paddingHorizontal: space[1], marginBottom: 2 },
+  weekHead: { flexDirection: 'row', marginBottom: 2 },
   weekHeadCell: { flex: 1, textAlign: 'center', color: colors.textMuted, paddingVertical: space[1] },
-  grid: { flexDirection: 'row', flexWrap: 'wrap' },
-  cellWrap: { width: `${100 / 7}%`, paddingHorizontal: 2, paddingVertical: 2 },
+  grid: { width: '100%' },
+  weekRow: { flexDirection: 'row' },
+  cellWrap: { flex: 1, paddingHorizontal: 2, paddingVertical: 2 },
   cellWeek: {
     height: 62, borderRadius: radius.lg,
     alignItems: 'center', justifyContent: 'center',
