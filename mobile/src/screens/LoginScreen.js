@@ -73,7 +73,10 @@ export default function LoginScreen() {
             <Image source={require('../../assets/logo-mark.png')} style={s.logo} resizeMode="contain" />
           </View>
           <Text style={[font.h1, { color: colors.text, textAlign: 'center' }]}>Tùng Lâm Workspace</Text>
-          <Text style={[font.small, { color: colors.textSub, marginTop: space[1], marginBottom: space[4], textAlign: 'center' }]}>
+          <Text style={[font.small, { color: colors.primary, fontWeight: '700', textAlign: 'center', marginTop: 2 }]}>
+            Coggi (Coder) · ViVa (Gamer)
+          </Text>
+          <Text style={[font.tiny, { color: colors.textSub, marginTop: 2, marginBottom: space[4], textAlign: 'center' }]}>
             Hệ thống điều hành cá nhân & quản trị Portfolio
           </Text>
 
