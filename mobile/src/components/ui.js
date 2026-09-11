@@ -5,6 +5,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
 import { colors, space, radius, font, shadows, tint } from '../theme';
 
 /* ── Khung màn hình ─────────────────────────────────────────────── */
@@ -230,6 +231,14 @@ export function Btn({
       ]}
       {...props}
     >
+      {(!variant || variant === 'primary') && !off ? (
+        <LinearGradient
+          colors={colors.gradientShort || ['#833AB4', '#E1306C', '#F77737']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[StyleSheet.absoluteFill, { borderRadius: small ? radius.sm : radius.md }]}
+        />
+      ) : null}
       {loading ? (
         <ActivityIndicator size="small" color={v.fg} style={{ marginRight: space[1] }} />
       ) : icon ? (
@@ -283,7 +292,13 @@ export function FAB({ onPress, icon = 'add' }) {
         pressed && { transform: [{ scale: 0.94 }] },
       ]}
     >
-      <Ionicons name={icon} size={26} color={colors.onPrimary} />
+      <LinearGradient
+        colors={colors.gradientShort || ['#833AB4', '#E1306C', '#F77737']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
+      <Ionicons name={icon} size={26} color="#FFFFFF" />
     </Pressable>
   );
 }
@@ -582,13 +597,13 @@ const s = StyleSheet.create({
     minHeight: 44,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space[2],
     paddingVertical: space[2] + 2, paddingHorizontal: space[4],
-    borderRadius: radius.md, borderWidth: 1,
+    borderRadius: radius.md, borderWidth: 1, overflow: 'hidden',
   },
   btnSmall: {
     minHeight: 36,
     paddingVertical: space[1] + 2,
     paddingHorizontal: space[3],
-    borderRadius: radius.sm,
+    borderRadius: radius.sm, overflow: 'hidden',
   },
   iconBtn: {
     minWidth: 44, minHeight: 44, borderRadius: radius.pill,
@@ -598,7 +613,7 @@ const s = StyleSheet.create({
   fab: {
     position: 'absolute', right: space[4], bottom: space[5],
     width: 56, height: 56, borderRadius: radius.pill, backgroundColor: colors.primary,
-    alignItems: 'center', justifyContent: 'center',
+    alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
   },
   input: {
     minHeight: 44,

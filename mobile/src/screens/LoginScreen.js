@@ -64,7 +64,7 @@ export default function LoginScreen() {
         style={s.wrap}
       >
         <LinearGradient
-          colors={['rgba(0,255,136,0.12)', 'rgba(139,92,246,0.08)', 'transparent']}
+          colors={['rgba(225, 48, 108, 0.16)', 'rgba(247, 119, 55, 0.10)', 'rgba(131, 58, 180, 0.06)', 'transparent']}
           style={StyleSheet.absoluteFill}
         />
 

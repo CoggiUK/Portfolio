@@ -6,28 +6,28 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "dark",
-    "backgroundColor": "#0B0F17",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#FAF9FC",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#0B0F17"
+      "backgroundColor": "#FAF9FC"
     },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.tunglam.workspace",
-      "userInterfaceStyle": "dark",
+      "userInterfaceStyle": "light",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "UIStatusBarStyle": "UIStatusBarStyleLightContent"
+        "UIStatusBarStyle": "UIStatusBarStyleDarkContent"
       }
     },
     "android": {
       "package": "com.tunglam.workspace",
       "edgeToEdgeEnabled": true,
       "adaptiveIcon": {
-        "backgroundColor": "#07070A",
+        "backgroundColor": "#FFFFFF",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -48,7 +48,7 @@
       [
         "expo-notifications",
         {
-          "color": "#00FF88",
+          "color": "#E1306C",
           "defaultChannel": "default"
         }
       ],

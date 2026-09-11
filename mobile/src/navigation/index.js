@@ -25,7 +25,7 @@ const Tab = createBottomTabNavigator();
 
 const navTheme = {
   ...DefaultTheme,
-  dark: true,
+  dark: false,
   colors: {
     ...DefaultTheme.colors,
     primary: colors.primary,

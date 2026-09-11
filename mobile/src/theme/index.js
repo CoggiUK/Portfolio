@@ -2,44 +2,48 @@
 // Apple HIG + Material 3 + Linear / Stripe Slate Neutral Ramp
 
 export const lightColors = {
-  // Slate Neutral Ramp (Linear / Stripe / Vercel light mode)
-  bg: '#F8FAFC',              // slate-50 clean light background (60% ratio)
+  // Luminous Bright Neutral Ramp
+  bg: '#FAF9FC',              // luminous, clean canvas
   bgElevated: '#FFFFFF',      // pure white surface
-  bgSurface: '#F1F5F9',       // slate-100 for input backgrounds, pills, icon buttons
-  bgSurfaceHover: '#E2E8F0',  // slate-200 hover
-  card: '#FFFFFF',            // pure white card (30% structural neutral surface)
+  bgSurface: '#F4F3F8',       // soft lavender/rose tinted surface
+  bgSurfaceHover: '#EAE8F2',  // surface hover
+  card: '#FFFFFF',            // crisp white card
   cardSolid: '#FFFFFF',
   cardElevated: '#FFFFFF',    // white elevated cards
-  cardHover: '#F8FAFC',       // slate-50 hover
-  border: '#E2E8F0',          // slate-200 subtle 1px border
-  borderStrong: '#CBD5E1',    // slate-300 emphasized border / dividers
-  borderGlow: 'rgba(5, 150, 105, 0.15)',
+  cardHover: '#FBF9FE',       // hover state
+  border: '#ECEAF2',          // subtle border
+  borderStrong: '#DCD8E8',    // emphasized border
+  borderGlow: 'rgba(225, 48, 108, 0.18)',
 
-  // Signature Primary Accent: Emerald-600 (Executive, crisp contrast >= 4.8:1)
-  primary: '#059669',
-  primaryDark: '#047857',
-  primarySurface: '#ECFDF5',  // emerald-50: subtle, elegant surface for active tags & pills
-  primaryBorder: '#A7F3D0',   // emerald-200: subtle border for active items
-  primaryGlow: 'rgba(5, 150, 105, 0.16)',
-  primaryDim: 'rgba(5, 150, 105, 0.08)',
+  // Instagram Signature Sunset Gradient Primary Accent
+  primary: '#E1306C',         // Instagram signature electric rose / magenta
+  primaryDark: '#C13584',     // Instagram royal magenta
+  primaryLight: '#FD1D1D',    // sunset coral red
+  primarySurface: '#FFF0F5',  // soft rose tint
+  primaryBorder: '#FBCFE8',   // rose border
+  primaryGlow: 'rgba(225, 48, 108, 0.22)',
+  primaryDim: 'rgba(225, 48, 108, 0.08)',
 
-  // Secondary & Accents — Calibrated to avoid clashing
-  secondary: '#475569',       // Slate-600 for neutral secondary elements
-  secondarySurface: '#F1F5F9',
-  secondaryGlow: 'rgba(15, 23, 42, 0.08)',
-  secondaryDim: 'rgba(71, 85, 105, 0.08)',
+  // Instagram Gradient Palettes
+  gradient: ['#833AB4', '#C13584', '#E1306C', '#FD1D1D', '#F77737', '#FCAF45'],
+  gradientShort: ['#833AB4', '#E1306C', '#F77737'],
+  gradientWarm: ['#E1306C', '#FD1D1D', '#F77737', '#FCAF45'],
+  gradientCool: ['#5851DB', '#833AB4', '#C13584', '#E1306C'],
 
-  cyan: '#0284C7',           // Sky/Blue-600
+  // Accents matching Instagram vibrant ecosystem
+  purple: '#833AB4',
+  magenta: '#C13584',
+  rose: '#E1306C',
+  orange: '#F77737',
+  amber: '#F59E0B',
+  blue: '#3897F0',            // Instagram classic link/verified blue
+
+  cyan: '#0284C7',
   cyanSurface: '#F0F9FF',
   cyanGlow: 'rgba(2, 132, 199, 0.15)',
   cyanDim: 'rgba(2, 132, 199, 0.08)',
 
-  amber: '#D97706',          // Amber-600 (warning)
-  amberSurface: '#FFFBEB',
-  amberGlow: 'rgba(217, 119, 6, 0.15)',
-  amberDim: 'rgba(217, 119, 6, 0.08)',
-
-  danger: '#DC2626',         // Red-600 (destructive)
+  danger: '#DC2626',
   dangerSurface: '#FEF2F2',
   dangerBorder: '#FECACA',
   dangerDim: 'rgba(220, 38, 38, 0.08)',
@@ -50,56 +54,58 @@ export const lightColors = {
   emeraldSurface: '#ECFDF5',
   emeraldDim: 'rgba(5, 150, 105, 0.08)',
   success: '#059669',
-  warning: '#D97706',
-  info: '#0284C7',
+  warning: '#F59E0B',
+  info: '#3897F0',
 
-  // Slate typography colors (WCAG 2.2 AA contrast verified)
-  text: '#0F172A',            // slate-900 (contrast > 13.5:1 on white)
-  textSub: '#475569',         // slate-600 (contrast > 7.0:1 on white)
-  textMuted: '#64748B',       // slate-500 (contrast >= 4.6:1 on white)
-  textDisabled: '#94A3B8',    // slate-400
+  // Crisp slate-violet typography (WCAG 2.2 AA verified)
+  text: '#181324',            // deep slate-violet (contrast > 14:1 on white)
+  textSub: '#5A546E',         // readable subtext (contrast > 6:1)
+  textMuted: '#86809C',       // muted label (contrast >= 4.5:1)
+  textDisabled: '#B4B0C6',
   onPrimary: '#FFFFFF',
 };
 
 export const darkColors = {
-  // Slate Neutral Ramp (Deep Dark Slate - Linear / Apple HIG / Vercel dark mode)
-  bg: '#0B0F17',              // slate-950 deep dark background (60% dominant ratio)
-  bgElevated: '#111827',      // slate-900 surface
-  bgSurface: '#161E2E',       // slate-850 for input backgrounds, pills, icon buttons
-  bgSurfaceHover: '#1E293B',  // slate-800 hover
-  card: '#111827',            // slate-900 card surface (30% structural neutral surface)
-  cardSolid: '#111827',
-  cardElevated: '#1E293B',    // slate-800 elevated cards
-  cardHover: '#161E2E',       // hover state
-  border: '#1E293B',          // slate-800 subtle 1px border
-  borderStrong: '#334155',    // slate-700 emphasized border / dividers
-  borderGlow: 'rgba(16, 185, 129, 0.25)',
+  // Deep Slate with subtle plum tint
+  bg: '#0F0D15',
+  bgElevated: '#181523',
+  bgSurface: '#1F1B2C',
+  bgSurfaceHover: '#29243A',
+  card: '#181523',
+  cardSolid: '#181523',
+  cardElevated: '#242033',
+  cardHover: '#1F1B2C',
+  border: '#29243A',
+  borderStrong: '#3A3350',
+  borderGlow: 'rgba(225, 48, 108, 0.28)',
 
-  // Signature Primary Accent: Emerald-500 (Vibrant, high contrast on dark >= 4.5:1)
-  primary: '#10B981',
-  primaryDark: '#059669',
-  primarySurface: 'rgba(16, 185, 129, 0.12)', // subtle emerald tint for active tags & pills
-  primaryBorder: 'rgba(16, 185, 129, 0.28)',  // emerald border for active items
-  primaryGlow: 'rgba(16, 185, 129, 0.25)',
-  primaryDim: 'rgba(16, 185, 129, 0.12)',
+  // Signature Instagram Primary
+  primary: '#E1306C',
+  primaryDark: '#C13584',
+  primaryLight: '#FD1D1D',
+  primarySurface: 'rgba(225, 48, 108, 0.15)',
+  primaryBorder: 'rgba(225, 48, 108, 0.32)',
+  primaryGlow: 'rgba(225, 48, 108, 0.28)',
+  primaryDim: 'rgba(225, 48, 108, 0.12)',
 
-  // Secondary & Neutral Accents
-  secondary: '#94A3B8',       // Slate-400 for neutral secondary elements
-  secondarySurface: 'rgba(255, 255, 255, 0.05)',
-  secondaryGlow: 'rgba(148, 163, 184, 0.15)',
-  secondaryDim: 'rgba(148, 163, 184, 0.10)',
+  gradient: ['#833AB4', '#C13584', '#E1306C', '#FD1D1D', '#F77737', '#FCAF45'],
+  gradientShort: ['#833AB4', '#E1306C', '#F77737'],
+  gradientWarm: ['#E1306C', '#FD1D1D', '#F77737', '#FCAF45'],
+  gradientCool: ['#5851DB', '#833AB4', '#C13584', '#E1306C'],
 
-  cyan: '#06B6D4',           // Cyan-500
+  purple: '#9D4EDD',
+  magenta: '#D62976',
+  rose: '#E1306C',
+  orange: '#FA7E1E',
+  amber: '#F59E0B',
+  blue: '#3897F0',
+
+  cyan: '#06B6D4',
   cyanSurface: 'rgba(6, 182, 212, 0.12)',
   cyanGlow: 'rgba(6, 182, 212, 0.22)',
   cyanDim: 'rgba(6, 182, 212, 0.12)',
 
-  amber: '#F59E0B',          // Amber-500 (warning)
-  amberSurface: 'rgba(245, 158, 11, 0.12)',
-  amberGlow: 'rgba(245, 158, 11, 0.20)',
-  amberDim: 'rgba(245, 158, 11, 0.12)',
-
-  danger: '#EF4444',         // Red-500 (destructive)
+  danger: '#EF4444',
   dangerSurface: 'rgba(239, 68, 68, 0.12)',
   dangerBorder: 'rgba(239, 68, 68, 0.28)',
   dangerDim: 'rgba(239, 68, 68, 0.12)',
@@ -111,18 +117,17 @@ export const darkColors = {
   emeraldDim: 'rgba(16, 185, 129, 0.12)',
   success: '#10B981',
   warning: '#F59E0B',
-  info: '#06B6D4',
+  info: '#3897F0',
 
-  // Slate typography colors (WCAG 2.2 AA contrast verified on #111827 / #0B0F17)
-  text: '#F8FAFC',            // slate-50 (contrast > 14:1)
-  textSub: '#94A3B8',         // slate-400 (contrast > 7:1)
-  textMuted: '#64748B',       // slate-500 (contrast >= 4.6:1)
-  textDisabled: '#475569',    // slate-600
-  onPrimary: '#022C22',       // dark emerald text on vibrant emerald-500 button (contrast > 8:1)
+  text: '#FAF8FD',
+  textSub: '#AEA8C2',
+  textMuted: '#7D7694',
+  textDisabled: '#544D68',
+  onPrimary: '#FFFFFF',
 };
 
-// Giao diện tối kích hoạt mặc định theo yêu cầu của người dùng
-export const colors = darkColors;
+// Kích hoạt giao diện sáng Instagram gradient theo yêu cầu của người dùng
+export const colors = lightColors;
 
 // Thang khoảng cách 4pt chuẩn: 0, 4, 8, 12, 16, 24, 32, 48, 64 px
 export const space = {
@@ -184,12 +189,12 @@ export const shadows = {
 
 // Bảng màu gán cho sự kiện / danh mục — dùng chung ở lịch, task, chi tiêu
 export const palette = [
-  { key: 'green', hex: '#059669' },
-  { key: 'cyan', hex: '#0891B2' },
-  { key: 'violet', hex: '#7C3AED' },
-  { key: 'amber', hex: '#D97706' },
-  { key: 'rose', hex: '#E11D48' },
-  { key: 'blue', hex: '#2563EB' },
+  { key: 'rose', hex: '#E1306C' },
+  { key: 'purple', hex: '#833AB4' },
+  { key: 'orange', hex: '#F77737' },
+  { key: 'amber', hex: '#F59E0B' },
+  { key: 'blue', hex: '#3897F0' },
+  { key: 'green', hex: '#10B981' },
 ];
 
 export const hexOf = (key) => (palette.find((p) => p.key === key) || palette[0]).hex;
