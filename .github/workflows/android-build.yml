@@ -39,17 +39,16 @@ jobs:
           fi
           if [ ! -f .env ] || [ ! -s .env ]; then
             echo "Populating .env with project defaults..."
-            cat << 'EOF' > .env
-EXPO_PUBLIC_FIREBASE_API_KEY=AIzaSyCzds1ECsDEFio21dKaFfXJ5gxfUXhcMwU
-EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN=portfolio-42c34.firebaseapp.com
-EXPO_PUBLIC_FIREBASE_PROJECT_ID=portfolio-42c34
-EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET=portfolio-42c34.firebasestorage.app
-EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=1098886400519
-EXPO_PUBLIC_FIREBASE_APP_ID=1:1098886400519:web:b4ad245801d323fb4038a2
-EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID=1034162011132-a0surkqf4e669o9bui0f107t7td3euv5.apps.googleusercontent.com
-EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID=1034162011132-5c3vm0l3a690lu0732lahbcpot04mouv.apps.googleusercontent.com
-EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID=1034162011132-kkpc0b8kuasddk8uik89v0l9f1ckit40.apps.googleusercontent.com
-EOF
+            printf "%s\n" \
+              "EXPO_PUBLIC_FIREBASE_API_KEY=AIzaSyCzds1ECsDEFio21dKaFfXJ5gxfUXhcMwU" \
+              "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN=portfolio-42c34.firebaseapp.com" \
+              "EXPO_PUBLIC_FIREBASE_PROJECT_ID=portfolio-42c34" \
+              "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET=portfolio-42c34.firebasestorage.app" \
+              "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=1098886400519" \
+              "EXPO_PUBLIC_FIREBASE_APP_ID=1:1098886400519:web:b4ad245801d323fb4038a2" \
+              "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID=1034162011132-a0surkqf4e669o9bui0f107t7td3euv5.apps.googleusercontent.com" \
+              "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID=1034162011132-5c3vm0l3a690lu0732lahbcpot04mouv.apps.googleusercontent.com" \
+              "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID=1034162011132-kkpc0b8kuasddk8uik89v0l9f1ckit40.apps.googleusercontent.com" > .env
           fi
           echo "✅ .env file successfully configured with $(wc -l < .env) lines"
 
