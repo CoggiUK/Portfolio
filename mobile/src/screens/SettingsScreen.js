@@ -4,11 +4,12 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Notifications from 'expo-notifications';
 import * as Application from 'expo-application';
 import {
-  Screen, Header, Card, Btn, SwitchRow, SectionTitle, Row, Field, Chip, Banner, IconBtn, Badge,
+  Screen, Header, Card, Btn, SwitchRow, SectionTitle, Row, Field, Chip, Banner, IconBtn, Badge, Sheet,
 } from '../components/ui';
 import { colors, space, radius, font, tint } from '../theme';
 import { useApp } from '../contexts/AppContext';
 import { useAuth, authMessage } from '../contexts/AuthContext';
+import { useLock } from '../contexts/LockContext';
 import {
   useGoogleAuth, listCalendars, isConfigured, resolveClientIds, redirectUri, CLIENT_ID_KEY,
 } from '../services/googleCalendar';
@@ -39,6 +40,59 @@ export default function SettingsScreen({ navigation }) {
   const googleConfigured = isConfigured(clientIds);
   const [clientIdDraft, setClientIdDraft] = useState('');
   const [showClientIdForm, setShowClientIdForm] = useState(false);
+
+  const {
+    lockEnabled, hasPinSet, biometricAvailable, biometricLabel,
+    enableLock, setLock, changePin,
+  } = useLock();
+
+  const [pinSheetVisible, setPinSheetVisible] = useState(false);
+  const [pinDraft, setPinDraft] = useState({ pin: '', confirm: '' });
+  const [pinSheetTitle, setPinSheetTitle] = useState('Thiết lập mã PIN');
+
+  const handleToggleLock = (v) => {
+    if (v) {
+      if (!hasPinSet) {
+        setPinSheetTitle('Thiết lập mã PIN');
+        setPinDraft({ pin: '', confirm: '' });
+        setPinSheetVisible(true);
+      } else {
+        setLock(true);
+        setMessage({ type: 'success', text: 'Đã bật khóa ứng dụng.' });
+      }
+    } else {
+      setLock(false);
+      setMessage({ type: 'info', text: 'Đã tắt khóa ứng dụng.' });
+    }
+  };
+
+  const handleOpenChangePin = () => {
+    setPinSheetTitle('Đổi mã PIN');
+    setPinDraft({ pin: '', confirm: '' });
+    setPinSheetVisible(true);
+  };
+
+  const handleSavePin = async () => {
+    if (pinDraft.pin.length < 4 || pinDraft.pin.length > 6) {
+      return setMessage({ type: 'error', text: 'Mã PIN phải gồm từ 4 đến 6 chữ số.' });
+    }
+    if (pinDraft.pin !== pinDraft.confirm) {
+      return setMessage({ type: 'error', text: 'Mã xác nhận PIN không khớp.' });
+    }
+    try {
+      if (hasPinSet && pinSheetTitle === 'Đổi mã PIN') {
+        await changePin(pinDraft.pin);
+        setMessage({ type: 'success', text: 'Đã đổi mã PIN thành công.' });
+      } else {
+        await enableLock(pinDraft.pin);
+        setMessage({ type: 'success', text: 'Đã thiết lập mã PIN và bật khóa ứng dụng.' });
+      }
+      setPinSheetVisible(false);
+      setPinDraft({ pin: '', confirm: '' });
+    } catch (err) {
+      setMessage({ type: 'error', text: err.message });
+    }
+  };
 
   const google = useGoogleAuth(async (ok, err) => {
     await refreshGoogleStatus();
@@ -315,6 +369,38 @@ export default function SettingsScreen({ navigation }) {
           </Text>
         </Card>
 
+        {/* ── Bảo mật ứng dụng ── */}
+        <SectionTitle>Bảo mật ứng dụng</SectionTitle>
+        <Card>
+          <SwitchRow
+            label="Khóa ứng dụng"
+            hint={hasPinSet ? 'Yêu cầu mã PIN hoặc sinh trắc học khi mở lại app' : 'Chưa có mã PIN — bật để thiết lập'}
+            icon="shield-checkmark-outline"
+            color={colors.primary}
+            value={lockEnabled}
+            onChange={handleToggleLock}
+          />
+          {lockEnabled && biometricAvailable ? (
+            <Row style={{ marginTop: space[2], paddingHorizontal: 4 }} gap={space[2]}>
+              <Ionicons name="finger-print-outline" size={16} color={colors.primary} />
+              <Text style={[font.tiny, { color: colors.textSub }]}>
+                Hỗ trợ mở nhanh bằng {biometricLabel}
+              </Text>
+            </Row>
+          ) : null}
+
+          {hasPinSet ? (
+            <Btn
+              title="Đổi mã PIN"
+              icon="key-outline"
+              variant="ghost"
+              small
+              style={{ marginTop: space[2], alignSelf: 'flex-start' }}
+              onPress={handleOpenChangePin}
+            />
+          ) : null}
+        </Card>
+
         {/* ── Bảo mật ── */}
         <SectionTitle>Đổi mật khẩu</SectionTitle>
         <Card>
@@ -335,6 +421,39 @@ export default function SettingsScreen({ navigation }) {
           Tùng Lâm Workspace · v1.0.0 · {Platform.OS}
         </Text>
       </ScrollView>
+
+      <Sheet
+        visible={pinSheetVisible}
+        onClose={() => setPinSheetVisible(false)}
+        title={pinSheetTitle}
+      >
+        <View style={{ padding: space[2] }}>
+          <Field
+            label="Mã PIN mới (4 - 6 số)"
+            value={pinDraft.pin}
+            secureTextEntry
+            keyboardType="numeric"
+            maxLength={6}
+            placeholder="Nhập 4-6 chữ số"
+            onChangeText={(v) => setPinDraft((p) => ({ ...p, pin: v.replace(/[^0-9]/g, '') }))}
+          />
+          <Field
+            label="Xác nhận mã PIN mới"
+            value={pinDraft.confirm}
+            secureTextEntry
+            keyboardType="numeric"
+            maxLength={6}
+            placeholder="Nhập lại mã PIN"
+            onChangeText={(v) => setPinDraft((p) => ({ ...p, confirm: v.replace(/[^0-9]/g, '') }))}
+          />
+          <Btn
+            title="Lưu mã PIN"
+            icon="checkmark-circle-outline"
+            onPress={handleSavePin}
+            style={{ marginTop: space[3] }}
+          />
+        </View>
+      </Sheet>
     </Screen>
   );
 }

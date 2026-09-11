@@ -20,7 +20,8 @@
       "userInterfaceStyle": "light",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "UIStatusBarStyle": "UIStatusBarStyleDarkContent"
+        "UIStatusBarStyle": "UIStatusBarStyleDarkContent",
+        "NSFaceIDUsageDescription": "Sử dụng Face ID để mở khóa ứng dụng Tùng Lâm Workspace nhanh chóng và bảo mật."
       }
     },
     "android": {
@@ -45,6 +46,22 @@
     "plugins": [
       "expo-web-browser",
       "expo-secure-store",
+      "expo-local-authentication",
+      [
+        "react-native-android-widget",
+        {
+          "widgets": [
+            {
+              "name": "TodayWidget",
+              "label": "Lịch & Việc hôm nay",
+              "minWidth": "320dp",
+              "minHeight": "120dp",
+              "description": "Xem nhanh lịch hẹn và việc cần làm hôm nay",
+              "previewImage": "./assets/splash-icon.png"
+            }
+          ]
+        }
+      ],
       [
         "expo-notifications",
         {

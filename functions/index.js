@@ -158,3 +158,9 @@ export const cleanupReminders = onSchedule(
     logger.info(`[cleanup] dọn cờ nhắc của ${stale.length} sự kiện cũ`);
   }
 );
+
+/* ────────────────────────────────────────────────────────────────
+ * 5. Trợ lý AI (Gemini)
+ * ──────────────────────────────────────────────────────────────── */
+export { assistantChat } from './assistant.js';
+

@@ -16,6 +16,7 @@ import CalendarScreen from '../screens/CalendarScreen';
 import PersonalScreen from '../screens/PersonalScreen';
 import LeadsScreen from '../screens/LeadsScreen';
 import WebsiteScreen from '../screens/WebsiteScreen';
+import AssistantScreen from '../screens/AssistantScreen';
 import EventFormScreen from '../screens/EventFormScreen';
 import ProjectFormScreen from '../screens/ProjectFormScreen';
 import SettingsScreen from '../screens/SettingsScreen';
@@ -40,6 +41,7 @@ const navTheme = {
 const ICONS = {
   'Trang chủ': ['home', 'home-outline'],
   'Lịch': ['calendar', 'calendar-outline'],
+  'Trợ lý': ['sparkles', 'sparkles-outline'],
   'Cá nhân': ['grid', 'grid-outline'],
   'Liên hệ': ['chatbubbles', 'chatbubbles-outline'],
   'Web': ['globe', 'globe-outline'],
@@ -89,6 +91,7 @@ function Tabs() {
     >
       <Tab.Screen name="Trang chủ" component={HomeScreen} />
       <Tab.Screen name="Lịch" component={CalendarScreen} />
+      <Tab.Screen name="Trợ lý" component={AssistantScreen} />
       <Tab.Screen name="Cá nhân" component={PersonalScreen} />
       <Tab.Screen
         name="Liên hệ"

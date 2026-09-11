@@ -1,5 +1,6 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
+import { getFunctions } from 'firebase/functions';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 // Lưu ý: import từ `@firebase/auth` (không phải `firebase/auth`) — chỉ package
 // scoped mới có điều kiện resolve "react-native" chứa `getReactNativePersistence`.
@@ -21,6 +22,7 @@ export const firebaseConfig = {
 let app = null;
 let auth = null;
 let db = null;
+let functions = null;
 
 try {
   app = getApps().length ? getApp() : initializeApp(firebaseConfig);
@@ -30,9 +32,14 @@ try {
     auth = getAuth(app);
   }
   db = getFirestore(app);
+  try {
+    functions = getFunctions(app, 'asia-southeast1');
+  } catch (fnErr) {
+    console.warn('[Firebase] Functions init error:', fnErr);
+  }
 } catch (err) {
   console.warn('[Firebase] Init error:', err);
 }
 
-export { auth, db };
+export { auth, db, functions };
 export default app;

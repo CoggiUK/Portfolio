@@ -466,7 +466,7 @@ export function Badge({ label, color = colors.primary, dot = false }) {
     : isDanger
     ? colors.dangerBorder
     : isWarning
-    ? colors.amberSurface
+    ? tint(colors.warning, 0.35)
     : colors.border;
   const fg = isPrimary
     ? colors.primary

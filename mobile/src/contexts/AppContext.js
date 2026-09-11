@@ -9,7 +9,8 @@ import {
   ensureChannels, requestPermission, getPushToken, syncEventReminders,
   syncHabitReminder, notifyNow,
 } from '../services/notifications';
-import { toDate } from '../utils/date';
+import { toDate, isSameDay } from '../utils/date';
+import { syncTodayWidget } from '../services/widgetSync';
 
 const AppCtx = createContext(null);
 const LAST_LEAD_KEY = 'last-seen-lead-at';
@@ -130,6 +131,24 @@ export function AppProvider({ children }) {
       await AsyncStorage.setItem(LAST_LEAD_KEY, String(newest));
     })().catch(() => {});
   }, [uid, leads]);
+
+  /* ── Đồng bộ Widget Android ──────────────────────────────────── */
+  useEffect(() => {
+    if (Platform.OS !== 'android') return;
+    const now = new Date();
+    const eventCount = events.filter((e) => {
+      const s = toDate(e.start);
+      return s && isSameDay(s, now);
+    }).length;
+
+    const overdueCount = tasks.filter((t) => {
+      if (t.done) return false;
+      const d = toDate(t.due);
+      return d && d < now;
+    }).length;
+
+    syncTodayWidget({ eventCount, overdueCount }).catch(() => {});
+  }, [events, tasks]);
 
   /* ── Trạng thái kết nối Google Calendar ──────────────────────── */
 

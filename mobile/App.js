@@ -4,6 +4,8 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider } from './src/contexts/AuthContext';
 import { AppProvider } from './src/contexts/AppContext';
+import { LockProvider } from './src/contexts/LockContext';
+import AppLockGate from './src/components/AppLockGate';
 import RootNavigator from './src/navigation';
 import ErrorBoundary from './src/components/ErrorBoundary';
 import { colors } from './src/theme';
@@ -15,8 +17,12 @@ export default function App() {
         <ErrorBoundary>
           <AuthProvider>
             <AppProvider>
-              <StatusBar style="dark" />
-              <RootNavigator />
+              <LockProvider>
+                <AppLockGate>
+                  <StatusBar style="dark" />
+                  <RootNavigator />
+                </AppLockGate>
+              </LockProvider>
             </AppProvider>
           </AuthProvider>
         </ErrorBoundary>
