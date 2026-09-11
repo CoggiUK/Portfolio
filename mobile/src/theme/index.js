@@ -38,6 +38,10 @@ export const lightColors = {
   purple: '#6366F1',          // Indigo purple
   rose: '#F43F5E',
 
+  // Secondary accent (tags, notes, "won" status) — reuses the indigo purple.
+  secondary: '#6366F1',
+  secondarySurface: '#EEF2FF',
+
   cyanSurface: '#F0F9FF',
   cyanGlow: 'rgba(0, 194, 255, 0.22)',
   cyanDim: 'rgba(0, 194, 255, 0.08)',
@@ -54,6 +58,7 @@ export const lightColors = {
   emeraldDim: 'rgba(16, 185, 129, 0.08)',
   success: '#10B981',
   warning: '#FFD000',
+  amberSurface: '#FFFBEB',
   info: '#0084FF',
 
   // Crisp midnight slate typography (WCAG 2.2 AA verified)
@@ -99,6 +104,9 @@ export const darkColors = {
   purple: '#818CF8',
   rose: '#F43F5E',
 
+  secondary: '#818CF8',
+  secondarySurface: 'rgba(129, 140, 248, 0.15)',
+
   cyanSurface: 'rgba(0, 194, 255, 0.15)',
   cyanGlow: 'rgba(0, 194, 255, 0.25)',
   cyanDim: 'rgba(0, 194, 255, 0.12)',
@@ -115,6 +123,7 @@ export const darkColors = {
   emeraldDim: 'rgba(16, 185, 129, 0.12)',
   success: '#10B981',
   warning: '#FFD000',
+  amberSurface: 'rgba(245, 158, 11, 0.14)',
   info: '#0084FF',
 
   text: '#F8FAFC',
