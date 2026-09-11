@@ -2,46 +2,45 @@
 // Apple HIG + Material 3 + Linear / Stripe Slate Neutral Ramp
 
 export const lightColors = {
-  // Luminous Bright Neutral Ramp
-  bg: '#FAF9FC',              // luminous, clean canvas
+  // Luminous Clean Canvas
+  bg: '#F6F9FD',              // clean high-tech ice-white canvas
   bgElevated: '#FFFFFF',      // pure white surface
-  bgSurface: '#F4F3F8',       // soft lavender/rose tinted surface
-  bgSurfaceHover: '#EAE8F2',  // surface hover
+  bgSurface: '#EDF3FA',       // subtle ice-blue tinted surface
+  bgSurfaceHover: '#E2ECF7',  // surface hover
   card: '#FFFFFF',            // crisp white card
   cardSolid: '#FFFFFF',
   cardElevated: '#FFFFFF',    // white elevated cards
-  cardHover: '#FBF9FE',       // hover state
-  border: '#ECEAF2',          // subtle border
-  borderStrong: '#DCD8E8',    // emphasized border
-  borderGlow: 'rgba(225, 48, 108, 0.18)',
+  cardHover: '#F8FAFE',       // hover state
+  border: '#E2ECF7',          // subtle ice-blue border
+  borderStrong: '#CADDF0',    // emphasized border
+  borderGlow: 'rgba(0, 132, 255, 0.20)',
 
-  // Instagram Signature Sunset Gradient Primary Accent
-  primary: '#E1306C',         // Instagram signature electric rose / magenta
-  primaryDark: '#C13584',     // Instagram royal magenta
-  primaryLight: '#FD1D1D',    // sunset coral red
-  primarySurface: '#FFF0F5',  // soft rose tint
-  primaryBorder: '#FBCFE8',   // rose border
-  primaryGlow: 'rgba(225, 48, 108, 0.22)',
-  primaryDim: 'rgba(225, 48, 108, 0.08)',
+  // Signature Primary Accent: Electric Cyber Blue (From Logo Nguyễn Tùng Lâm & ViVa Coggi)
+  primary: '#0084FF',         // Electric Blue from logo
+  primaryDark: '#0058CC',     // Deep Royal Blue
+  primaryLight: '#00C2FF',    // Neon Cyan
+  primarySurface: '#EDF6FF',  // soft ice blue surface
+  primaryBorder: '#BAE0FF',   // ice blue border
+  primaryGlow: 'rgba(0, 132, 255, 0.28)',
+  primaryDim: 'rgba(0, 132, 255, 0.08)',
 
-  // Instagram Gradient Palettes
-  gradient: ['#833AB4', '#C13584', '#E1306C', '#FD1D1D', '#F77737', '#FCAF45'],
-  gradientShort: ['#833AB4', '#E1306C', '#F77737'],
-  gradientWarm: ['#E1306C', '#FD1D1D', '#F77737', '#FCAF45'],
-  gradientCool: ['#5851DB', '#833AB4', '#C13584', '#E1306C'],
+  // Logo Signature Gradient Palettes (Electric Blue to Cyber Cyan & Yellow Accent)
+  gradient: ['#0052D4', '#0072FF', '#00C6FF'],
+  gradientShort: ['#0062FF', '#0099FF', '#00D2FF'],
+  gradientAccent: ['#0072FF', '#FFD000'],
+  gradientCool: ['#0A1128', '#0052D4', '#00C6FF'],
 
-  // Accents matching Instagram vibrant ecosystem
-  purple: '#833AB4',
-  magenta: '#C13584',
-  rose: '#E1306C',
-  orange: '#F77737',
-  amber: '#F59E0B',
-  blue: '#3897F0',            // Instagram classic link/verified blue
+  // Accents matching Logo Ecosystem
+  blue: '#0084FF',            // Electric Blue
+  cyan: '#00C2FF',            // Neon Cyan (Turn ideas into reality)
+  yellow: '#FFD000',          // Crown & Sticky note Yellow
+  amber: '#F59E0B',           // Warm amber
+  purple: '#6366F1',          // Indigo purple
+  rose: '#F43F5E',
 
-  cyan: '#0284C7',
   cyanSurface: '#F0F9FF',
-  cyanGlow: 'rgba(2, 132, 199, 0.15)',
-  cyanDim: 'rgba(2, 132, 199, 0.08)',
+  cyanGlow: 'rgba(0, 194, 255, 0.22)',
+  cyanDim: 'rgba(0, 194, 255, 0.08)',
 
   danger: '#DC2626',
   dangerSurface: '#FEF2F2',
@@ -50,60 +49,59 @@ export const lightColors = {
   destructive: '#DC2626',
   destructiveDim: 'rgba(220, 38, 38, 0.08)',
 
-  emerald: '#059669',
+  emerald: '#10B981',
   emeraldSurface: '#ECFDF5',
-  emeraldDim: 'rgba(5, 150, 105, 0.08)',
-  success: '#059669',
-  warning: '#F59E0B',
-  info: '#3897F0',
+  emeraldDim: 'rgba(16, 185, 129, 0.08)',
+  success: '#10B981',
+  warning: '#FFD000',
+  info: '#0084FF',
 
-  // Crisp slate-violet typography (WCAG 2.2 AA verified)
-  text: '#181324',            // deep slate-violet (contrast > 14:1 on white)
-  textSub: '#5A546E',         // readable subtext (contrast > 6:1)
-  textMuted: '#86809C',       // muted label (contrast >= 4.5:1)
-  textDisabled: '#B4B0C6',
+  // Crisp midnight slate typography (WCAG 2.2 AA verified)
+  text: '#0A1128',            // deep midnight slate (contrast > 15:1 on white)
+  textSub: '#475569',         // readable subtext (contrast > 7:1)
+  textMuted: '#64748B',       // muted label (contrast >= 4.5:1)
+  textDisabled: '#94A3B8',
   onPrimary: '#FFFFFF',
 };
 
 export const darkColors = {
-  // Deep Slate with subtle plum tint
-  bg: '#0F0D15',
-  bgElevated: '#181523',
-  bgSurface: '#1F1B2C',
-  bgSurfaceHover: '#29243A',
-  card: '#181523',
-  cardSolid: '#181523',
-  cardElevated: '#242033',
-  cardHover: '#1F1B2C',
-  border: '#29243A',
-  borderStrong: '#3A3350',
-  borderGlow: 'rgba(225, 48, 108, 0.28)',
+  // Deep Cyber Midnight Slate
+  bg: '#080C16',
+  bgElevated: '#0F1626',
+  bgSurface: '#162035',
+  bgSurfaceHover: '#1E2B47',
+  card: '#0F1626',
+  cardSolid: '#0F1626',
+  cardElevated: '#162035',
+  cardHover: '#141D30',
+  border: '#1A2740',
+  borderStrong: '#253759',
+  borderGlow: 'rgba(0, 132, 255, 0.32)',
 
-  // Signature Instagram Primary
-  primary: '#E1306C',
-  primaryDark: '#C13584',
-  primaryLight: '#FD1D1D',
-  primarySurface: 'rgba(225, 48, 108, 0.15)',
-  primaryBorder: 'rgba(225, 48, 108, 0.32)',
-  primaryGlow: 'rgba(225, 48, 108, 0.28)',
-  primaryDim: 'rgba(225, 48, 108, 0.12)',
+  // Signature Logo Primary
+  primary: '#0084FF',
+  primaryDark: '#0058CC',
+  primaryLight: '#00C2FF',
+  primarySurface: 'rgba(0, 132, 255, 0.16)',
+  primaryBorder: 'rgba(0, 132, 255, 0.35)',
+  primaryGlow: 'rgba(0, 132, 255, 0.32)',
+  primaryDim: 'rgba(0, 132, 255, 0.12)',
 
-  gradient: ['#833AB4', '#C13584', '#E1306C', '#FD1D1D', '#F77737', '#FCAF45'],
-  gradientShort: ['#833AB4', '#E1306C', '#F77737'],
-  gradientWarm: ['#E1306C', '#FD1D1D', '#F77737', '#FCAF45'],
-  gradientCool: ['#5851DB', '#833AB4', '#C13584', '#E1306C'],
+  gradient: ['#0052D4', '#0072FF', '#00C6FF'],
+  gradientShort: ['#0062FF', '#0099FF', '#00D2FF'],
+  gradientAccent: ['#0072FF', '#FFD000'],
+  gradientCool: ['#0A1128', '#0052D4', '#00C6FF'],
 
-  purple: '#9D4EDD',
-  magenta: '#D62976',
-  rose: '#E1306C',
-  orange: '#FA7E1E',
+  blue: '#0084FF',
+  cyan: '#00C2FF',
+  yellow: '#FFD000',
   amber: '#F59E0B',
-  blue: '#3897F0',
+  purple: '#818CF8',
+  rose: '#F43F5E',
 
-  cyan: '#06B6D4',
-  cyanSurface: 'rgba(6, 182, 212, 0.12)',
-  cyanGlow: 'rgba(6, 182, 212, 0.22)',
-  cyanDim: 'rgba(6, 182, 212, 0.12)',
+  cyanSurface: 'rgba(0, 194, 255, 0.15)',
+  cyanGlow: 'rgba(0, 194, 255, 0.25)',
+  cyanDim: 'rgba(0, 194, 255, 0.12)',
 
   danger: '#EF4444',
   dangerSurface: 'rgba(239, 68, 68, 0.12)',
@@ -116,17 +114,17 @@ export const darkColors = {
   emeraldSurface: 'rgba(16, 185, 129, 0.12)',
   emeraldDim: 'rgba(16, 185, 129, 0.12)',
   success: '#10B981',
-  warning: '#F59E0B',
-  info: '#3897F0',
+  warning: '#FFD000',
+  info: '#0084FF',
 
-  text: '#FAF8FD',
-  textSub: '#AEA8C2',
-  textMuted: '#7D7694',
-  textDisabled: '#544D68',
+  text: '#F8FAFC',
+  textSub: '#94A3B8',
+  textMuted: '#64748B',
+  textDisabled: '#475569',
   onPrimary: '#FFFFFF',
 };
 
-// Kích hoạt giao diện sáng Instagram gradient theo yêu cầu của người dùng
+// Kích hoạt giao diện sáng chuẩn theo tông màu logo Nguyễn Tùng Lâm & ViVa Coggi
 export const colors = lightColors;
 
 // Thang khoảng cách 4pt chuẩn: 0, 4, 8, 12, 16, 24, 32, 48, 64 px
@@ -189,11 +187,11 @@ export const shadows = {
 
 // Bảng màu gán cho sự kiện / danh mục — dùng chung ở lịch, task, chi tiêu
 export const palette = [
-  { key: 'rose', hex: '#E1306C' },
-  { key: 'purple', hex: '#833AB4' },
-  { key: 'orange', hex: '#F77737' },
+  { key: 'blue', hex: '#0084FF' },
+  { key: 'cyan', hex: '#00C2FF' },
+  { key: 'yellow', hex: '#FFD000' },
+  { key: 'purple', hex: '#6366F1' },
   { key: 'amber', hex: '#F59E0B' },
-  { key: 'blue', hex: '#3897F0' },
   { key: 'green', hex: '#10B981' },
 ];
 

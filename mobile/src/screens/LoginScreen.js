@@ -64,7 +64,7 @@ export default function LoginScreen() {
         style={s.wrap}
       >
         <LinearGradient
-          colors={['rgba(225, 48, 108, 0.16)', 'rgba(247, 119, 55, 0.10)', 'rgba(131, 58, 180, 0.06)', 'transparent']}
+          colors={['rgba(0, 132, 255, 0.18)', 'rgba(0, 194, 255, 0.10)', 'rgba(255, 222, 0, 0.05)', 'transparent']}
           style={StyleSheet.absoluteFill}
         />
 
@@ -147,19 +147,16 @@ const s = StyleSheet.create({
   },
   logoContainer: {
     alignSelf: 'center',
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    backgroundColor: '#000000',
-    borderWidth: 2,
-    borderColor: colors.primary,
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: space[3],
-    overflow: 'hidden',
-    ...shadows.glow(colors.primary, 0.25, 12),
+    ...shadows.glow(colors.primary, 0.35, 16),
   },
-  logo: { width: 84, height: 84, borderRadius: 42 },
+  logo: { width: 96, height: 96, borderRadius: 48 },
   eye: { position: 'absolute', right: space[3], top: 38 },
   demoBtn: {
     flexDirection: 'row',

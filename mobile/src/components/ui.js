@@ -233,7 +233,7 @@ export function Btn({
     >
       {(!variant || variant === 'primary') && !off ? (
         <LinearGradient
-          colors={colors.gradientShort || ['#833AB4', '#E1306C', '#F77737']}
+          colors={colors.gradientShort || ['#0062FF', '#0099FF', '#00D2FF']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={[StyleSheet.absoluteFill, { borderRadius: small ? radius.sm : radius.md }]}
@@ -293,7 +293,7 @@ export function FAB({ onPress, icon = 'add' }) {
       ]}
     >
       <LinearGradient
-        colors={colors.gradientShort || ['#833AB4', '#E1306C', '#F77737']}
+        colors={colors.gradientShort || ['#0062FF', '#0099FF', '#00D2FF']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFill}
