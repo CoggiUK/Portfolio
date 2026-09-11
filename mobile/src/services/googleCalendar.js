@@ -7,7 +7,11 @@ import { exchangeCodeAsync, refreshAsync, revokeAsync, ResponseType } from 'expo
 import { Platform } from 'react-native';
 import { toRFC3339, timeZone, toDate } from '../utils/date';
 
-WebBrowser.maybeCompleteAuthSession();
+try {
+  WebBrowser?.maybeCompleteAuthSession?.();
+} catch (err) {
+  console.warn('[googleCalendar] maybeCompleteAuthSession error:', err);
+}
 
 const API = 'https://www.googleapis.com/calendar/v3';
 const STORE_KEY = 'google-calendar-tokens';
@@ -18,9 +22,9 @@ const SCOPES = [
 
 /** Giá trị nạp lúc build từ .env — nay chỉ còn là mặc định, có thể bỏ trống. */
 const ENV_CLIENT_IDS = {
-  android: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID || undefined,
-  ios: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || undefined,
-  web: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || undefined,
+  android: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID || '1034162011132-a0surkqf4e669o9bui0f107t7td3euv5.apps.googleusercontent.com',
+  ios: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || '1034162011132-5c3vm0l3a690lu0732lahbcpot04mouv.apps.googleusercontent.com',
+  web: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || '1034162011132-kkpc0b8kuasddk8uik89v0l9f1ckit40.apps.googleusercontent.com',
 };
 
 /**

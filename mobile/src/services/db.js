@@ -18,19 +18,28 @@ import { db } from '../lib/firebase';
  * users/{uid}/meta/prefs             Tuỳ chọn cá nhân (auto-sync, giờ nhắc mặc định…)
  */
 
-export const userCol = (uid, name) => collection(db, 'users', uid, name);
-export const userDoc = (uid, name, id) => doc(db, 'users', uid, name, id);
-export const prefsRef = (uid) => doc(db, 'users', uid, 'meta', 'prefs');
-export const leadsCol = () => collection(db, 'leads');
-export const siteRef = () => doc(db, 'settings', 'main');
+export const userCol = (uid, name) => (db ? collection(db, 'users', uid, name) : null);
+export const userDoc = (uid, name, id) => (db ? doc(db, 'users', uid, name, id) : null);
+export const prefsRef = (uid) => (db ? doc(db, 'users', uid, 'meta', 'prefs') : null);
+export const leadsCol = () => (db ? collection(db, 'leads') : null);
+export const siteRef = () => (db ? doc(db, 'settings', 'main') : null);
 
 /** Đăng ký lắng nghe realtime một collection con của user. */
-export const subscribe = (uid, name, onData, constraints = []) =>
-  onSnapshot(
-    query(userCol(uid, name), ...constraints),
-    (snap) => onData(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
-    (err) => console.warn(`[db] subscribe ${name}:`, err.message)
-  );
+export const subscribe = (uid, name, onData, constraints = []) => {
+  if (!db) return () => {};
+  try {
+    const col = userCol(uid, name);
+    if (!col) return () => {};
+    return onSnapshot(
+      query(col, ...constraints),
+      (snap) => onData(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
+      (err) => console.warn(`[db] subscribe ${name}:`, err.message)
+    );
+  } catch (err) {
+    console.warn(`[db] subscribe ${name} error:`, err);
+    return () => {};
+  }
+};
 
 export const createItem = (uid, name, data) =>
   addDoc(userCol(uid, name), { ...data, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
@@ -78,48 +87,80 @@ export const subscribeTransactions = (uid, cb) =>
 
 /* ── Liên hệ từ website ─────────────────────────────────────────── */
 
-export const subscribeLeads = (cb) =>
-  onSnapshot(
-    query(leadsCol(), orderBy('createdAt', 'desc'), limit(200)),
-    (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
-    (err) => console.warn('[db] subscribe leads:', err.message)
-  );
+export const subscribeLeads = (cb) => {
+  if (!db) return () => {};
+  try {
+    const col = leadsCol();
+    if (!col) return () => {};
+    return onSnapshot(
+      query(col, orderBy('createdAt', 'desc'), limit(200)),
+      (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
+      (err) => console.warn('[db] subscribe leads:', err.message)
+    );
+  } catch (err) {
+    console.warn('[db] subscribe leads error:', err);
+    return () => {};
+  }
+};
 
-export const updateLead = (id, data) => updateDoc(doc(db, 'leads', id), data);
-export const removeLead = (id) => deleteDoc(doc(db, 'leads', id));
+export const updateLead = (id, data) => (db ? updateDoc(doc(db, 'leads', id), data) : Promise.resolve());
+export const removeLead = (id) => (db ? deleteDoc(doc(db, 'leads', id)) : Promise.resolve());
 
 export const markLeadsRead = async (leads) => {
+  if (!db) return;
   const unread = leads.filter((l) => !l.read).slice(0, 400);
   if (!unread.length) return;
-  const batch = writeBatch(db);
-  unread.forEach((l) => batch.update(doc(db, 'leads', l.id), { read: true }));
-  await batch.commit();
+  try {
+    const batch = writeBatch(db);
+    unread.forEach((l) => batch.update(doc(db, 'leads', l.id), { read: true }));
+    await batch.commit();
+  } catch (err) {
+    console.warn('[db] markLeadsRead error:', err);
+  }
 };
 
 /* ── Nội dung website ───────────────────────────────────────────── */
 
-export const subscribeSite = (cb) =>
-  onSnapshot(
-    siteRef(),
-    (snap) => cb(snap.exists() ? snap.data() : { profile: {}, projects: [] }),
-    (err) => console.warn('[db] subscribe site:', err.message)
-  );
+export const subscribeSite = (cb) => {
+  if (!db) return () => {};
+  try {
+    const ref = siteRef();
+    if (!ref) return () => {};
+    return onSnapshot(
+      ref,
+      (snap) => cb(snap.exists() ? snap.data() : { profile: {}, projects: [] }),
+      (err) => console.warn('[db] subscribe site:', err.message)
+    );
+  } catch (err) {
+    console.warn('[db] subscribe site error:', err);
+    return () => {};
+  }
+};
 
-export const saveSiteProfile = (profile) => setDoc(siteRef(), { profile }, { merge: true });
-export const saveSiteProjects = (projects) => setDoc(siteRef(), { projects }, { merge: true });
+export const saveSiteProfile = (profile) => (siteRef() ? setDoc(siteRef(), { profile }, { merge: true }) : Promise.resolve());
+export const saveSiteProjects = (projects) => (siteRef() ? setDoc(siteRef(), { projects }, { merge: true }) : Promise.resolve());
 
 /* ── Thiết bị nhận push ─────────────────────────────────────────── */
 
 export const registerDevice = (uid, token, info) =>
-  setDoc(doc(db, 'users', uid, 'devices', token), { token, ...info, updatedAt: serverTimestamp() });
+  (db ? setDoc(doc(db, 'users', uid, 'devices', token), { token, ...info, updatedAt: serverTimestamp() }) : Promise.resolve());
 
-export const unregisterDevice = (uid, token) => deleteDoc(doc(db, 'users', uid, 'devices', token));
+export const unregisterDevice = (uid, token) => (db ? deleteDoc(doc(db, 'users', uid, 'devices', token)) : Promise.resolve());
 
 /* ── Tuỳ chọn ───────────────────────────────────────────────────── */
 
-export const subscribePrefs = (uid, cb) =>
-  onSnapshot(prefsRef(uid), (snap) => cb(snap.exists() ? snap.data() : {}), () => cb({}));
+export const subscribePrefs = (uid, cb) => {
+  if (!db) return () => {};
+  try {
+    const ref = prefsRef(uid);
+    if (!ref) return () => {};
+    return onSnapshot(ref, (snap) => cb(snap.exists() ? snap.data() : {}), () => cb({}));
+  } catch (err) {
+    console.warn('[db] subscribe prefs error:', err);
+    return () => {};
+  }
+};
 
-export const savePrefs = (uid, data) => setDoc(prefsRef(uid), data, { merge: true });
+export const savePrefs = (uid, data) => (prefsRef(uid) ? setDoc(prefsRef(uid), data, { merge: true }) : Promise.resolve());
 
 export { serverTimestamp, getDoc, getDocs, doc, collection, query, where, orderBy, limit };

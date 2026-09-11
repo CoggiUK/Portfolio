@@ -5,18 +5,24 @@ import { Platform } from 'react-native';
 import { colors } from '../theme';
 import { toDate, fmtTime } from '../utils/date';
 
-const DATE_TRIGGER = Notifications.SchedulableTriggerInputTypes.DATE;
-const DAILY_TRIGGER = Notifications.SchedulableTriggerInputTypes.DAILY;
+const DATE_TRIGGER = Notifications?.SchedulableTriggerInputTypes?.DATE ?? 'date';
+const DAILY_TRIGGER = Notifications?.SchedulableTriggerInputTypes?.DAILY ?? 'daily';
 
 // Thông báo luôn hiện kể cả khi app đang mở (mặc định của expo là ẩn).
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-  }),
-});
+try {
+  if (Notifications?.setNotificationHandler) {
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowBanner: true,
+        shouldShowList: true,
+        shouldPlaySound: true,
+        shouldSetBadge: true,
+      }),
+    });
+  }
+} catch (err) {
+  console.warn('[notifications] setNotificationHandler error:', err);
+}
 
 export const CHANNELS = {
   default: 'default',
@@ -27,32 +33,47 @@ export const CHANNELS = {
 /** Android bắt buộc có channel thì thông báo mới kêu/rung đúng mức ưu tiên. */
 export async function ensureChannels() {
   if (Platform.OS !== 'android') return;
-  await Notifications.setNotificationChannelAsync(CHANNELS.default, {
-    name: 'Chung',
-    importance: Notifications.AndroidImportance.DEFAULT,
-    lightColor: colors.primary,
-  });
-  await Notifications.setNotificationChannelAsync(CHANNELS.leads, {
-    name: 'Liên hệ mới',
-    importance: Notifications.AndroidImportance.MAX,
-    vibrationPattern: [0, 250, 250, 250],
-    lightColor: colors.primary,
-    sound: 'default',
-  });
-  await Notifications.setNotificationChannelAsync(CHANNELS.reminders, {
-    name: 'Nhắc lịch',
-    importance: Notifications.AndroidImportance.HIGH,
-    vibrationPattern: [0, 200, 150, 200],
-    lightColor: colors.cyan,
-    sound: 'default',
-  });
+  try {
+    if (!Notifications?.setNotificationChannelAsync) return;
+    const defaultImp = Notifications?.AndroidImportance?.DEFAULT ?? 3;
+    const maxImp = Notifications?.AndroidImportance?.MAX ?? 5;
+    const highImp = Notifications?.AndroidImportance?.HIGH ?? 4;
+
+    await Notifications.setNotificationChannelAsync(CHANNELS.default, {
+      name: 'Chung',
+      importance: defaultImp,
+      lightColor: colors.primary,
+    });
+    await Notifications.setNotificationChannelAsync(CHANNELS.leads, {
+      name: 'Liên hệ mới',
+      importance: maxImp,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: colors.primary,
+      sound: 'default',
+    });
+    await Notifications.setNotificationChannelAsync(CHANNELS.reminders, {
+      name: 'Nhắc lịch',
+      importance: highImp,
+      vibrationPattern: [0, 200, 150, 200],
+      lightColor: colors.cyan,
+      sound: 'default',
+    });
+  } catch (err) {
+    console.warn('[notifications] ensureChannels error:', err);
+  }
 }
 
 export async function requestPermission() {
-  const current = await Notifications.getPermissionsAsync();
-  if (current.granted) return true;
-  const asked = await Notifications.requestPermissionsAsync();
-  return asked.granted || asked.ios?.status === Notifications.IosAuthorizationStatus.PROVISIONAL;
+  try {
+    if (!Notifications?.getPermissionsAsync) return false;
+    const current = await Notifications.getPermissionsAsync();
+    if (current?.granted) return true;
+    const asked = await Notifications.requestPermissionsAsync();
+    return asked?.granted || asked?.ios?.status === Notifications?.IosAuthorizationStatus?.PROVISIONAL;
+  } catch (err) {
+    console.warn('[notifications] requestPermission error:', err);
+    return false;
+  }
 }
 
 /**
@@ -104,40 +125,45 @@ const offsetLabel = (m) =>
  * sửa/xoá sự kiện luôn phản ánh đúng, không cần theo dõi từng id.
  */
 export async function syncEventReminders(events) {
-  const scheduled = await Notifications.getAllScheduledNotificationsAsync();
-  await Promise.all(
-    scheduled
-      .filter((n) => n.content?.data?.kind === EVENT_KIND)
-      .map((n) => Notifications.cancelScheduledNotificationAsync(n.identifier))
-  );
+  try {
+    if (!Notifications?.getAllScheduledNotificationsAsync || !Notifications?.scheduleNotificationAsync) return 0;
+    const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+    await Promise.all(
+      scheduled
+        .filter((n) => n.content?.data?.kind === EVENT_KIND)
+        .map((n) => Notifications.cancelScheduledNotificationAsync(n.identifier).catch(() => {}))
+    );
 
-  const now = Date.now();
-  let count = 0;
-  for (const ev of events) {
-    const start = toDate(ev.start);
-    if (!start) continue;
-    const offsets = ev.reminders?.length ? ev.reminders : DEFAULT_REMINDERS;
-    for (const mins of offsets) {
-      const at = new Date(start.getTime() - mins * 60000);
-      // Bỏ qua mốc đã trôi qua và các mốc quá xa (Android giới hạn ~500 alarm).
-      if (at.getTime() <= now + 5000 || count >= 200) continue;
-      await Notifications.scheduleNotificationAsync({
-        content: {
-          title: mins === 0 ? `⏰ ${ev.title}` : `⏰ Sắp đến lịch · ${offsetLabel(mins)} nữa`,
-          body:
-            mins === 0
-              ? `Bắt đầu ngay bây giờ${ev.location ? ` · ${ev.location}` : ''}`
-              : `${ev.title} — ${fmtTime(start)}${ev.location ? ` · ${ev.location}` : ''}`,
-          data: { kind: EVENT_KIND, eventId: ev.id },
-          sound: 'default',
-          ...(Platform.OS === 'android' ? { channelId: CHANNELS.reminders } : {}),
-        },
-        trigger: { type: DATE_TRIGGER, date: at, channelId: CHANNELS.reminders },
-      });
-      count += 1;
+    const now = Date.now();
+    let count = 0;
+    for (const ev of events || []) {
+      const start = toDate(ev.start);
+      if (!start) continue;
+      const offsets = ev.reminders?.length ? ev.reminders : DEFAULT_REMINDERS;
+      for (const mins of offsets) {
+        const at = new Date(start.getTime() - mins * 60000);
+        if (at.getTime() <= now + 5000 || count >= 200) continue;
+        await Notifications.scheduleNotificationAsync({
+          content: {
+            title: mins === 0 ? `⏰ ${ev.title}` : `⏰ Sắp đến lịch · ${offsetLabel(mins)} nữa`,
+            body:
+              mins === 0
+                ? `Bắt đầu ngay bây giờ${ev.location ? ` · ${ev.location}` : ''}`
+                : `${ev.title} — ${fmtTime(start)}${ev.location ? ` · ${ev.location}` : ''}`,
+            data: { kind: EVENT_KIND, eventId: ev.id },
+            sound: 'default',
+            ...(Platform.OS === 'android' ? { channelId: CHANNELS.reminders } : {}),
+          },
+          trigger: { type: DATE_TRIGGER, date: at, channelId: CHANNELS.reminders },
+        }).catch(() => {});
+        count += 1;
+      }
     }
+    return count;
+  } catch (err) {
+    console.warn('[notifications] syncEventReminders error:', err);
+    return 0;
   }
-  return count;
 }
 
 /* ── Nhắc thói quen hằng ngày ───────────────────────────────────── */
@@ -145,36 +171,46 @@ export async function syncEventReminders(events) {
 const HABIT_KIND = 'habit-reminder';
 
 export async function syncHabitReminder(enabled, hour = 20, minute = 0) {
-  const scheduled = await Notifications.getAllScheduledNotificationsAsync();
-  await Promise.all(
-    scheduled
-      .filter((n) => n.content?.data?.kind === HABIT_KIND)
-      .map((n) => Notifications.cancelScheduledNotificationAsync(n.identifier))
-  );
-  if (!enabled) return;
-  await Notifications.scheduleNotificationAsync({
-    content: {
-      title: '🌱 Điểm danh thói quen',
-      body: 'Dành 30 giây tổng kết ngày hôm nay nhé.',
-      data: { kind: HABIT_KIND },
-      ...(Platform.OS === 'android' ? { channelId: CHANNELS.reminders } : {}),
-    },
-    trigger: { type: DAILY_TRIGGER, hour, minute, channelId: CHANNELS.reminders },
-  });
+  try {
+    if (!Notifications?.getAllScheduledNotificationsAsync || !Notifications?.scheduleNotificationAsync) return;
+    const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+    await Promise.all(
+      scheduled
+        .filter((n) => n.content?.data?.kind === HABIT_KIND)
+        .map((n) => Notifications.cancelScheduledNotificationAsync(n.identifier).catch(() => {}))
+    );
+    if (!enabled) return;
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: '🌱 Điểm danh thói quen',
+        body: 'Dành 30 giây tổng kết ngày hôm nay nhé.',
+        data: { kind: HABIT_KIND },
+        ...(Platform.OS === 'android' ? { channelId: CHANNELS.reminders } : {}),
+      },
+      trigger: { type: DAILY_TRIGGER, hour, minute, channelId: CHANNELS.reminders },
+    }).catch(() => {});
+  } catch (err) {
+    console.warn('[notifications] syncHabitReminder error:', err);
+  }
 }
 
 /** Thông báo ngay lập tức — dùng cho lead mới khi app đang chạy. */
 export async function notifyNow(title, body, data = {}, channel = CHANNELS.leads) {
-  await Notifications.scheduleNotificationAsync({
-    content: {
-      title,
-      body,
-      data,
-      sound: 'default',
-      ...(Platform.OS === 'android' ? { channelId: channel } : {}),
-    },
-    trigger: null,
-  });
+  try {
+    if (!Notifications?.scheduleNotificationAsync) return;
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title,
+        body,
+        data,
+        sound: 'default',
+        ...(Platform.OS === 'android' ? { channelId: channel } : {}),
+      },
+      trigger: null,
+    }).catch(() => {});
+  } catch (err) {
+    console.warn('[notifications] notifyNow error:', err);
+  }
 }
 
 export { Notifications };

@@ -12,14 +12,14 @@ export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.bg }}>
       <SafeAreaProvider>
-        <AuthProvider>
-          <AppProvider>
-            <StatusBar style="dark" />
-            <ErrorBoundary>
+        <ErrorBoundary>
+          <AuthProvider>
+            <AppProvider>
+              <StatusBar style="dark" />
               <RootNavigator />
-            </ErrorBoundary>
-          </AppProvider>
-        </AuthProvider>
+            </AppProvider>
+          </AuthProvider>
+        </ErrorBoundary>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

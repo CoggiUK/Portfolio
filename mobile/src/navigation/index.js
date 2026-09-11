@@ -104,8 +104,10 @@ function Splash() {
   return (
     <View style={s.splash}>
       <Image source={require('../../assets/logo-mark.png')} style={s.logo} resizeMode="contain" />
-      <ActivityIndicator color={colors.primary} />
-      <Text style={[font.small, { color: colors.textMuted, marginTop: space[3] }]}>Đang mở workspace…</Text>
+      <ActivityIndicator color={colors.primary} size="large" />
+      <Text style={[font.small, { color: colors.textMuted, marginTop: space[3], fontWeight: '600' }]}>
+        Đang mở Tùng Lâm Workspace…
+      </Text>
     </View>
   );
 }
@@ -116,16 +118,22 @@ export default function RootNavigator() {
 
   // Chạm vào thông báo → mở đúng màn hình liên quan.
   useEffect(() => {
-    const sub = Notifications.addNotificationResponseReceivedListener((res) => {
-      const data = res.notification.request.content.data || {};
-      if (!navRef.current) return;
-      if (data.kind === 'lead') navRef.current.navigate('Tabs', { screen: 'Liên hệ' });
-      else if (data.kind === 'event-reminder') navRef.current.navigate('Tabs', { screen: 'Lịch' });
-      else if (data.kind === 'habit-reminder') {
-        navRef.current.navigate('Tabs', { screen: 'Cá nhân', params: { tab: 'habits' } });
+    try {
+      if (Notifications?.addNotificationResponseReceivedListener) {
+        const sub = Notifications.addNotificationResponseReceivedListener((res) => {
+          const data = res?.notification?.request?.content?.data || {};
+          if (!navRef.current) return;
+          if (data.kind === 'lead') navRef.current.navigate('Tabs', { screen: 'Liên hệ' });
+          else if (data.kind === 'event-reminder') navRef.current.navigate('Tabs', { screen: 'Lịch' });
+          else if (data.kind === 'habit-reminder') {
+            navRef.current.navigate('Tabs', { screen: 'Cá nhân', params: { tab: 'habits' } });
+          }
+        });
+        return () => sub?.remove?.();
       }
-    });
-    return () => sub.remove();
+    } catch (err) {
+      console.warn('[navigation] Notification response listener warning:', err);
+    }
   }, []);
 
   if (initializing) return <Splash />;

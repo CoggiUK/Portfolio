@@ -24,14 +24,22 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [initializing, setInitializing] = useState(true);
 
-  useEffect(
-    () =>
-      onAuthStateChanged(auth, (u) => {
+  useEffect(() => {
+    if (!auth) {
+      setInitializing(false);
+      return;
+    }
+    try {
+      const unsub = onAuthStateChanged(auth, (u) => {
         setUser(u);
         setInitializing(false);
-      }),
-    []
-  );
+      });
+      return () => unsub?.();
+    } catch (err) {
+      console.warn('[AuthContext] onAuthStateChanged error:', err);
+      setInitializing(false);
+    }
+  }, []);
 
   const signIn = useCallback(async (email, password) => {
     const cred = await signInWithEmailAndPassword(auth, email.trim(), password);
