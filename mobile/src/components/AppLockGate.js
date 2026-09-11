@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useLock } from '../contexts/LockContext';
-import { colors, space, radius, font, shadows } from '../theme';
+import { colors, space, radius, font, shadows, tint } from '../theme';
 
 const KEYPAD_NUMS = [
   ['1', '2', '3'],
