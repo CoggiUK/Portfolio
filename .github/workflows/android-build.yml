@@ -8,13 +8,13 @@ on:
         required: false
         default: ''
       build_type:
-        description: 'Chon loai build (debug de cai ngay tren moi may Android)'
+        description: 'Chon loai build (release de chay standalone offline tren moi may Android)'
         required: true
-        default: 'debug'
+        default: 'release'
         type: choice
         options:
-          - debug
           - release
+          - debug
   push:
     branches:
       - main
@@ -77,21 +77,28 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      - name: 🔨 Build APK
+      - name: 🔨 Build Standalone Release APK
         working-directory: ./mobile/android
         run: |
           chmod +x gradlew
-          BUILD_TYPE="${{ github.event.inputs.build_type || 'debug' }}"
-          if [ "$BUILD_TYPE" = "release" ]; then
-            ./gradlew assembleRelease || ./gradlew assembleDebug
-          else
+          # Ensure release build uses debug.keystore so the APK is signed and can be installed on any device without custom keys
+          sed -i 's/signingConfig signingConfigs.release/signingConfig signingConfigs.debug/g' app/build.gradle || true
+          
+          BUILD_TYPE="${{ github.event.inputs.build_type || 'release' }}"
+          if [ "$BUILD_TYPE" = "debug" ]; then
             ./gradlew assembleDebug
+          else
+            ./gradlew assembleRelease || ./gradlew assembleDebug
           fi
 
       - name: 🔍 Find and Prepare APK
         run: |
           mkdir -p build-output
-          APK_FILE=$(find mobile/android/app/build/outputs/apk -name "*.apk" | head -n 1)
+          # Prefer signed release APK, then any APK
+          APK_FILE=$(find mobile/android/app/build/outputs/apk -name "*.apk" ! -name "*unsigned*" | head -n 1)
+          if [ -z "$APK_FILE" ]; then
+            APK_FILE=$(find mobile/android/app/build/outputs/apk -name "*.apk" | head -n 1)
+          fi
           if [ -z "$APK_FILE" ]; then
             echo "Error: Không tìm thấy file APK sau khi build!"
             exit 1
