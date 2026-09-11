@@ -55,6 +55,23 @@ export default function ProfilePane() {
     set('education', eduList.filter((_, i) => i !== idx));
   };
 
+  // Chứng chỉ: danh sách riêng, tách khỏi học vấn.
+  const certList = Array.isArray(draft.certificates) ? draft.certificates : [];
+
+  const updateCert = (idx, field, val) => {
+    const next = [...certList];
+    next[idx] = { ...(next[idx] || {}), [field]: val };
+    set('certificates', next);
+  };
+
+  const addCert = () => {
+    set('certificates', [...certList, { name: '', issuer: '', date: '', url: '' }]);
+  };
+
+  const removeCert = (idx) => {
+    set('certificates', certList.filter((_, i) => i !== idx));
+  };
+
   // Chuẩn hoá kinh nghiệm
   const expList = Array.isArray(draft.experience) ? draft.experience : [];
 
@@ -83,9 +100,11 @@ export default function ProfilePane() {
     setBusy(true);
     try {
       const cleanedEdu = eduList.filter((e) => (e.school || '').trim() || (e.major || '').trim());
+      const cleanedCert = certList.filter((c) => (c.name || '').trim());
       const payload = {
         ...draft,
         education: cleanedEdu,
+        certificates: cleanedCert,
       };
       await db.saveSiteProfile(payload);
       setDirty(false);
@@ -192,6 +211,66 @@ export default function ProfilePane() {
         icon="add"
         variant="secondary"
         onPress={addEdu}
+        style={{ marginBottom: space[4] }}
+      />
+
+      <SectionTitle right={
+        <Btn title="Thêm chứng chỉ" icon="add" small variant="secondary" onPress={addCert} />
+      }>
+        Chứng chỉ ({certList.length})
+      </SectionTitle>
+
+      {certList.map((cert, idx) => (
+        <Card key={idx} style={{ marginBottom: space[3] }}>
+          <Row style={{ justifyContent: 'space-between', marginBottom: space[2] }}>
+            <Text style={[font.h3, { color: colors.amber, fontWeight: '700' }]}>
+              {cert.name || `Chứng chỉ #${idx + 1}`}
+            </Text>
+            <IconBtn
+              icon="trash-outline"
+              color={colors.danger}
+              onPress={() => removeCert(idx)}
+            />
+          </Row>
+          <Field
+            label="Tên chứng chỉ"
+            value={cert.name || ''}
+            onChangeText={(v) => updateCert(idx, 'name', v)}
+            placeholder="AWS Certified Cloud Practitioner"
+          />
+          <Field
+            label="Đơn vị cấp"
+            value={cert.issuer || ''}
+            onChangeText={(v) => updateCert(idx, 'issuer', v)}
+            placeholder="Amazon Web Services"
+          />
+          <Row gap={space[2]}>
+            <View style={{ flex: 1 }}>
+              <Field
+                label="Thời gian"
+                value={cert.date || ''}
+                onChangeText={(v) => updateCert(idx, 'date', v)}
+                placeholder="06/2026"
+              />
+            </View>
+            <View style={{ flex: 1.5 }}>
+              <Field
+                label="Link xác thực"
+                value={cert.url || ''}
+                onChangeText={(v) => updateCert(idx, 'url', v)}
+                placeholder="https://…"
+                autoCapitalize="none"
+              />
+            </View>
+          </Row>
+        </Card>
+      ))}
+
+      <Btn
+        title="+ Thêm chứng chỉ"
+        icon="add"
+        variant="secondary"
+        onPress={addCert}
         style={{ marginBottom: space[4] }}
       />
 

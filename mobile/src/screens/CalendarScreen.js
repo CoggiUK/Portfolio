@@ -1,12 +1,13 @@
 import React, { useMemo, useState, useCallback, memo } from 'react';
 import { View, Text, StyleSheet, Pressable, FlatList, Platform } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { Screen, Header, Card, FAB, Empty, IconBtn, Row, Badge } from '../components/ui';
+import { Screen, Header, Card, FAB, Empty, IconBtn, Row, Badge, Sheet } from '../components/ui';
 import { colors, space, radius, font, hexOf, tint, shadows } from '../theme';
 import { useApp } from '../contexts/AppContext';
 import {
-  monthGrid, dayKey, isSameDay, startOfMonth, addMonths, fmtTime, fmtDayLabel,
+  monthGrid, dayKey, isSameDay, startOfMonth, startOfWeek, addMonths, addDays, fmtTime, fmtDayLabel,
   MONTHS, toDate,
 } from '../utils/date';
 
@@ -67,6 +68,9 @@ export default function CalendarScreen({ navigation }) {
   const [anchor, setAnchor] = useState(startOfMonth(new Date()));
   const [selected, setSelected] = useState(new Date());
   const [reloading, setReloading] = useState(false);
+  const [viewMode, setViewMode] = useState('month'); // 'month' | 'week'
+  const [pickerVisible, setPickerVisible] = useState(false);
+  const [pickerYear, setPickerYear] = useState(anchor.getFullYear());
 
   const handleReload = useCallback(async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
@@ -94,7 +98,10 @@ export default function CalendarScreen({ navigation }) {
     return map;
   }, [events]);
 
-  const grid = useMemo(() => monthGrid(anchor), [anchor]);
+  const grid = useMemo(
+    () => (viewMode === 'week' ? Array.from({ length: 7 }, (_, i) => addDays(startOfWeek(selected), i)) : monthGrid(anchor)),
+    [viewMode, anchor, selected]
+  );
   const dayEvents = byDay[dayKey(selected)] || [];
   const today = new Date();
 
@@ -108,6 +115,55 @@ export default function CalendarScreen({ navigation }) {
     Haptics.selectionAsync().catch(() => {});
     setSelected(d);
   }, []);
+
+  const goPrev = useCallback(() => {
+    if (viewMode === 'week') {
+      const d = addDays(selected, -7);
+      setSelected(d);
+      setAnchor(startOfMonth(d));
+    } else {
+      setAnchor((a) => addMonths(a, -1));
+    }
+  }, [viewMode, selected]);
+
+  const goNext = useCallback(() => {
+    if (viewMode === 'week') {
+      const d = addDays(selected, 7);
+      setSelected(d);
+      setAnchor(startOfMonth(d));
+    } else {
+      setAnchor((a) => addMonths(a, 1));
+    }
+  }, [viewMode, selected]);
+
+  const openPicker = useCallback(() => {
+    Haptics.selectionAsync().catch(() => {});
+    setPickerYear(anchor.getFullYear());
+    setPickerVisible(true);
+  }, [anchor]);
+
+  const pickMonth = useCallback((monthIdx) => {
+    Haptics.selectionAsync().catch(() => {});
+    const d = new Date(pickerYear, monthIdx, 1);
+    setAnchor(d);
+    setSelected(d);
+    setViewMode('month');
+    setPickerVisible(false);
+  }, [pickerYear]);
+
+  const pinchGesture = useMemo(
+    () =>
+      Gesture.Pinch().onEnd((e) => {
+        if (e.scale < 0.8 && viewMode === 'month') {
+          Haptics.selectionAsync().catch(() => {});
+          setViewMode('week');
+        } else if (e.scale > 1.25 && viewMode === 'week') {
+          Haptics.selectionAsync().catch(() => {});
+          setViewMode('month');
+        }
+      }),
+    [viewMode]
+  );
 
   const keyExtractor = useCallback((e) => e.id, []);
 
@@ -141,14 +197,15 @@ export default function CalendarScreen({ navigation }) {
 
       {/* Month Selector Bar */}
       <View style={s.monthBar}>
-        <IconBtn icon="chevron-back" onPress={() => setAnchor(addMonths(anchor, -1))} />
-        <View style={s.monthPill}>
+        <IconBtn icon="chevron-back" onPress={goPrev} />
+        <Pressable style={s.monthPill} onPress={openPicker}>
           <Ionicons name="calendar-outline" size={14} color={colors.primary} />
           <Text style={[font.h3, { color: colors.text, fontWeight: '800' }]}>
             {MONTHS[anchor.getMonth()]} {anchor.getFullYear()}
           </Text>
-        </View>
-        <IconBtn icon="chevron-forward" onPress={() => setAnchor(addMonths(anchor, 1))} />
+          <Ionicons name="chevron-down" size={14} color={colors.textMuted} />
+        </Pressable>
+        <IconBtn icon="chevron-forward" onPress={goNext} />
       </View>
 
       {/* Week Header */}
@@ -167,12 +224,13 @@ export default function CalendarScreen({ navigation }) {
         ))}
       </View>
 
-      {/* Calendar Month Grid */}
+      {/* Calendar Grid — chụm 2 ngón để thu về xem tuần, xoè ra để phóng lại tháng */}
+      <GestureDetector gesture={pinchGesture}>
       <View style={s.grid}>
         {grid.map((d) => {
           const key = dayKey(d);
           const list = byDay[key] || [];
-          const outside = d.getMonth() !== anchor.getMonth();
+          const outside = viewMode === 'month' && d.getMonth() !== anchor.getMonth();
           const isSel = isSameDay(d, selected);
           const isToday = isSameDay(d, today);
 
@@ -218,6 +276,7 @@ export default function CalendarScreen({ navigation }) {
           );
         })}
       </View>
+      </GestureDetector>
 
       {/* Agenda Header */}
       <View style={s.agendaHead}>
@@ -253,6 +312,30 @@ export default function CalendarScreen({ navigation }) {
       />
 
       <FAB onPress={() => navigation.navigate('EventForm', { date: selected.toISOString() })} />
+
+      <Sheet visible={pickerVisible} onClose={() => setPickerVisible(false)} title="Chọn tháng / năm">
+        <Row style={{ justifyContent: 'center', alignItems: 'center', marginBottom: space[4] }} gap={space[5]}>
+          <IconBtn icon="chevron-back" onPress={() => setPickerYear((y) => y - 1)} />
+          <Text style={[font.h1, { color: colors.text, minWidth: 90, textAlign: 'center' }]}>{pickerYear}</Text>
+          <IconBtn icon="chevron-forward" onPress={() => setPickerYear((y) => y + 1)} />
+        </Row>
+        <View style={s.monthPickerGrid}>
+          {MONTHS.map((m, idx) => {
+            const isCurrent = idx === anchor.getMonth() && pickerYear === anchor.getFullYear();
+            return (
+              <Pressable
+                key={m}
+                onPress={() => pickMonth(idx)}
+                style={[s.monthOption, isCurrent && s.monthOptionActive]}
+              >
+                <Text style={[font.small, { color: isCurrent ? colors.onPrimary : colors.text, fontWeight: '700' }]}>
+                  {m.replace('Tháng ', 'Th ')}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      </Sheet>
     </Screen>
   );
 }
@@ -354,5 +437,26 @@ const s = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: radius.pill,
     backgroundColor: colors.bgSurface,
+  },
+  monthPickerGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    paddingHorizontal: space[4],
+    gap: space[2],
+    justifyContent: 'center',
+  },
+  monthOption: {
+    width: '28%',
+    paddingVertical: space[3],
+    borderRadius: radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.bgSurface,
+  },
+  monthOptionActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
 });

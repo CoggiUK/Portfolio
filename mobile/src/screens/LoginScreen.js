@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, Image, StyleSheet, KeyboardAvoidingView, Platform, Pressable, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
-import { Screen, Field, Btn, Banner, Row } from '../components/ui';
-import { colors, space, radius, font, tint, shadows } from '../theme';
+import { Screen, Field, Btn, Banner, SwitchRow } from '../components/ui';
+import { colors, space, radius, font, shadows } from '../theme';
 import { useAuth, authMessage } from '../contexts/AuthContext';
+import { getSavedCredentials, saveCredentials, clearSavedCredentials } from '../services/savedCredentials';
+import { hasBiometricHardware, authenticateBiometric, getBiometricTypeLabel } from '../services/appLock';
 
 export default function LoginScreen() {
   const { signIn, resetPassword } = useAuth();
@@ -14,6 +15,25 @@ export default function LoginScreen() {
   const [show, setShow] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [rememberMe, setRememberMe] = useState(true);
+  const [bioLoginAvailable, setBioLoginAvailable] = useState(false);
+  const [bioLabel, setBioLabel] = useState('Sinh trắc học');
+
+  useEffect(() => {
+    (async () => {
+      const [saved, bioHardware, label] = await Promise.all([
+        getSavedCredentials(),
+        hasBiometricHardware(),
+        getBiometricTypeLabel(),
+      ]);
+      if (saved) {
+        setEmail(saved.email);
+        setPassword(saved.password);
+      }
+      setBioLoginAvailable(!!saved && bioHardware);
+      setBioLabel(label);
+    })();
+  }, []);
 
   const submit = async () => {
     if (!email || !password) return setError('Vui lòng nhập đầy đủ email và mật khẩu.');
@@ -21,6 +41,13 @@ export default function LoginScreen() {
     setError('');
     try {
       await signIn(email, password);
+      if (rememberMe) {
+        saveCredentials(email, password);
+        setBioLoginAvailable(await hasBiometricHardware());
+      } else {
+        clearSavedCredentials();
+        setBioLoginAvailable(false);
+      }
     } catch (err) {
       setError(authMessage(err));
     } finally {
@@ -28,24 +55,24 @@ export default function LoginScreen() {
     }
   };
 
-  const quickLogin = async () => {
-    Haptics.selectionAsync().catch(() => {});
-    const adminEmail = 'ntlam2211@gmail.com';
-    const adminPassword = 'adminTungLam02';
-    setEmail(adminEmail);
-    setPassword(adminPassword);
+  const loginWithBiometric = async () => {
     setError('');
+    const ok = await authenticateBiometric();
+    if (!ok) return;
+    const saved = await getSavedCredentials();
+    if (!saved) {
+      setBioLoginAvailable(false);
+      return;
+    }
     setBusy(true);
     try {
-      await signIn(adminEmail, adminPassword);
+      await signIn(saved.email, saved.password);
     } catch (err) {
       setError(authMessage(err));
     } finally {
       setBusy(false);
     }
   };
-
-  const fillDemo = quickLogin;
 
   const forgot = async () => {
     if (!email) return setError('Nhập email trước rồi bấm quên mật khẩu.');
@@ -72,12 +99,8 @@ export default function LoginScreen() {
           <View style={s.logoContainer}>
             <Image source={require('../../assets/logo-mark.png')} style={s.logo} resizeMode="contain" />
           </View>
-          <Text style={[font.h1, { color: colors.text, textAlign: 'center' }]}>Tùng Lâm Workspace</Text>
-          <Text style={[font.small, { color: colors.primary, fontWeight: '700', textAlign: 'center', marginTop: 2 }]}>
-            Coggi (Coder) · ViVa (Gamer)
-          </Text>
-          <Text style={[font.tiny, { color: colors.textSub, marginTop: 2, marginBottom: space[4], textAlign: 'center' }]}>
-            Hệ thống điều hành cá nhân & quản trị Portfolio
+          <Text style={[font.h1, { color: colors.text, textAlign: 'center', marginBottom: space[4] }]}>
+            Xin chào Tùng Lâm
           </Text>
 
           <Banner type="error" message={error} onClose={() => setError('')} />
@@ -108,28 +131,33 @@ export default function LoginScreen() {
             </Pressable>
           </View>
 
-          <Btn title="Đăng nhập Workspace" onPress={submit} loading={busy} icon="log-in-outline" />
+          <View style={{ marginTop: space[3] }}>
+            <SwitchRow
+              label="Lưu tài khoản"
+              hint="Tự động điền lại email và mật khẩu ở lần mở sau"
+              value={rememberMe}
+              onChange={setRememberMe}
+              icon="bookmark-outline"
+            />
+          </View>
 
-          {/* Quick Admin Login Button */}
-          <Pressable
-            onPress={quickLogin}
-            disabled={busy}
-            style={({ pressed }) => [s.demoBtn, pressed && { opacity: 0.7 }]}
-          >
-            <Ionicons name="flash-outline" size={14} color={colors.primary} />
-            <Text style={[font.tiny, { color: colors.primary, fontWeight: '700' }]}>
-              Đăng nhập nhanh với tài khoản Admin
-            </Text>
-          </Pressable>
+          <Btn title="Đăng nhập Workspace" onPress={submit} loading={busy} icon="log-in-outline" style={{ marginTop: space[3] }} />
+
+          {bioLoginAvailable ? (
+            <Btn
+              title={`Đăng nhập bằng ${bioLabel}`}
+              onPress={loginWithBiometric}
+              disabled={busy}
+              variant="secondary"
+              icon={bioLabel.includes('Face') ? 'scan-outline' : 'finger-print-outline'}
+              style={{ marginTop: space[2] }}
+            />
+          ) : null}
 
           <Pressable onPress={forgot} style={{ marginTop: space[3], alignSelf: 'center' }}>
             <Text style={[font.small, { color: colors.textMuted }]}>Quên mật khẩu?</Text>
           </Pressable>
         </View>
-
-        <Text style={[font.tiny, s.footer]}>
-          Đồng bộ và bảo mật qua Firebase Authentication
-        </Text>
       </KeyboardAvoidingView>
     </Screen>
   );
@@ -158,17 +186,4 @@ const s = StyleSheet.create({
   },
   logo: { width: 96, height: 96, borderRadius: 48 },
   eye: { position: 'absolute', right: space[3], top: 38 },
-  demoBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    marginTop: space[3],
-    paddingVertical: space[2],
-    backgroundColor: tint(colors.primary, 0.1),
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: tint(colors.primary, 0.25),
-  },
-  footer: { color: colors.textMuted, textAlign: 'center', marginTop: space[4] },
 });

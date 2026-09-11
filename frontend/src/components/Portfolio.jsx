@@ -793,7 +793,7 @@ export default function Portfolio({ profile, projects, onAdminClick, onOpenProje
                 <h3>{edu.major}</h3>
                 <p className="timeline-org">{edu.school}</p>
                 <div className="edu-meta">
-                  <span className="badge">{profile.education.period}</span>
+                  <span className="badge">{edu.period}</span>
                 </div>
               </div>
             ))}
@@ -812,6 +812,39 @@ export default function Portfolio({ profile, projects, onAdminClick, onOpenProje
           </aside>
         </div>
       </section>
+
+      {/* CERTIFICATES SECTION */}
+      {Array.isArray(profile.certificates) && profile.certificates.length > 0 && (
+        <section id="certificates" className="container section">
+          <div className="section-head" data-reveal>
+            <span className="eyebrow">Chứng chỉ</span>
+            <h2 className="glow-text-purple">Chứng chỉ chuyên môn</h2>
+          </div>
+          <div className="event-grid">
+            {profile.certificates.map((cert, i) => (
+              <article key={i} className="glass-card" data-reveal style={{ transitionDelay: `${(i % 3) * 90}ms` }}>
+                <div className="timeline-icon"><Award size={18} /></div>
+                <h3>{cert.name}</h3>
+                <p className="timeline-org">{cert.issuer}</p>
+                <div className="edu-meta">
+                  <span className="badge">{cert.date}</span>
+                </div>
+                {cert.url && (
+                  <a
+                    href={cert.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="badge purple"
+                    style={{ marginTop: '10px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                  >
+                    Xem chứng nhận <ExternalLink size={12} />
+                  </a>
+                )}
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* EVENTS SECTION */}
       {Array.isArray(profile.events) && profile.events.length > 0 && (

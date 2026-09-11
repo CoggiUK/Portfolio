@@ -23,6 +23,7 @@ import {
   ChevronRight,
   GripVertical,
   GraduationCap,
+  Award,
   Image as ImageIcon,
   Users,
   Heart,
@@ -276,19 +277,21 @@ export default function Admin({ token, expiresAt, onLogout, onUpdateData }) {
     setLoading(true);
     try {
       const cleanedEdu = eduList.filter((e) => (e.school || '').trim() || (e.major || '').trim());
+      const cleanedCertificates = listOf('certificates').filter((c) => (c.name || '').trim());
       // Dọn các dòng trống người dùng gõ ra trong lúc soạn thảo.
       const cleanPoints = (list) =>
         list.map((it) => ({ ...it, points: (it.points || []).map((x) => x.trim()).filter(Boolean) }));
       const updatedProfile = {
         ...profile,
         education: cleanedEdu,
+        certificates: cleanedCertificates,
         experience: cleanPoints(listOf('experience')),
         activities: cleanPoints(listOf('activities')),
       };
       await setDoc(doc(db, 'settings', 'main'), { profile: updatedProfile }, { merge: true });
       setProfile(updatedProfile);
       setJourneyDirty(false);
-      showSuccess('Đã lưu học vấn, kinh nghiệm và hoạt động.');
+      showSuccess('Đã lưu học vấn, chứng chỉ, kinh nghiệm và hoạt động.');
       onUpdateData();
     } catch (err) {
       showError(err.message);
@@ -882,6 +885,35 @@ export default function Admin({ token, expiresAt, onLogout, onUpdateData }) {
                       <Field label="Chuyên ngành" value={edu.major} onChange={(v) => updateEdu(idx, 'major', v)} placeholder="Ví dụ: Kỹ thuật phần mềm" />
                       <Field label="Thời gian" value={edu.period} onChange={(v) => updateEdu(idx, 'period', v)} placeholder="Ví dụ: 2021 - 2024" />
                       <Field label="GPA (không bắt buộc)" value={edu.gpa} onChange={(v) => updateEdu(idx, 'gpa', v)} placeholder="Ví dụ: 3.2" />
+                    </div>
+                  </BlockCard>
+                ))}
+              </section>
+
+              {/* CHỨNG CHỈ */}
+              <section style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <SectionHead
+                  icon={<Award size={16} />}
+                  title="Chứng chỉ"
+                  hint="Chứng chỉ chuyên môn, ngoại ngữ... tách riêng khỏi học vấn."
+                  onAdd={() => addListItem('certificates', { name: '', issuer: '', date: '', url: '' })}
+                  addLabel="Thêm chứng chỉ"
+                />
+                {listOf('certificates').length === 0 ? (
+                  <EmptyHint text="Chưa có chứng chỉ nào. Nhấn “Thêm chứng chỉ”." />
+                ) : listOf('certificates').map((cert, idx) => (
+                  <BlockCard
+                    key={idx}
+                    title={cert.name || 'Tên chứng chỉ'}
+                    onUp={idx > 0 ? () => moveListItem('certificates', idx, 'up') : null}
+                    onDown={idx < listOf('certificates').length - 1 ? () => moveListItem('certificates', idx, 'down') : null}
+                    onRemove={() => removeListItem('certificates', idx)}
+                  >
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                      <Field label="Tên chứng chỉ" value={cert.name} onChange={(v) => updateListItem('certificates', idx, 'name', v)} placeholder="Ví dụ: AWS Certified Cloud Practitioner" />
+                      <Field label="Đơn vị cấp" value={cert.issuer} onChange={(v) => updateListItem('certificates', idx, 'issuer', v)} placeholder="Ví dụ: Amazon Web Services" />
+                      <Field label="Thời gian" value={cert.date} onChange={(v) => updateListItem('certificates', idx, 'date', v)} placeholder="Ví dụ: 06/2026" />
+                      <Field label="Link xác thực (không bắt buộc)" value={cert.url} onChange={(v) => updateListItem('certificates', idx, 'url', v)} placeholder="https://..." />
                     </div>
                   </BlockCard>
                 ))}

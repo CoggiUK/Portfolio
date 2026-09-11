@@ -52,31 +52,7 @@ export default function AppLockGate({ children }) {
     }
   };
 
-  const handleKeyPress = useCallback(async (key) => {
-    Haptics.selectionAsync().catch(() => {});
-    setErrorMsg('');
-
-    if (key === 'del') {
-      setEnteredPin((prev) => prev.slice(0, -1));
-      return;
-    }
-
-    if (key === 'bio') {
-      handleBiometric();
-      return;
-    }
-
-    setEnteredPin((prev) => {
-      const next = prev + key;
-      // Nếu đã đủ 4 ký tự thì kiểm tra
-      if (next.length >= 4) {
-        checkPin(next);
-      }
-      return next;
-    });
-  }, [handleBiometric, checkPin]);
-
-  const checkPin = async (pinToCheck) => {
+  const checkPin = useCallback(async (pinToCheck) => {
     const valid = await verifyPin(pinToCheck);
     if (valid) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
@@ -101,7 +77,31 @@ export default function AppLockGate({ children }) {
         }, 500);
       }
     }
-  };
+  }, [verifyPin, unlock]);
+
+  const handleKeyPress = useCallback(async (key) => {
+    Haptics.selectionAsync().catch(() => {});
+    setErrorMsg('');
+
+    if (key === 'del') {
+      setEnteredPin((prev) => prev.slice(0, -1));
+      return;
+    }
+
+    if (key === 'bio') {
+      handleBiometric();
+      return;
+    }
+
+    setEnteredPin((prev) => {
+      const next = prev + key;
+      // Nếu đã đủ 4 ký tự thì kiểm tra
+      if (next.length >= 4) {
+        checkPin(next);
+      }
+      return next;
+    });
+  }, [handleBiometric, checkPin]);
 
   if (!ready || !locked) {
     return children;

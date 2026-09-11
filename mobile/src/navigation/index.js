@@ -6,7 +6,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import * as Notifications from 'expo-notifications';
 
-import { colors, space, font } from '../theme';
+import { colors, space, font, tint } from '../theme';
 import { useAuth } from '../contexts/AuthContext';
 import { useApp } from '../contexts/AppContext';
 
@@ -82,7 +82,7 @@ function Tabs() {
         tabBarIcon: ({ focused, color }) => {
           const [on, off] = ICONS[route.name] || ICONS['Trang chủ'];
           return (
-            <View style={s.tabIconWrap}>
+            <View style={[s.tabIconWrap, focused && s.tabIconActive]}>
               <Ionicons name={focused ? on : off} size={22} color={color} />
             </View>
           );
@@ -163,9 +163,13 @@ const s = StyleSheet.create({
   splash: { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
   logo: { width: 84, height: 84, marginBottom: space[5] },
   tabIconWrap: {
-    width: 32,
-    height: 28,
+    width: 44,
+    height: 30,
+    borderRadius: 15,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  tabIconActive: {
+    backgroundColor: tint(colors.primary, 0.14),
   },
 });
