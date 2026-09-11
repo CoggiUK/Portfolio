@@ -14,9 +14,6 @@ on:
   push:
     branches:
       - main
-    paths:
-      - 'mobile/**'
-      - '.github/workflows/android-build.yml'
 
 jobs:
   build-android:
