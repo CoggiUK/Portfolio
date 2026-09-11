@@ -1,8 +1,12 @@
-﻿name: Build Android APK
+name: Build Android APK
 
 on:
   workflow_dispatch:
     inputs:
+      env_base64:
+        description: 'Base64 encoded .env content'
+        required: false
+        default: ''
       build_type:
         description: 'Chon loai build (debug de cai ngay tren moi may Android)'
         required: true
@@ -24,6 +28,20 @@ jobs:
     steps:
       - name: ⬇️ Checkout Repository
         uses: actions/checkout@v4
+
+      - name: 📝 Configure Environment (.env)
+        working-directory: ./mobile
+        run: |
+          if [ -n "${{ github.event.inputs.env_base64 }}" ]; then
+            echo "${{ github.event.inputs.env_base64 }}" | base64 -d > .env
+          elif [ -n "${{ secrets.MOBILE_ENV }}" ]; then
+            echo "${{ secrets.MOBILE_ENV }}" > .env
+          fi
+          if [ -f .env ]; then
+            echo "✅ .env file successfully configured with $(wc -l < .env) lines"
+          else
+            echo "⚠️ No .env file configured, using defaults or env.example"
+          fi
 
       - name: ☕ Setup Java 17
         uses: actions/setup-java@v4
