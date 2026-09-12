@@ -119,7 +119,14 @@ export const assistantChat = onCall(
       throw new HttpsError('invalid-argument', 'Nội dung tin nhắn không hợp lệ.');
     }
 
-    const apiKey = geminiApiKey.value();
+    let apiKey = '';
+    try {
+      apiKey = typeof geminiApiKey?.value === 'function' ? geminiApiKey.value() : '';
+    } catch {
+      apiKey = '';
+    }
+    apiKey = apiKey || process.env.GEMINI_API_KEY || process.env.GEMINI_API_TOKEN;
+
     if (!apiKey) {
       throw new HttpsError('failed-precondition', 'GEMINI_API_KEY chưa được thiết lập trên server.');
     }
