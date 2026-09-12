@@ -149,15 +149,34 @@ export default function AssistantScreen() {
             return { executed: true, summary: `Đã lưu ghi chú "${input.title}"` };
           }
           case 'create_transaction': {
+            const rawType = String(input.type || '').toLowerCase();
+            const isIncome = rawType === 'in' || rawType === 'income' || rawType === 'thu';
+            const catMap = {
+              'ăn uống': 'food', 'an uong': 'food', 'food': 'food',
+              'di chuyển': 'transport', 'di chuyen': 'transport', 'transport': 'transport',
+              'học tập': 'study', 'hoc tap': 'study', 'study': 'study',
+              'hoá đơn': 'bill', 'hoa don': 'bill', 'bill': 'bill',
+              'giải trí': 'fun', 'giai tri': 'fun', 'fun': 'fun',
+              'lương': 'salary', 'luong': 'salary', 'salary': 'salary',
+              'freelance': 'freelance',
+              'thưởng': 'bonus', 'thuong': 'bonus', 'bonus': 'bonus',
+            };
+            const rawCat = String(input.category || '').trim().toLowerCase();
+            const normalizedCat = catMap[rawCat] || (isIncome ? 'salary' : 'food');
+            const amt = Number(input.amount || 0);
+
             await create('transactions', {
-              type: input.type === 'in' ? 'in' : 'out',
-              amount: Number(input.amount || 0),
-              category: input.category || 'Khác',
-              note: input.note || '',
+              type: isIncome ? 'income' : 'expense',
+              amount: amt,
+              category: normalizedCat,
+              note: input.note || input.category || '',
               date: new Date(),
             });
-            notify(`Đã ghi giao dịch: ${input.category}`, 'success');
-            return { executed: true, summary: `Đã ghi nhận ${input.type === 'in' ? 'thu' : 'chi'} ${input.amount?.toLocaleString?.('vi-VN')}đ` };
+            notify(`Đã ghi nhận ${isIncome ? 'thu' : 'chi'}: ${amt.toLocaleString('vi-VN')}đ`, 'success');
+            return {
+              executed: true,
+              summary: `Đã ghi nhận ${isIncome ? 'khoản thu' : 'khoản chi'} ${amt.toLocaleString('vi-VN')}đ (${input.category || normalizedCat})`,
+            };
           }
           case 'toggle_habit': {
             const normalizedTitle = (input.title || '').trim().toLowerCase();

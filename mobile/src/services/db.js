@@ -41,13 +41,23 @@ export const subscribe = (uid, name, onData, constraints = []) => {
   }
 };
 
-export const createItem = (uid, name, data) =>
-  addDoc(userCol(uid, name), { ...data, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+export const createItem = (uid, name, data) => {
+  const col = userCol(uid, name);
+  if (!col) return Promise.resolve(null);
+  return addDoc(col, { ...data, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+};
 
-export const updateItem = (uid, name, id, data) =>
-  updateDoc(userDoc(uid, name, id), { ...data, updatedAt: serverTimestamp() });
+export const updateItem = (uid, name, id, data) => {
+  const d = userDoc(uid, name, id);
+  if (!d) return Promise.resolve();
+  return updateDoc(d, { ...data, updatedAt: serverTimestamp() });
+};
 
-export const removeItem = (uid, name, id) => deleteDoc(userDoc(uid, name, id));
+export const removeItem = (uid, name, id) => {
+  const d = userDoc(uid, name, id);
+  if (!d) return Promise.resolve();
+  return deleteDoc(d);
+};
 
 /* ── Sự kiện / lịch ─────────────────────────────────────────────── */
 

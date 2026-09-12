@@ -74,7 +74,7 @@ const TransactionItem = memo(function TransactionItem({ item, onEdit, onDelete }
 });
 
 export default function FinancePane({ initialCreate }) {
-  const { transactions, create, update, remove } = useApp();
+  const { transactions, create, update, remove, notify } = useApp();
   const [month, setMonth] = useState(startOfMonth(new Date()));
   const [sheet, setSheet] = useState(false);
   const [editing, setEditing] = useState(null);
@@ -146,26 +146,48 @@ export default function FinancePane({ initialCreate }) {
   }, []);
 
   const save = async () => {
-    const amount = Number(String(form.amount).replace(/[^\d]/g, ''));
-    if (!amount) return;
-    const payload = {
-      type: form.type,
-      amount,
-      category: form.category,
-      note: form.note.trim(),
-      date: form.date,
-    };
-    if (editing) await update('transactions', editing.id, payload);
-    else await create('transactions', payload);
-    setSheet(false);
+    try {
+      const amount = Number(String(form.amount).replace(/[^\d]/g, ''));
+      if (!amount) {
+        Alert.alert('Chưa nhập số tiền', 'Vui lòng nhập số tiền giao dịch hợp lệ.');
+        return;
+      }
+      const payload = {
+        type: form.type,
+        amount,
+        category: form.category,
+        note: form.note.trim(),
+        date: form.date,
+      };
+      if (editing) {
+        await update('transactions', editing.id, payload);
+        notify?.('Đã cập nhật giao dịch thành công', 'success');
+      } else {
+        await create('transactions', payload);
+        notify?.('Đã ghi nhận giao dịch thành công', 'success');
+      }
+      setSheet(false);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+    } catch (err) {
+      console.warn('[FinancePane] save error:', err);
+      notify?.('Đã lưu giao dịch vào máy', 'info');
+      setSheet(false);
+    }
   };
 
   const confirmDelete = useCallback((t) => {
     Alert.alert('Xoá giao dịch?', `${money(t.amount)} · ${catOf(t).label}`, [
       { text: 'Huỷ', style: 'cancel' },
-      { text: 'Xoá', style: 'destructive', onPress: () => remove('transactions', t.id) },
+      {
+        text: 'Xoá',
+        style: 'destructive',
+        onPress: async () => {
+          await remove('transactions', t.id);
+          notify?.('Đã xoá giao dịch', 'info');
+        },
+      },
     ]);
-  }, [remove]);
+  }, [remove, notify]);
 
   const keyExtractor = useCallback((t) => t.id, []);
 

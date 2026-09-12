@@ -45,7 +45,26 @@ export function AppProvider({ children }) {
     setTimeout(() => setToast(null), 4000);
   }, []);
 
-  /* ── Đăng ký các luồng realtime ──────────────────────────────── */
+  const CACHE_PREFIX = 'workspace_local_';
+
+  const loadLocalList = useCallback(async (userUid, name) => {
+    try {
+      const raw = await AsyncStorage.getItem(`${CACHE_PREFIX}${userUid}_${name}`);
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  }, []);
+
+  const saveLocalList = useCallback(async (userUid, name, list) => {
+    try {
+      await AsyncStorage.setItem(`${CACHE_PREFIX}${userUid}_${name}`, JSON.stringify(list));
+    } catch (err) {
+      console.warn(`[AppContext] saveLocalList ${name} error:`, err);
+    }
+  }, []);
+
+  /* ── Đăng ký các luồng realtime + Local Cache fallback ───────── */
   useEffect(() => {
     if (!uid) {
       setEvents([]); setTasks([]); setNotes([]); setHabits([]);
@@ -53,19 +72,52 @@ export function AppProvider({ children }) {
       leadsSeen.current = false;
       return;
     }
+
+    // 1. Tải ngay dữ liệu cục bộ từ AsyncStorage để app sẵn sàng tức thì
+    (async () => {
+      const [initEvents, initTasks, initNotes, initHabits, initTx] = await Promise.all([
+        loadLocalList(uid, 'events'),
+        loadLocalList(uid, 'tasks'),
+        loadLocalList(uid, 'notes'),
+        loadLocalList(uid, 'habits'),
+        loadLocalList(uid, 'transactions'),
+      ]);
+      setEvents((prev) => (prev.length ? prev : initEvents));
+      setTasks((prev) => (prev.length ? prev : initTasks));
+      setNotes((prev) => (prev.length ? prev : initNotes));
+      setHabits((prev) => (prev.length ? prev : initHabits));
+      setTransactions((prev) => (prev.length ? prev : initTx));
+      setReady(true);
+    })();
+
+    // 2. Lắng nghe Firestore nếu kết nối thành công, tự cập nhật cache
     const unsubs = [
-      api.subscribeEvents(uid, setEvents),
-      api.subscribeTasks(uid, setTasks),
-      api.subscribeNotes(uid, setNotes),
-      api.subscribeHabits(uid, setHabits),
-      api.subscribeTransactions(uid, setTransactions),
+      api.subscribeEvents(uid, (items) => {
+        setEvents(items);
+        saveLocalList(uid, 'events', items);
+      }),
+      api.subscribeTasks(uid, (items) => {
+        setTasks(items);
+        saveLocalList(uid, 'tasks', items);
+      }),
+      api.subscribeNotes(uid, (items) => {
+        setNotes(items);
+        saveLocalList(uid, 'notes', items);
+      }),
+      api.subscribeHabits(uid, (items) => {
+        setHabits(items);
+        saveLocalList(uid, 'habits', items);
+      }),
+      api.subscribeTransactions(uid, (items) => {
+        setTransactions(items);
+        saveLocalList(uid, 'transactions', items);
+      }),
       api.subscribePrefs(uid, setPrefs),
       api.subscribeSite(setSite),
       api.subscribeLeads(setLeads),
     ];
-    setReady(true);
     return () => unsubs.forEach((u) => u?.());
-  }, [uid]);
+  }, [uid, loadLocalList, saveLocalList]);
 
   /* ── Quyền + token push ──────────────────────────────────────── */
   useEffect(() => {
@@ -283,6 +335,109 @@ export function AppProvider({ children }) {
     [uid, prefs.autoSyncGoogle, calendarId]
   );
 
+  const create = useCallback(
+    async (name, data) => {
+      const localId = `loc_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+      const localItem = {
+        id: localId,
+        ...data,
+        createdAt: data?.createdAt || new Date(),
+        updatedAt: new Date(),
+      };
+
+      // Cập nhật State và Cache ngay lập tức (Optimistic UI)
+      const updateStateAndCache = (setter, key) => {
+        setter((prev) => {
+          const next = [localItem, ...prev.filter((i) => i.id !== localId)];
+          saveLocalList(uid, key, next);
+          return next;
+        });
+      };
+
+      if (name === 'transactions') updateStateAndCache(setTransactions, 'transactions');
+      else if (name === 'tasks') updateStateAndCache(setTasks, 'tasks');
+      else if (name === 'notes') updateStateAndCache(setNotes, 'notes');
+      else if (name === 'habits') updateStateAndCache(setHabits, 'habits');
+      else if (name === 'events') updateStateAndCache(setEvents, 'events');
+
+      // Thử đồng bộ lên Firestore ngầm trong try/catch an toàn
+      try {
+        const ref = await api.createItem(uid, name, data);
+        if (ref?.id) {
+          const syncedItem = { ...localItem, id: ref.id };
+          const replaceIdInState = (setter, key) => {
+            setter((prev) => {
+              const next = prev.map((i) => (i.id === localId ? syncedItem : i));
+              saveLocalList(uid, key, next);
+              return next;
+            });
+          };
+          if (name === 'transactions') replaceIdInState(setTransactions, 'transactions');
+          else if (name === 'tasks') replaceIdInState(setTasks, 'tasks');
+          else if (name === 'notes') replaceIdInState(setNotes, 'notes');
+          else if (name === 'habits') replaceIdInState(setHabits, 'habits');
+          else if (name === 'events') replaceIdInState(setEvents, 'events');
+          return ref;
+        }
+      } catch (err) {
+        console.warn(`[AppContext] create ${name} firestore sync notice:`, err.message);
+      }
+
+      return { id: localId };
+    },
+    [uid, saveLocalList]
+  );
+
+  const update = useCallback(
+    async (name, id, data) => {
+      const updateStateAndCache = (setter, key) => {
+        setter((prev) => {
+          const next = prev.map((i) => (i.id === id ? { ...i, ...data, updatedAt: new Date() } : i));
+          saveLocalList(uid, key, next);
+          return next;
+        });
+      };
+
+      if (name === 'transactions') updateStateAndCache(setTransactions, 'transactions');
+      else if (name === 'tasks') updateStateAndCache(setTasks, 'tasks');
+      else if (name === 'notes') updateStateAndCache(setNotes, 'notes');
+      else if (name === 'habits') updateStateAndCache(setHabits, 'habits');
+      else if (name === 'events') updateStateAndCache(setEvents, 'events');
+
+      try {
+        await api.updateItem(uid, name, id, data);
+      } catch (err) {
+        console.warn(`[AppContext] update ${name} firestore sync notice:`, err.message);
+      }
+    },
+    [uid, saveLocalList]
+  );
+
+  const remove = useCallback(
+    async (name, id) => {
+      const removeStateAndCache = (setter, key) => {
+        setter((prev) => {
+          const next = prev.filter((i) => i.id !== id);
+          saveLocalList(uid, key, next);
+          return next;
+        });
+      };
+
+      if (name === 'transactions') removeStateAndCache(setTransactions, 'transactions');
+      else if (name === 'tasks') removeStateAndCache(setTasks, 'tasks');
+      else if (name === 'notes') removeStateAndCache(setNotes, 'notes');
+      else if (name === 'habits') removeStateAndCache(setHabits, 'habits');
+      else if (name === 'events') removeStateAndCache(setEvents, 'events');
+
+      try {
+        await api.removeItem(uid, name, id);
+      } catch (err) {
+        console.warn(`[AppContext] remove ${name} firestore sync notice:`, err.message);
+      }
+    },
+    [uid, saveLocalList]
+  );
+
   const unreadLeads = useMemo(() => leads.filter((l) => !l.read).length, [leads]);
 
   const value = useMemo(
@@ -291,15 +446,16 @@ export function AppProvider({ children }) {
       unreadLeads, pushToken, googleConnected, syncing, toast, notify,
       refreshGoogleStatus, syncGoogle, saveEvent, deleteEvent, syncEventToGoogle,
       savePrefs: (d) => api.savePrefs(uid, d),
-      create: (name, data) => api.createItem(uid, name, data),
-      update: (name, id, data) => api.updateItem(uid, name, id, data),
-      remove: (name, id) => api.removeItem(uid, name, id),
+      create,
+      update,
+      remove,
       api,
     }),
     [
       uid, ready, events, tasks, notes, habits, transactions, leads, site, prefs,
       unreadLeads, pushToken, googleConnected, syncing, toast, notify,
       refreshGoogleStatus, syncGoogle, saveEvent, deleteEvent, syncEventToGoogle,
+      create, update, remove,
     ]
   );
 
