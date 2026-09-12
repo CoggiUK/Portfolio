@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Image, StyleSheet, KeyboardAvoidingView, Platform, Pressable, Alert } from 'react-native';
+import { View, Text, Image, StyleSheet, KeyboardAvoidingView, Platform, Pressable, Alert, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { Screen, Field, Btn, Banner, SwitchRow } from '../components/ui';
@@ -91,76 +91,82 @@ export default function LoginScreen() {
     <Screen edges={['top', 'bottom']}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={s.wrap}
+        style={{ flex: 1 }}
       >
         <LinearGradient
           colors={['rgba(0, 132, 255, 0.18)', 'rgba(0, 194, 255, 0.10)', 'rgba(255, 222, 0, 0.05)', 'transparent']}
           style={StyleSheet.absoluteFill}
         />
 
-        <View style={s.card}>
-          <View style={s.logoContainer}>
-            <Image source={require('../../assets/logo-mark.png')} style={s.logo} resizeMode="contain" />
-          </View>
-          <Text style={[font.h1, { color: colors.text, textAlign: 'center', marginBottom: space[4] }]}>
-            Xin chào Tùng Lâm
-          </Text>
+        <ScrollView
+          contentContainerStyle={[s.wrap, { flexGrow: 1, justifyContent: 'center' }]}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={s.card}>
+            <View style={s.logoContainer}>
+              <Image source={require('../../assets/logo-mark.png')} style={s.logo} resizeMode="contain" />
+            </View>
+            <Text style={[font.h1, { color: colors.text, textAlign: 'center', marginBottom: space[4] }]}>
+              Xin chào Tùng Lâm
+            </Text>
 
-          <Banner type="error" message={error} onClose={() => setError('')} />
+            <Banner type="error" message={error} onClose={() => setError('')} />
 
-          <Field
-            label="Email quản trị"
-            value={email}
-            onChangeText={setEmail}
-            placeholder="ban@example.com"
-            autoCapitalize="none"
-            keyboardType="email-address"
-            autoComplete="email"
-          />
-
-          <View>
             <Field
-              label="Mật khẩu"
-              value={password}
-              onChangeText={setPassword}
-              placeholder="••••••••"
-              secureTextEntry={!show}
+              label="Email quản trị"
+              value={email}
+              onChangeText={setEmail}
+              placeholder="ban@example.com"
               autoCapitalize="none"
-              onSubmitEditing={submit}
-              returnKeyType="go"
+              keyboardType="email-address"
+              autoComplete="email"
             />
-            <Pressable onPress={() => setShow((v) => !v)} hitSlop={10} style={s.eye}>
-              <Ionicons name={show ? 'eye-off-outline' : 'eye-outline'} size={19} color={colors.textMuted} />
+
+            <View>
+              <Field
+                label="Mật khẩu"
+                value={password}
+                onChangeText={setPassword}
+                placeholder="••••••••"
+                secureTextEntry={!show}
+                autoCapitalize="none"
+                onSubmitEditing={submit}
+                returnKeyType="go"
+              />
+              <Pressable onPress={() => setShow((v) => !v)} hitSlop={10} style={s.eye}>
+                <Ionicons name={show ? 'eye-off-outline' : 'eye-outline'} size={19} color={colors.textMuted} />
+              </Pressable>
+            </View>
+
+            <View style={{ marginTop: space[3] }}>
+              <SwitchRow
+                label="Lưu tài khoản"
+                hint="Tự động điền lại email và mật khẩu ở lần mở sau"
+                value={rememberMe}
+                onChange={setRememberMe}
+                icon="bookmark-outline"
+              />
+            </View>
+
+            <Btn title="Đăng nhập" onPress={submit} loading={busy} icon="log-in-outline" style={{ marginTop: space[3] }} />
+
+            {bioLoginAvailable ? (
+              <Btn
+                title={`Đăng nhập bằng ${bioLabel}`}
+                onPress={loginWithBiometric}
+                disabled={busy}
+                variant="secondary"
+                icon={bioLabel.includes('Face') ? 'scan-outline' : 'finger-print-outline'}
+                style={{ marginTop: space[2] }}
+              />
+            ) : null}
+
+            <Pressable onPress={forgot} style={{ marginTop: space[3], alignSelf: 'center' }}>
+              <Text style={[font.small, { color: colors.textMuted }]}>Quên mật khẩu?</Text>
             </Pressable>
           </View>
-
-          <View style={{ marginTop: space[3] }}>
-            <SwitchRow
-              label="Lưu tài khoản"
-              hint="Tự động điền lại email và mật khẩu ở lần mở sau"
-              value={rememberMe}
-              onChange={setRememberMe}
-              icon="bookmark-outline"
-            />
-          </View>
-
-          <Btn title="Đăng nhập" onPress={submit} loading={busy} icon="log-in-outline" style={{ marginTop: space[3] }} />
-
-          {bioLoginAvailable ? (
-            <Btn
-              title={`Đăng nhập bằng ${bioLabel}`}
-              onPress={loginWithBiometric}
-              disabled={busy}
-              variant="secondary"
-              icon={bioLabel.includes('Face') ? 'scan-outline' : 'finger-print-outline'}
-              style={{ marginTop: space[2] }}
-            />
-          ) : null}
-
-          <Pressable onPress={forgot} style={{ marginTop: space[3], alignSelf: 'center' }}>
-            <Text style={[font.small, { color: colors.textMuted }]}>Quên mật khẩu?</Text>
-          </Pressable>
-        </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </Screen>
   );

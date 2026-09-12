@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View, Text, TextInput, Pressable, StyleSheet, ActivityIndicator, ScrollView, Modal, Platform,
+  KeyboardAvoidingView, Keyboard, Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -543,18 +544,69 @@ export function Banner({ type = 'info', message, onClose }) {
 
 /** Bottom sheet mượt mà dùng cho form nhanh (Chuẩn Apple HIG / Material 3) */
 export function Sheet({ visible, onClose, title, children }) {
+  const [kbHeight, setKbHeight] = useState(0);
+
+  useEffect(() => {
+    if (!visible) {
+      setKbHeight(0);
+      return;
+    }
+    const onShow = (e) => {
+      const h = e.endCoordinates?.height || 0;
+      setKbHeight(h);
+    };
+    const onHide = () => {
+      setKbHeight(0);
+    };
+
+    const showSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      onShow
+    );
+    const hideSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      onHide
+    );
+
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, [visible]);
+
+  const handleClose = () => {
+    Keyboard.dismiss();
+    setKbHeight(0);
+    onClose?.();
+  };
+
+  const winHeight = Dimensions.get('window').height;
+  const maxSheetHeight = kbHeight > 0 ? Math.max(280, winHeight - kbHeight - 48) : '88%';
+
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable style={s.sheetBackdrop} onPress={onClose} />
-      <View style={s.sheet}>
-        <View style={s.sheetGrip} />
-        <View style={s.sheetHead}>
-          <Text style={[font.h2, { color: colors.text, flex: 1 }]}>{title}</Text>
-          <IconBtn icon="close" onPress={onClose} size={20} label="Đóng sheet" />
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={handleClose}
+      statusBarTranslucent
+    >
+      <View style={[s.sheetContainer, kbHeight > 0 && { paddingBottom: kbHeight }]}>
+        <Pressable style={s.sheetBackdrop} onPress={handleClose} />
+        <View style={[s.sheet, { maxHeight: maxSheetHeight }]}>
+          <View style={s.sheetGrip} />
+          <View style={s.sheetHead}>
+            <Text style={[font.h2, { color: colors.text, flex: 1 }]}>{title}</Text>
+            <IconBtn icon="close" onPress={handleClose} size={20} label="Đóng sheet" />
+          </View>
+          <ScrollView
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={{ paddingBottom: space[6] }}
+            showsVerticalScrollIndicator={false}
+          >
+            {children}
+          </ScrollView>
         </View>
-        <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: space[6] }}>
-          {children}
-        </ScrollView>
       </View>
     </Modal>
   );
@@ -664,11 +716,13 @@ const s = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: space[2],
     padding: space[3], borderRadius: radius.sm, borderWidth: 1, marginBottom: space[3],
   },
-  sheetBackdrop: { flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.45)' },
+  sheetContainer: { flex: 1, justifyContent: 'flex-end' },
+  sheetBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(15, 23, 42, 0.45)' },
   sheet: {
     backgroundColor: colors.card, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl,
     borderWidth: 1, borderBottomWidth: 0, borderColor: colors.borderStrong,
     paddingHorizontal: space[4], paddingBottom: space[5], maxHeight: '88%',
+    flexShrink: 1,
     ...shadows.sheet,
   },
   sheetGrip: {
