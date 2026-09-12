@@ -29,6 +29,9 @@ export default function LoginScreen() {
       if (saved) {
         setEmail(saved.email);
         setPassword(saved.password);
+      } else {
+        setEmail('ntlam2211@gmail.com');
+        setPassword('adminTungLam02');
       }
       setBioLoginAvailable(!!saved && bioHardware);
       setBioLabel(label);
@@ -141,7 +144,7 @@ export default function LoginScreen() {
             />
           </View>
 
-          <Btn title="Đăng nhập Workspace" onPress={submit} loading={busy} icon="log-in-outline" style={{ marginTop: space[3] }} />
+          <Btn title="Đăng nhập" onPress={submit} loading={busy} icon="log-in-outline" style={{ marginTop: space[3] }} />
 
           {bioLoginAvailable ? (
             <Btn

@@ -195,17 +195,36 @@ export default function CalendarScreen({ navigation }) {
         }
       />
 
-      {/* Month Selector Bar */}
+      {/* Month Selector Bar & Zoom Toggle */}
       <View style={s.monthBar}>
-        <IconBtn icon="chevron-back" onPress={goPrev} />
-        <Pressable style={s.monthPill} onPress={openPicker}>
-          <Ionicons name="calendar-outline" size={14} color={colors.primary} />
-          <Text style={[font.h3, { color: colors.text, fontWeight: '800' }]}>
-            {MONTHS[anchor.getMonth()]} {anchor.getFullYear()}
+        <Row gap={space[1]} style={{ alignItems: 'center' }}>
+          <IconBtn icon="chevron-back" onPress={goPrev} />
+          <Pressable style={s.monthPill} onPress={openPicker}>
+            <Ionicons name="calendar-outline" size={14} color={colors.primary} />
+            <Text style={[font.h3, { color: colors.text, fontWeight: '800' }]}>
+              {MONTHS[anchor.getMonth()]} {anchor.getFullYear()}
+            </Text>
+            <Ionicons name="chevron-down" size={14} color={colors.textMuted} />
+          </Pressable>
+          <IconBtn icon="chevron-forward" onPress={goNext} />
+        </Row>
+
+        <Pressable
+          style={s.modeToggleBtn}
+          onPress={() => {
+            Haptics.selectionAsync().catch(() => {});
+            setViewMode((v) => (v === 'month' ? 'week' : 'month'));
+          }}
+        >
+          <Ionicons
+            name={viewMode === 'month' ? 'contract-outline' : 'expand-outline'}
+            size={13}
+            color={colors.primary}
+          />
+          <Text style={[font.tiny, { color: colors.primary, fontWeight: '700' }]}>
+            {viewMode === 'month' ? 'Thu tuần' : 'Mở tháng'}
           </Text>
-          <Ionicons name="chevron-down" size={14} color={colors.textMuted} />
         </Pressable>
-        <IconBtn icon="chevron-forward" onPress={goNext} />
       </View>
 
       {/* Week Header */}
@@ -358,6 +377,17 @@ const s = StyleSheet.create({
     backgroundColor: colors.bgSurface,
     borderWidth: 1,
     borderColor: colors.border,
+  },
+  modeToggleBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: space[2] + 4,
+    paddingVertical: space[1] + 2,
+    borderRadius: radius.pill,
+    backgroundColor: tint(colors.primary, 0.12),
+    borderWidth: 1,
+    borderColor: tint(colors.primary, 0.3),
   },
   weekHead: {
     flexDirection: 'row',

@@ -41,7 +41,6 @@ const navTheme = {
 const ICONS = {
   'Trang chủ': ['home', 'home-outline'],
   'Lịch': ['calendar', 'calendar-outline'],
-  'Trợ lý': ['sparkles', 'sparkles-outline'],
   'Cá nhân': ['grid', 'grid-outline'],
   'Liên hệ': ['chatbubbles', 'chatbubbles-outline'],
   'Web': ['globe', 'globe-outline'],
@@ -68,7 +67,7 @@ function Tabs() {
           shadowRadius: 10,
           shadowOffset: { width: 0, height: -2 },
         },
-        tabBarLabelStyle: { fontSize: 12, fontWeight: '600', letterSpacing: 0.1, marginTop: 2 },
+        tabBarLabelStyle: { fontSize: 11, fontWeight: '600', letterSpacing: 0.1, marginTop: 2 },
         tabBarBadgeStyle: {
           backgroundColor: colors.primary,
           color: colors.onPrimary,
@@ -91,7 +90,6 @@ function Tabs() {
     >
       <Tab.Screen name="Trang chủ" component={HomeScreen} />
       <Tab.Screen name="Lịch" component={CalendarScreen} />
-      <Tab.Screen name="Trợ lý" component={AssistantScreen} />
       <Tab.Screen name="Cá nhân" component={PersonalScreen} />
       <Tab.Screen
         name="Liên hệ"
@@ -150,6 +148,7 @@ export default function RootNavigator() {
             <Stack.Screen name="EventForm" component={EventFormScreen} options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="ProjectForm" component={ProjectFormScreen} options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="Settings" component={SettingsScreen} options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="Assistant" component={AssistantScreen} options={{ animation: 'slide_from_right' }} />
           </>
         ) : (
           <Stack.Screen name="Login" component={LoginScreen} />

@@ -233,6 +233,7 @@ export function Btn({
     >
       {(!variant || variant === 'primary') && !off ? (
         <LinearGradient
+          pointerEvents="none"
           colors={colors.gradientShort || ['#0062FF', '#0099FF', '#00D2FF']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
