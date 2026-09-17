@@ -46,5 +46,8 @@
     "build:android": "eas build --platform android --profile preview",
     "test": "node --test __tests__/full_suite_215.test.mjs"
   },
-  "private": true
+  "private": true,
+  "devDependencies": {
+    "typescript": "~5.3.3"
+  }
 }
