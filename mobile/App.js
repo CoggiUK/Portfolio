@@ -14,9 +14,9 @@ import ErrorBoundary from './src/components/ErrorBoundary';
 import { colors } from './src/theme';
 
 export default function App() {
-  const [fontsLoaded] = useFonts(Ionicons.font);
+  const [fontsLoaded, fontError] = useFonts(Ionicons.font);
 
-  if (!fontsLoaded) {
+  if (!fontsLoaded && !fontError) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' }}>
         <ActivityIndicator size="large" color={colors.primary} />

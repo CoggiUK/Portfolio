@@ -25,19 +25,29 @@ export function AuthProvider({ children }) {
   const [initializing, setInitializing] = useState(true);
 
   useEffect(() => {
+    let timer = setTimeout(() => {
+      setInitializing(false);
+    }, 2000);
+
     if (!auth) {
       setInitializing(false);
+      clearTimeout(timer);
       return;
     }
     try {
       const unsub = onAuthStateChanged(auth, (u) => {
         setUser(u);
         setInitializing(false);
+        clearTimeout(timer);
       });
-      return () => unsub?.();
+      return () => {
+        unsub?.();
+        clearTimeout(timer);
+      };
     } catch (err) {
       console.warn('[AuthContext] onAuthStateChanged error:', err);
       setInitializing(false);
+      clearTimeout(timer);
     }
   }, []);
 
