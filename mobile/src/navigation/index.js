@@ -162,13 +162,15 @@ const s = StyleSheet.create({
   splash: { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
   logo: { width: 84, height: 84, marginBottom: space[5] },
   tabIconWrap: {
-    width: 44,
+    width: 48,
     height: 30,
     borderRadius: 15,
     alignItems: 'center',
     justifyContent: 'center',
   },
   tabIconActive: {
-    backgroundColor: tint(colors.primary, 0.14),
+    backgroundColor: colors.primarySurface,
+    borderWidth: 1,
+    borderColor: colors.primaryBorder,
   },
 });

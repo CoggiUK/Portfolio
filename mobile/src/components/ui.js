@@ -28,17 +28,24 @@ export function Screen({ children, scroll = false, style, edges = ['top'], refre
   );
 }
 
-export function Header({ title, subtitle, right, onBack, badge }) {
+export function Header({ title, subtitle, right, onBack, badge, avatar }) {
   return (
     <View style={s.header}>
       {onBack ? (
         <Pressable
-          onPress={onBack}
+          onPress={() => {
+            Haptics.selectionAsync().catch(() => {});
+            onBack();
+          }}
           hitSlop={12}
           style={({ pressed }) => [s.backBtn, pressed && { opacity: 0.7, transform: [{ scale: 0.94 }] }]}
         >
           <Ionicons name="chevron-back" size={20} color={colors.text} />
         </Pressable>
+      ) : avatar ? (
+        <View style={s.headerAvatarWrap}>
+          <Image source={avatar} style={s.headerAvatar} resizeMode="contain" />
+        </View>
       ) : null}
       <View style={{ flex: 1, justifyContent: 'center' }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
@@ -393,9 +400,9 @@ export function Chip({ label, active, onPress, color = colors.primary, icon, cou
   );
 }
 
-export function Segmented({ items, value, onChange }) {
+export function Segmented({ items, value, onChange, style }) {
   return (
-    <View style={s.segmented}>
+    <View style={[s.segmented, style]}>
       {items.map((it) => {
         const active = it.value === value;
         return (
@@ -405,15 +412,24 @@ export function Segmented({ items, value, onChange }) {
               Haptics.selectionAsync().catch(() => {});
               onChange(it.value);
             }}
-            style={[
+            style={({ pressed }) => [
               s.segItem,
               active && {
                 backgroundColor: colors.card,
                 borderColor: colors.border,
-                ...shadows.card,
+                ...shadows.sm,
               },
+              pressed && !active && { opacity: 0.75 },
             ]}
           >
+            {it.icon ? (
+              <Ionicons
+                name={it.icon}
+                size={14}
+                color={active ? colors.primary : colors.textMuted}
+                style={{ marginRight: 4 }}
+              />
+            ) : null}
             <Text
               style={[
                 font.small,
@@ -422,6 +438,13 @@ export function Segmented({ items, value, onChange }) {
             >
               {it.label}
             </Text>
+            {it.badge ? (
+              <View style={[s.segBadge, active && s.segBadgeActive]}>
+                <Text style={[font.tiny, { color: active ? colors.primary : colors.textMuted, fontWeight: '700' }]}>
+                  {it.badge}
+                </Text>
+              </View>
+            ) : null}
           </Pressable>
         );
       })}
@@ -684,12 +707,28 @@ const s = StyleSheet.create({
   },
   segmented: {
     flexDirection: 'row', gap: space[1], padding: 3,
-    backgroundColor: colors.bgSurface, borderRadius: radius.sm + 2,
+    backgroundColor: colors.bgSurface, borderRadius: radius.md,
     borderWidth: 1, borderColor: colors.border,
   },
   segItem: {
-    flex: 1, alignItems: 'center', paddingVertical: space[2],
+    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: space[2],
     borderRadius: radius.sm, borderWidth: 1, borderColor: 'transparent',
+  },
+  segBadge: {
+    marginLeft: 5, paddingHorizontal: 5, paddingVertical: 1, borderRadius: radius.pill,
+    backgroundColor: colors.border,
+  },
+  segBadgeActive: {
+    backgroundColor: colors.primarySurface,
+  },
+  headerAvatarWrap: {
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: colors.bgSurface, borderWidth: 1, borderColor: colors.border,
+    alignItems: 'center', justifyContent: 'center',
+    marginRight: space[1],
+  },
+  headerAvatar: {
+    width: 28, height: 28, borderRadius: 14,
   },
   switchRow: {
     flexDirection: 'row', alignItems: 'center', gap: space[3], paddingVertical: space[3],

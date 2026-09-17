@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useLock } from '../contexts/LockContext';
+import { useAuth } from '../contexts/AuthContext';
 import { colors, space, radius, font, shadows, tint } from '../theme';
 
 const KEYPAD_NUMS = [
@@ -20,6 +21,9 @@ export default function AppLockGate({ children }) {
     locked, ready, biometricAvailable, biometricLabel,
     unlock, verifyPin, authenticateBiometric,
   } = useLock();
+
+  const authCtx = useAuth();
+  const signOut = authCtx?.signOut;
 
   const [enteredPin, setEnteredPin] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
@@ -58,13 +62,11 @@ export default function AppLockGate({ children }) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
       unlock();
     } else {
-      // Nếu 4 số sai, thử chờ xem user có gõ mã 6 số không, nếu đã dài 6 số thì chắc chắn sai
       if (pinToCheck.length >= 6) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
         setErrorMsg('Mã PIN không chính xác');
         setEnteredPin('');
       } else {
-        // Cho 1 khoảng thời gian nhỏ trước khi báo lỗi nếu user chỉ dùng mã 4 số
         setTimeout(async () => {
           const recheck = await verifyPin(pinToCheck);
           if (recheck) {
@@ -95,7 +97,6 @@ export default function AppLockGate({ children }) {
 
     setEnteredPin((prev) => {
       const next = prev + key;
-      // Nếu đã đủ 4 ký tự thì kiểm tra
       if (next.length >= 4) {
         checkPin(next);
       }
@@ -121,7 +122,7 @@ export default function AppLockGate({ children }) {
           Tùng Lâm Workspace
         </Text>
         <Text style={[font.small, { color: colors.textMuted, marginTop: space[1] }]}>
-          Ứng dụng đã được bảo vệ · Nhập mã PIN để mở khóa
+          Ứng dụng được bảo vệ · Mở bằng PIN, Sinh trắc học hoặc Tài khoản
         </Text>
       </View>
 
@@ -201,6 +202,22 @@ export default function AppLockGate({ children }) {
           </View>
         ))}
       </View>
+
+      {/* Nút chuyển đổi phương thức đăng nhập */}
+      <View style={s.altLoginContainer}>
+        <Pressable
+          onPress={() => {
+            unlock();
+            signOut?.();
+          }}
+          style={({ pressed }) => [s.altLoginBtn, pressed && { opacity: 0.75 }]}
+        >
+          <Ionicons name="log-in-outline" size={16} color={colors.primary} />
+          <Text style={[font.small, { color: colors.primary, fontWeight: '600' }]}>
+            Đăng nhập lại (Tài khoản / Gmail)
+          </Text>
+        </Pressable>
+      </View>
     </SafeAreaView>
   );
 }
@@ -259,7 +276,6 @@ const s = StyleSheet.create({
   keypad: {
     width: '100%',
     maxWidth: 320,
-    marginBottom: Platform.OS === 'ios' ? space[6] : space[4],
     gap: space[3],
   },
   keypadRow: {
@@ -284,5 +300,20 @@ const s = StyleSheet.create({
   keyEmpty: {
     width: 72,
     height: 72,
+  },
+  altLoginContainer: {
+    marginBottom: Platform.OS === 'ios' ? space[4] : space[2],
+    alignItems: 'center',
+  },
+  altLoginBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[2],
+    paddingVertical: space[2],
+    paddingHorizontal: space[4],
+    borderRadius: radius.full,
+    backgroundColor: colors.primarySurface,
+    borderWidth: 1,
+    borderColor: colors.primaryBorder,
   },
 });

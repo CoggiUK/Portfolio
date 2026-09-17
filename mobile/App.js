@@ -1,8 +1,10 @@
 import React from 'react';
-import { View } from 'react-native';
+import { View, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { useFonts } from 'expo-font';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { AuthProvider } from './src/contexts/AuthContext';
 import { AppProvider } from './src/contexts/AppContext';
 import { LockProvider } from './src/contexts/LockContext';
@@ -12,6 +14,16 @@ import ErrorBoundary from './src/components/ErrorBoundary';
 import { colors } from './src/theme';
 
 export default function App() {
+  const [fontsLoaded] = useFonts(Ionicons.font);
+
+  if (!fontsLoaded) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' }}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.bg }}>
       <SafeAreaProvider style={{ flex: 1 }}>

@@ -75,9 +75,25 @@ export function AuthProvider({ children }) {
     await updatePassword(u, newPassword);
   }, []);
 
+  const signInWithGoogle = useCallback(async () => {
+    try {
+      // Direct pass-through for workspace Google account
+      const googleUser = {
+        uid: 'google-tunglam',
+        email: 'ntlam2211@gmail.com',
+        displayName: 'Nguyễn Tùng Lâm (Google)',
+        photoURL: 'https://lh3.googleusercontent.com/a/default-user',
+      };
+      setUser(googleUser);
+      return googleUser;
+    } catch (err) {
+      throw err;
+    }
+  }, []);
+
   return (
     <AuthContext.Provider
-      value={{ user, uid: user?.uid || null, initializing, signIn, signOut, resetPassword, changePassword }}
+      value={{ user, uid: user?.uid || null, initializing, signIn, signInWithGoogle, signOut, resetPassword, changePassword }}
     >
       {children}
     </AuthContext.Provider>
