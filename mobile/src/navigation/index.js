@@ -1,12 +1,13 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, Image, ActivityIndicator, StyleSheet, Platform } from 'react-native';
+import { View, Text, Image, ActivityIndicator, StyleSheet, Platform, Pressable } from 'react-native';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import * as Notifications from 'expo-notifications';
 
-import { colors, space, font, tint } from '../theme';
+import { colors, space, font } from '../theme';
 import { useAuth } from '../contexts/AuthContext';
 import { useApp } from '../contexts/AppContext';
 
@@ -29,73 +30,108 @@ const navTheme = {
   dark: false,
   colors: {
     ...DefaultTheme.colors,
-    primary: colors.primary,
+    primary: '#F97316',
     background: colors.bg,
     card: colors.bgElevated,
     text: colors.text,
     border: colors.border,
-    notification: colors.primary,
+    notification: '#F97316',
   },
 };
 
-const ICONS = {
-  'Trang chủ': ['home', 'home-outline'],
-  'Lịch': ['calendar', 'calendar-outline'],
-  'Cá nhân': ['grid', 'grid-outline'],
-  'Liên hệ': ['chatbubbles', 'chatbubbles-outline'],
-  'Web': ['globe', 'globe-outline'],
-};
+function CustomTabBar({ state, navigation }) {
+  const { unreadLeads } = useApp();
+  const currentRoute = state.routes[state.index]?.name;
+
+  const navigateTab = (targetName) => {
+    Haptics.selectionAsync().catch(() => {});
+    navigation.navigate(targetName);
+  };
+
+  return (
+    <View style={s.tabBarWrapper} pointerEvents="box-none">
+      <View style={s.tabBarCard}>
+        {/* Tab 1: KHÁCH HÀNG */}
+        <Pressable onPress={() => navigateTab('Liên hệ')} style={s.tabItem}>
+          <Ionicons
+            name={currentRoute === 'Liên hệ' ? 'person' : 'person-outline'}
+            size={22}
+            color={currentRoute === 'Liên hệ' ? '#F97316' : '#64748B'}
+          />
+          <Text style={[s.tabLabel, currentRoute === 'Liên hệ' && s.tabLabelActive]}>
+            KHÁCH HÀNG
+          </Text>
+          {unreadLeads ? <View style={s.badgeDot} /> : null}
+        </Pressable>
+
+        {/* Tab 2: LỊCH LÀM VIỆC */}
+        <Pressable onPress={() => navigateTab('Lịch')} style={s.tabItem}>
+          <Ionicons
+            name={currentRoute === 'Lịch' ? 'calendar' : 'calendar-outline'}
+            size={22}
+            color={currentRoute === 'Lịch' ? '#F97316' : '#64748B'}
+          />
+          <Text style={[s.tabLabel, currentRoute === 'Lịch' && s.tabLabelActive]}>
+            LỊCH LÀM VIỆC
+          </Text>
+        </Pressable>
+
+        {/* Center Floating Logo Emblem Button */}
+        <View style={s.centerLogoSlot} pointerEvents="box-none">
+          <Pressable
+            onPress={() => navigateTab('Trang chủ')}
+            style={({ pressed }) => [
+              s.centerLogoBtn,
+              currentRoute === 'Trang chủ' && s.centerLogoBtnActive,
+              pressed && { transform: [{ scale: 0.94 }] },
+            ]}
+          >
+            <Image
+              source={require('../../assets/logo-mark.png')}
+              style={s.centerLogoImage}
+              resizeMode="contain"
+            />
+          </Pressable>
+        </View>
+
+        {/* Tab 4: SẢN PHẨM */}
+        <Pressable onPress={() => navigateTab('Cá nhân')} style={s.tabItem}>
+          <Ionicons
+            name={currentRoute === 'Cá nhân' ? 'cube' : 'cube-outline'}
+            size={22}
+            color={currentRoute === 'Cá nhân' ? '#F97316' : '#64748B'}
+          />
+          <Text style={[s.tabLabel, currentRoute === 'Cá nhân' && s.tabLabelActive]}>
+            SẢN PHẨM
+          </Text>
+        </Pressable>
+
+        {/* Tab 5: MENU */}
+        <Pressable onPress={() => navigateTab('Web')} style={s.tabItem}>
+          <Ionicons
+            name={currentRoute === 'Web' ? 'apps' : 'apps-outline'}
+            size={22}
+            color={currentRoute === 'Web' ? '#F97316' : '#64748B'}
+          />
+          <Text style={[s.tabLabel, currentRoute === 'Web' && s.tabLabelActive]}>
+            MENU
+          </Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
 
 function Tabs() {
-  const { unreadLeads } = useApp();
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({
-        headerShown: false,
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textMuted,
-        tabBarStyle: {
-          backgroundColor: colors.card,
-          borderTopColor: colors.border,
-          borderTopWidth: 1,
-          height: Platform.OS === 'ios' ? 84 : 66,
-          paddingTop: 8,
-          paddingBottom: Platform.OS === 'ios' ? 24 : 10,
-          elevation: 4,
-          shadowColor: '#0F172A',
-          shadowOpacity: 0.05,
-          shadowRadius: 10,
-          shadowOffset: { width: 0, height: -2 },
-        },
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '600', letterSpacing: 0.1, marginTop: 2 },
-        tabBarBadgeStyle: {
-          backgroundColor: colors.primary,
-          color: colors.onPrimary,
-          fontSize: 12,
-          fontWeight: '700',
-          minWidth: 18,
-          height: 18,
-          borderRadius: 9,
-          lineHeight: 18,
-        },
-        tabBarIcon: ({ focused, color }) => {
-          const [on, off] = ICONS[route.name] || ICONS['Trang chủ'];
-          return (
-            <View style={[s.tabIconWrap, focused && s.tabIconActive]}>
-              <Ionicons name={focused ? on : off} size={22} color={color} />
-            </View>
-          );
-        },
-      })}
+      tabBar={(props) => <CustomTabBar {...props} />}
+      screenOptions={{ headerShown: false }}
     >
       <Tab.Screen name="Trang chủ" component={HomeScreen} />
       <Tab.Screen name="Lịch" component={CalendarScreen} />
       <Tab.Screen name="Cá nhân" component={PersonalScreen} />
-      <Tab.Screen
-        name="Liên hệ"
-        component={LeadsScreen}
-        options={{ tabBarBadge: unreadLeads || undefined }}
-      />
+      <Tab.Screen name="Liên hệ" component={LeadsScreen} />
       <Tab.Screen name="Web" component={WebsiteScreen} />
     </Tab.Navigator>
   );
@@ -117,7 +153,6 @@ export default function RootNavigator() {
   const { user, initializing } = useAuth();
   const navRef = useRef(null);
 
-  // Chạm vào thông báo → mở đúng màn hình liên quan.
   useEffect(() => {
     try {
       if (Notifications?.addNotificationResponseReceivedListener) {
@@ -161,16 +196,87 @@ export default function RootNavigator() {
 const s = StyleSheet.create({
   splash: { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
   logo: { width: 84, height: 84, marginBottom: space[5] },
-  tabIconWrap: {
-    width: 48,
-    height: 30,
-    borderRadius: 15,
+  tabBarWrapper: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'transparent',
+  },
+  tabBarCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingTop: 10,
+    paddingBottom: Platform.OS === 'ios' ? 24 : 10,
+    height: Platform.OS === 'ios' ? 84 : 68,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    elevation: 16,
+    shadowColor: '#0F172A',
+    shadowOpacity: 0.1,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: -6 },
+    paddingHorizontal: 4,
+  },
+  tabItem: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    position: 'relative',
   },
-  tabIconActive: {
-    backgroundColor: colors.primarySurface,
-    borderWidth: 1,
-    borderColor: colors.primaryBorder,
+  tabLabel: {
+    fontSize: 9.5,
+    fontWeight: '700',
+    color: '#64748B',
+    marginTop: 3,
+    letterSpacing: 0.2,
+  },
+  tabLabelActive: {
+    color: '#F97316',
+    fontWeight: '800',
+  },
+  badgeDot: {
+    position: 'absolute',
+    top: 0,
+    right: 18,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#EF4444',
+  },
+  centerLogoSlot: {
+    width: 64,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: -34,
+    zIndex: 20,
+  },
+  centerLogoBtn: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 2.5,
+    borderColor: '#F97316',
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 8,
+    shadowColor: '#F97316',
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+  },
+  centerLogoBtnActive: {
+    borderColor: '#EA580C',
+    transform: [{ scale: 1.05 }],
+  },
+  centerLogoImage: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
   },
 });

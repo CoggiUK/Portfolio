@@ -1,90 +1,110 @@
 import React, { useMemo, useState, useCallback, memo } from 'react';
 import { View, Text, StyleSheet, Pressable, FlatList, Platform } from 'react-native';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { Screen, Header, Card, FAB, Empty, IconBtn, Row, Badge, Sheet } from '../components/ui';
-import { colors, space, radius, font, hexOf, tint, shadows } from '../theme';
+import { Screen, FAB, Empty, Sheet } from '../components/ui';
+import { colors, space, font, hexOf, shadows } from '../theme';
 import { useApp } from '../contexts/AppContext';
 import {
-  monthGrid, dayKey, isSameDay, startOfMonth, startOfWeek, addMonths, addDays, fmtTime, fmtDayLabel,
+  monthGrid, dayKey, isSameDay, startOfMonth, startOfWeek, addMonths, addDays, fmtTime,
   MONTHS, toDate,
 } from '../utils/date';
 
 const WEEK_HEAD = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
+const VI_DAYS = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
 
-// Component item được memo hóa để tối ưu render FlatList
-const EventItem = memo(function EventItem({ event, onPress }) {
-  const hex = hexOf(event.color);
+const p2 = (n) => String(n).padStart(2, '0');
+
+const fmtWeekRange = (selectedDate) => {
+  const start = startOfWeek(selectedDate);
+  const end = addDays(start, 6);
+  return `${p2(start.getDate())}/${p2(start.getMonth() + 1)}/${start.getFullYear()} – ${p2(end.getDate())}/${p2(end.getMonth() + 1)}/${end.getFullYear()}`;
+};
+
+const fmtMonthHeader = (anchorDate) => {
+  return `Tháng ${p2(anchorDate.getMonth() + 1)}/${anchorDate.getFullYear()}`;
+};
+
+const fmtFullDateVi = (d) => {
+  return `${VI_DAYS[d.getDay()]}, ${p2(d.getDate())}/${p2(d.getMonth() + 1)}/${d.getFullYear()}`;
+};
+
+const TimelineEventItem = memo(function TimelineEventItem({ event, onPress }) {
   const start = toDate(event.start);
   const end = toDate(event.end);
+  const timeStr = event.allDay
+    ? 'Cả ngày'
+    : `${start ? fmtTime(start) : '00:00'} → ${end ? fmtTime(end) : '23:59'}`;
+
+  let statusLabel = 'CHƯA BẮT ĐẦU';
+  let statusBg = '#F1F5F9';
+  let statusColor = '#475569';
+  let dotColor = '#94A3B8';
+
+  if (event.status === 'doing' || event.doing) {
+    statusLabel = 'ĐANG XỬ LÝ';
+    statusBg = '#FFF7ED';
+    statusColor = '#EA580C';
+    dotColor = '#F97316';
+  } else if (event.status === 'done' || event.done) {
+    statusLabel = 'HOÀN THÀNH';
+    statusBg = '#ECFDF5';
+    statusColor = '#10B981';
+    dotColor = '#10B981';
+  } else if (event.status === 'overdue' || event.overdue) {
+    statusLabel = 'QUÁ HẠN';
+    statusBg = '#FEF2F2';
+    statusColor = '#EF4444';
+    dotColor = '#EF4444';
+  }
+
+  const category = event.category || (event.location ? event.location : 'Việc cá nhân');
 
   return (
-    <Card
-      accent={hex}
-      style={[s.eventCard, { borderLeftColor: hex, borderLeftWidth: 4 }]}
-      onPress={onPress}
-    >
-      <View style={{ flex: 1 }}>
-        <Row style={{ justifyContent: 'space-between' }}>
-          <Text style={[font.body, { color: colors.text, fontWeight: '700', flex: 1 }]} numberOfLines={1}>
+    <View style={s.timelineRow}>
+      {/* Timeline left dot and line */}
+      <View style={s.timelineTrack}>
+        <View style={[s.timelineDot, { backgroundColor: dotColor }]} />
+        <View style={s.timelineLine} />
+      </View>
+
+      {/* Card Content */}
+      <Pressable
+        onPress={() => {
+          Haptics.selectionAsync().catch(() => {});
+          onPress();
+        }}
+        style={({ pressed }) => [s.timelineCard, pressed && { opacity: 0.88, transform: [{ scale: 0.99 }] }]}
+      >
+        <View style={s.timelineCardHead}>
+          <Text style={[font.h3, { color: '#0F172A', fontWeight: '700', flex: 1 }]} numberOfLines={1}>
             {event.title}
           </Text>
-          {event.googleEventId ? (
-            <View style={s.googleSyncBadge}>
-              <Ionicons name="logo-google" size={11} color={colors.textSub} />
-            </View>
-          ) : null}
-        </Row>
-        <Row style={{ marginTop: space[1] + 2 }} gap={4}>
-          <Ionicons name="time-outline" size={13} color={colors.textSub} />
-          <Text style={[font.small, { color: colors.textSub }]}>
-            {event.allDay ? 'Cả ngày' : `${fmtTime(start)}${end ? ` – ${fmtTime(end)}` : ''}`}
-          </Text>
-        </Row>
-        {event.location ? (
-          <Row style={{ marginTop: 3 }} gap={4}>
-            <Ionicons name="location-outline" size={13} color={colors.textMuted} />
-            <Text style={[font.tiny, { color: colors.textMuted, flex: 1 }]} numberOfLines={1}>
-              {event.location}
+          <View style={[s.statusBadge, { backgroundColor: statusBg }]}>
+            <Text style={[font.tiny, { color: statusColor, fontWeight: '700' }]}>
+              {statusLabel}
             </Text>
-          </Row>
-        ) : null}
-        {event.reminders?.length ? (
-          <Row style={{ marginTop: space[2] }} gap={4}>
-            <Ionicons name="notifications-outline" size={12} color={colors.primary} />
-            <Text style={[font.tiny, { color: colors.primary }]}>
-              Nhắc trước {event.reminders.map((m) => (m >= 60 ? `${m / 60}h` : `${m}p`)).join(', ')}
-            </Text>
-          </Row>
-        ) : null}
-      </View>
-    </Card>
+          </View>
+        </View>
+
+        <View style={s.timelineCardSub}>
+          <Text style={[font.small, { color: '#64748B' }]}>{timeStr}</Text>
+          <Text style={[font.small, { color: '#64748B' }]}>{category}</Text>
+        </View>
+      </Pressable>
+    </View>
   );
 });
 
 export default function CalendarScreen({ navigation }) {
-  const { events, googleConnected, syncing, syncGoogle, notify } = useApp();
+  const { events } = useApp();
   const [anchor, setAnchor] = useState(startOfMonth(new Date()));
   const [selected, setSelected] = useState(new Date());
-  const [reloading, setReloading] = useState(false);
-  const [viewMode, setViewMode] = useState('month'); // 'month' | 'week'
+  const [viewMode, setViewMode] = useState('week'); // 'week' | 'month'
   const [pickerVisible, setPickerVisible] = useState(false);
   const [pickerYear, setPickerYear] = useState(anchor.getFullYear());
 
-  const handleReload = useCallback(async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
-    if (googleConnected) {
-      await syncGoogle();
-    } else {
-      setReloading(true);
-      await new Promise((r) => setTimeout(r, 600));
-      setReloading(false);
-      notify('Đã làm mới lịch làm việc', 'success');
-    }
-  }, [googleConnected, syncGoogle, notify]);
-
-  // Gom sự kiện theo ngày tối ưu qua useMemo
+  // Gom sự kiện theo ngày
   const byDay = useMemo(() => {
     const map = {};
     events.forEach((e) => {
@@ -102,21 +122,30 @@ export default function CalendarScreen({ navigation }) {
     () => (viewMode === 'week' ? Array.from({ length: 7 }, (_, i) => addDays(startOfWeek(selected), i)) : monthGrid(anchor)),
     [viewMode, anchor, selected]
   );
+
   const dayEvents = byDay[dayKey(selected)] || [];
   const today = new Date();
 
-  const jumpToday = useCallback(() => {
-    Haptics.selectionAsync().catch(() => {});
-    setAnchor(startOfMonth(today));
-    setSelected(today);
-  }, []);
+  // Thống kê trạng thái cho ngày đã chọn
+  const statusCounts = useMemo(() => {
+    let done = 0, doing = 0, overdue = 0, todo = 0;
+    dayEvents.forEach((e) => {
+      if (e.status === 'done' || e.done) done++;
+      else if (e.status === 'doing') doing++;
+      else if (e.status === 'overdue') overdue++;
+      else todo++;
+    });
+    return { done, doing, overdue, todo };
+  }, [dayEvents]);
 
   const selectDate = useCallback((d) => {
     Haptics.selectionAsync().catch(() => {});
     setSelected(d);
+    setAnchor(startOfMonth(d));
   }, []);
 
   const goPrev = useCallback(() => {
+    Haptics.selectionAsync().catch(() => {});
     if (viewMode === 'week') {
       const d = addDays(selected, -7);
       setSelected(d);
@@ -127,6 +156,7 @@ export default function CalendarScreen({ navigation }) {
   }, [viewMode, selected]);
 
   const goNext = useCallback(() => {
+    Haptics.selectionAsync().catch(() => {});
     if (viewMode === 'week') {
       const d = addDays(selected, 7);
       setSelected(d);
@@ -136,40 +166,16 @@ export default function CalendarScreen({ navigation }) {
     }
   }, [viewMode, selected]);
 
-  const openPicker = useCallback(() => {
+  const toggleViewMode = useCallback(() => {
     Haptics.selectionAsync().catch(() => {});
-    setPickerYear(anchor.getFullYear());
-    setPickerVisible(true);
-  }, [anchor]);
-
-  const pickMonth = useCallback((monthIdx) => {
-    Haptics.selectionAsync().catch(() => {});
-    const d = new Date(pickerYear, monthIdx, 1);
-    setAnchor(d);
-    setSelected(d);
-    setViewMode('month');
-    setPickerVisible(false);
-  }, [pickerYear]);
-
-  const pinchGesture = useMemo(
-    () =>
-      Gesture.Pinch().onEnd((e) => {
-        if (e.scale < 0.8 && viewMode === 'month') {
-          Haptics.selectionAsync().catch(() => {});
-          setViewMode('week');
-        } else if (e.scale > 1.25 && viewMode === 'week') {
-          Haptics.selectionAsync().catch(() => {});
-          setViewMode('month');
-        }
-      }),
-    [viewMode]
-  );
+    setViewMode((v) => (v === 'month' ? 'week' : 'month'));
+  }, []);
 
   const keyExtractor = useCallback((e) => e.id, []);
 
   const renderItem = useCallback(
     ({ item }) => (
-      <EventItem
+      <TimelineEventItem
         event={item}
         onPress={() => navigation.navigate('EventForm', { id: item.id })}
       />
@@ -178,177 +184,156 @@ export default function CalendarScreen({ navigation }) {
   );
 
   return (
-    <Screen>
-      <Header
-        title="Lịch làm việc"
-        subtitle={googleConnected ? 'Đồng bộ hai chiều Google Calendar' : 'Lưu trữ đám mây an toàn'}
-        badge={googleConnected ? 'GOOGLE' : undefined}
-        right={
-          <Row gap={space[2]}>
-            <IconBtn
-              icon={syncing || reloading ? 'sync' : 'sync-outline'}
-              color={googleConnected ? colors.primary : colors.textMuted}
-              onPress={handleReload}
-            />
-            <IconBtn icon="today-outline" onPress={jumpToday} />
-          </Row>
-        }
-      />
-
-      {/* Month Selector Bar & Zoom Toggle */}
-      <View style={s.monthBar}>
-        <Row gap={space[1]} style={{ alignItems: 'center' }}>
-          <IconBtn icon="chevron-back" onPress={goPrev} />
-          <Pressable style={s.monthPill} onPress={openPicker}>
-            <Ionicons name="calendar-outline" size={14} color={colors.primary} />
-            <Text style={[font.h3, { color: colors.text, fontWeight: '800' }]}>
-              {MONTHS[anchor.getMonth()]} {anchor.getFullYear()}
-            </Text>
-            <Ionicons name="chevron-down" size={14} color={colors.textMuted} />
-          </Pressable>
-          <IconBtn icon="chevron-forward" onPress={goNext} />
-        </Row>
+    <Screen style={{ paddingBottom: space[8] }}>
+      {/* Top Navigation Bar with Rounded Chevrons */}
+      <View style={s.topNavRow}>
+        <Pressable onPress={goPrev} style={({ pressed }) => [s.navCircleBtn, pressed && s.navCirclePressed]}>
+          <Ionicons name="chevron-back" size={18} color="#0F172A" />
+        </Pressable>
 
         <Pressable
-          style={s.modeToggleBtn}
-          onPress={() => {
-            Haptics.selectionAsync().catch(() => {});
-            setViewMode((v) => (v === 'month' ? 'week' : 'month'));
-          }}
+          onPress={() => setPickerVisible(true)}
+          style={({ pressed }) => [s.titlePill, pressed && { opacity: 0.8 }]}
         >
-          <Ionicons
-            name={viewMode === 'month' ? 'contract-outline' : 'expand-outline'}
-            size={13}
-            color={colors.primary}
-          />
-          <Text style={[font.tiny, { color: colors.primary, fontWeight: '700' }]}>
-            {viewMode === 'month' ? 'Thu tuần' : 'Mở tháng'}
+          <Text style={s.titlePillText}>
+            {viewMode === 'week' ? fmtWeekRange(selected) : fmtMonthHeader(anchor)}
           </Text>
+        </Pressable>
+
+        <Pressable onPress={goNext} style={({ pressed }) => [s.navCircleBtn, pressed && s.navCirclePressed]}>
+          <Ionicons name="chevron-forward" size={18} color="#0F172A" />
         </Pressable>
       </View>
 
-      {/* Week Header */}
-      <View style={s.weekHead}>
-        {WEEK_HEAD.map((w, idx) => (
-          <Text
-            key={w}
-            style={[
-              font.tiny,
-              s.weekHeadCell,
-              idx >= 5 && { color: colors.cyan },
-            ]}
-          >
-            {w}
-          </Text>
-        ))}
-      </View>
+      {/* Calendar Grid Card */}
+      <View style={s.calendarCard}>
+        {/* Weekday Row Header */}
+        <View style={s.weekHeadRow}>
+          {WEEK_HEAD.map((w) => (
+            <Text key={w} style={s.weekHeadCell}>
+              {w}
+            </Text>
+          ))}
+        </View>
 
-      {/* Calendar Grid — chụm 2 ngón để thu về xem tuần, xoè ra để phóng lại tháng */}
-      <GestureDetector gesture={pinchGesture}>
-      <View style={s.grid}>
-        {grid.map((d) => {
-          const key = dayKey(d);
-          const list = byDay[key] || [];
-          const outside = viewMode === 'month' && d.getMonth() !== anchor.getMonth();
-          const isSel = isSameDay(d, selected);
-          const isToday = isSameDay(d, today);
+        {/* Days Grid */}
+        <View style={s.gridRow}>
+          {grid.map((d) => {
+            const key = dayKey(d);
+            const list = byDay[key] || [];
+            const hasEvents = list.length > 0;
+            const outside = viewMode === 'month' && d.getMonth() !== anchor.getMonth();
+            const isSel = isSameDay(d, selected);
+            const isTodayDate = isSameDay(d, today);
 
-          return (
-            <Pressable
-              key={key}
-              onPress={() => selectDate(d)}
-              style={s.cellWrap}
-            >
-              <View
-                style={[
-                  s.cell,
-                  isToday && !isSel && s.cellToday,
-                  isSel && s.cellSel,
-                ]}
+            return (
+              <Pressable
+                key={key}
+                onPress={() => selectDate(d)}
+                style={s.cellSlot}
               >
-                <Text
+                <View
                   style={[
-                    font.small,
-                    {
-                      color: outside ? colors.textMuted : colors.text,
-                      opacity: outside ? 0.35 : 1,
-                      fontWeight: isSel || isToday ? '800' : '500',
-                    },
-                    isSel && { color: colors.onPrimary },
+                    s.cellPill,
+                    isSel && s.cellPillSelected,
+                    isTodayDate && !isSel && s.cellPillToday,
                   ]}
                 >
-                  {d.getDate()}
-                </Text>
-                <View style={s.cellDots}>
-                  {list.slice(0, 3).map((e) => (
-                    <View
-                      key={e.id}
-                      style={[
-                        s.cellDot,
-                        { backgroundColor: isSel ? colors.onPrimary : colors.primary },
-                      ]}
-                    />
-                  ))}
+                  <Text
+                    style={[
+                      s.cellNum,
+                      outside && s.cellNumOutside,
+                      isSel && s.cellNumSelected,
+                    ]}
+                  >
+                    {d.getDate()}
+                  </Text>
+                  {/* Indicator Dot */}
+                  <View
+                    style={[
+                      s.dot,
+                      hasEvents && s.dotVisible,
+                      isSel && hasEvents && s.dotSelected,
+                    ]}
+                  />
                 </View>
-              </View>
-            </Pressable>
-          );
-        })}
-      </View>
-      </GestureDetector>
+              </Pressable>
+            );
+          })}
+        </View>
 
-      {/* Agenda Header */}
-      <View style={s.agendaHead}>
-        <Row gap={space[2]}>
-          <Text style={[font.h3, { color: colors.text }]}>{fmtDayLabel(selected)}</Text>
-          {isSameDay(selected, today) ? (
-            <Badge label="HÔM NAY" color={colors.primary} />
-          ) : null}
-        </Row>
-        <Text style={[font.tiny, { color: colors.textMuted, fontWeight: '600' }]}>
-          {dayEvents.length ? `${dayEvents.length} lịch trình` : 'Trống lịch'}
+        {/* Bottom Expand / Collapse Toggle Chevron */}
+        <Pressable onPress={toggleViewMode} style={s.expandToggleRow} hitSlop={12}>
+          <Ionicons
+            name={viewMode === 'week' ? 'chevron-down' : 'chevron-up'}
+            size={18}
+            color="#64748B"
+          />
+        </Pressable>
+      </View>
+
+      {/* Selected Date Agenda Header */}
+      <View style={s.agendaHeader}>
+        <View style={s.agendaTitleRow}>
+          <Text style={s.selectedDateTitle}>{fmtFullDateVi(selected)}</Text>
+          <Text style={s.taskCountOrange}>
+            {dayEvents.length} công việc
+          </Text>
+        </View>
+        <Text style={s.statusSummarySubtitle}>
+          {`${statusCounts.done} hoàn thành · ${statusCounts.doing} đang xử lý · ${statusCounts.overdue} quá hạn · ${statusCounts.todo} chưa bắt đầu`}
         </Text>
       </View>
 
-      {/* Agenda Event List */}
+      {/* Timeline Event List */}
       <FlatList
         data={dayEvents}
         keyExtractor={keyExtractor}
         renderItem={renderItem}
-        contentContainerStyle={{ paddingHorizontal: space[4], paddingBottom: 110 }}
+        contentContainerStyle={{ paddingHorizontal: space[4], paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
-        initialNumToRender={8}
-        maxToRenderPerBatch={10}
-        windowSize={5}
+        initialNumToRender={10}
+        maxToRenderPerBatch={12}
         removeClippedSubviews={Platform.OS !== 'web'}
         ListEmptyComponent={
           <Empty
             icon="calendar-clear-outline"
             title="Không có lịch trong ngày này"
-            hint="Nhấn vào nút + bên dưới để tạo sự kiện mới và đồng bộ ngay."
+            hint="Nhấn nút + bên dưới để thêm lịch trình mới."
           />
         }
       />
 
       <FAB onPress={() => navigation.navigate('EventForm', { date: selected.toISOString() })} />
 
+      {/* Month/Year Picker Sheet */}
       <Sheet visible={pickerVisible} onClose={() => setPickerVisible(false)} title="Chọn tháng / năm">
-        <Row style={{ justifyContent: 'center', alignItems: 'center', marginBottom: space[4] }} gap={space[5]}>
-          <IconBtn icon="chevron-back" onPress={() => setPickerYear((y) => y - 1)} />
-          <Text style={[font.h1, { color: colors.text, minWidth: 90, textAlign: 'center' }]}>{pickerYear}</Text>
-          <IconBtn icon="chevron-forward" onPress={() => setPickerYear((y) => y + 1)} />
-        </Row>
+        <View style={s.pickerYearRow}>
+          <Pressable onPress={() => setPickerYear((y) => y - 1)} style={s.navCircleBtn}>
+            <Ionicons name="chevron-back" size={18} color="#0F172A" />
+          </Pressable>
+          <Text style={[font.h1, { color: colors.text }]}>{pickerYear}</Text>
+          <Pressable onPress={() => setPickerYear((y) => y + 1)} style={s.navCircleBtn}>
+            <Ionicons name="chevron-forward" size={18} color="#0F172A" />
+          </Pressable>
+        </View>
         <View style={s.monthPickerGrid}>
           {MONTHS.map((m, idx) => {
             const isCurrent = idx === anchor.getMonth() && pickerYear === anchor.getFullYear();
             return (
               <Pressable
                 key={m}
-                onPress={() => pickMonth(idx)}
+                onPress={() => {
+                  Haptics.selectionAsync().catch(() => {});
+                  const d = new Date(pickerYear, idx, 1);
+                  setAnchor(d);
+                  setSelected(d);
+                  setPickerVisible(false);
+                }}
                 style={[s.monthOption, isCurrent && s.monthOptionActive]}
               >
-                <Text style={[font.small, { color: isCurrent ? colors.onPrimary : colors.text, fontWeight: '700' }]}>
-                  {m.replace('Tháng ', 'Th ')}
+                <Text style={[font.small, { color: isCurrent ? '#FFFFFF' : colors.text, fontWeight: '700' }]}>
+                  {m}
                 </Text>
               </Pressable>
             );
@@ -360,133 +345,210 @@ export default function CalendarScreen({ navigation }) {
 }
 
 const s = StyleSheet.create({
-  monthBar: {
+  topNavRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: space[4],
-    marginBottom: space[2],
+    marginVertical: space[3],
   },
-  monthPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[2],
-    paddingHorizontal: space[3],
-    paddingVertical: space[1] + 2,
-    borderRadius: radius.pill,
-    backgroundColor: colors.bgSurface,
+  navCircleBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: colors.border,
-  },
-  modeToggleBtn: {
-    flexDirection: 'row',
+    borderColor: '#E2E8F0',
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: space[2] + 4,
-    paddingVertical: space[1] + 2,
-    borderRadius: radius.pill,
-    backgroundColor: tint(colors.primary, 0.12),
-    borderWidth: 1,
-    borderColor: tint(colors.primary, 0.3),
+    justifyContent: 'center',
+    ...shadows.sm,
   },
-  weekHead: {
-    flexDirection: 'row',
+  navCirclePressed: {
+    backgroundColor: '#F1F5F9',
+  },
+  titlePill: {
     paddingHorizontal: space[3],
-    marginBottom: 4,
+    paddingVertical: 6,
+    borderRadius: radius.pill,
+  },
+  titlePillText: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  calendarCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: space[3] + 2,
+    marginHorizontal: space[4],
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+    marginBottom: space[4],
+    ...shadows.card,
+  },
+  weekHeadRow: {
+    flexDirection: 'row',
+    marginBottom: 8,
   },
   weekHeadCell: {
     flex: 1,
     textAlign: 'center',
-    color: colors.textMuted,
-    paddingVertical: space[1],
+    fontSize: 12,
     fontWeight: '700',
+    color: '#94A3B8',
   },
-  grid: {
+  gridRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    paddingHorizontal: space[3],
   },
-  cellWrap: {
-    width: `${100 / 7}%`,
-    paddingHorizontal: 2,
-    paddingVertical: 2,
+  cellSlot: {
+    width: '14.28%',
+    alignItems: 'center',
+    marginVertical: 3,
   },
-  cell: {
-    height: 44,
-    borderRadius: radius.pill,
+  cellPill: {
+    width: 38,
+    height: 48,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'transparent',
     backgroundColor: 'transparent',
   },
-  cellSel: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-    shadowColor: colors.primary,
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
+  cellPillToday: {
+    borderWidth: 1.5,
+    borderColor: '#F97316',
   },
-  cellToday: {
-    borderColor: colors.primaryBorder,
-    backgroundColor: colors.primarySurface,
+  cellPillSelected: {
+    backgroundColor: '#F97316',
+    ...shadows.sm,
   },
-  cellDots: {
-    flexDirection: 'row',
-    gap: 3,
-    marginTop: 2,
-    height: 5,
-    alignItems: 'center',
+  cellNum: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#0F172A',
   },
-  cellDot: {
+  cellNumOutside: {
+    color: '#CBD5E1',
+  },
+  cellNumSelected: {
+    color: '#FFFFFF',
+    fontWeight: '800',
+  },
+  dot: {
     width: 4,
     height: 4,
     borderRadius: 2,
+    backgroundColor: 'transparent',
+    marginTop: 2,
   },
-  agendaHead: {
+  dotVisible: {
+    backgroundColor: '#F97316',
+  },
+  dotSelected: {
+    backgroundColor: '#FFFFFF',
+  },
+  expandToggleRow: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 8,
+  },
+  agendaHeader: {
+    paddingHorizontal: space[4],
+    marginBottom: space[3],
+  },
+  agendaTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: space[4],
-    paddingTop: space[4],
-    paddingBottom: space[3],
-    marginTop: space[2],
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
   },
-  eventCard: {
+  selectedDateTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  taskCountOrange: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#EA580C',
+  },
+  statusSummarySubtitle: {
+    fontSize: 12,
+    color: '#64748B',
+    marginTop: 3,
+    fontWeight: '500',
+  },
+  timelineRow: {
     flexDirection: 'row',
-    gap: space[3],
-    marginBottom: space[2],
-    padding: space[3] + 2,
-    overflow: 'hidden',
+    marginBottom: space[3],
   },
-  googleSyncBadge: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+  timelineTrack: {
+    width: 24,
+    alignItems: 'center',
+    marginRight: space[2],
+  },
+  timelineDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#F97316',
+    marginTop: 16,
+    zIndex: 2,
+  },
+  timelineLine: {
+    position: 'absolute',
+    top: 20,
+    bottom: -20,
+    width: 2,
+    backgroundColor: '#E2E8F0',
+  },
+  timelineCard: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: space[3] + 2,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+    ...shadows.card,
+  },
+  timelineCardHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  statusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
     borderRadius: radius.pill,
-    backgroundColor: colors.bgSurface,
+  },
+  timelineCardSub: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: space[2],
+  },
+  pickerYearRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginVertical: space[3],
   },
   monthPickerGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    paddingHorizontal: space[4],
     gap: space[2],
     justifyContent: 'center',
   },
   monthOption: {
-    width: '28%',
+    width: '30%',
     paddingVertical: space[3],
-    borderRadius: radius.md,
     alignItems: 'center',
-    justifyContent: 'center',
+    borderRadius: radius.md,
+    backgroundColor: colors.bgSurface,
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: colors.bgSurface,
   },
   monthOptionActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
+    backgroundColor: '#F97316',
+    borderColor: '#EA580C',
   },
 });
