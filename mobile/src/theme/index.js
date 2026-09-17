@@ -156,6 +156,7 @@ export const radius = {
   lg: 16,
   xl: 20,
   pill: 999,
+  full: 999,
 };
 
 // Thang chữ chuẩn: Không có text < 12px (Hard Stop)

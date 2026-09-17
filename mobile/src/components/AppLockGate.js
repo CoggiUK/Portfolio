@@ -311,7 +311,7 @@ const s = StyleSheet.create({
     gap: space[2],
     paddingVertical: space[2],
     paddingHorizontal: space[4],
-    borderRadius: radius.full,
+    borderRadius: radius.pill,
     backgroundColor: colors.primarySurface,
     borderWidth: 1,
     borderColor: colors.primaryBorder,
